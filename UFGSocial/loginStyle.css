@@ -1,0 +1,789 @@
+/**
+ * Estilos para página de Login y Registro
+ * 
+ * @author Kevin Pineda
+ * @license KevinPineda
+ * @copyright © 2025 Kevin Pineda. Todos los derechos reservados.
+ */
+
+@import url("./global.css");
+
+html,
+body,
+* {
+  font-family: "Inter", sans-serif !important;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: #1a1a1a;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Keyframes para animaciones */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 111, 60, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 111, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 111, 60, 0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Panel lateral con imagen */
+.side-container {
+  flex: 1.2;
+  background-image: url("./assets/fondos/ASU-carruselMobile.webp");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  min-width: 320px;
+  box-shadow: 1px 0 15px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+
+  border-radius: 0px 15px 15px 0px;
+}
+
+.side-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+
+:root.modo-claro .side-container::before {
+  background: rgba(0, 0, 0, 0.407);
+  
+}
+
+.side-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px;
+  max-width: 400px;
+}
+
+.side-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #fff;
+  animation: fadeIn 1.5s ease-out 0.6s both;
+}
+
+.side-content p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #e0e0e0;
+  animation: fadeIn 1.8s ease-out 0.9s both;
+}
+
+.highlight {
+  color: var(--color-terciario);
+  font-weight: 600;
+}
+
+.theme {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  animation: drop 0.3s ease-out 0.5s both;
+  z-index: 3;
+}
+
+.theme svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* Contenedor del formulario */
+.form-container {
+  flex: 1;
+  background: var(--color-primario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  min-width: 350px;
+}
+
+.logueo,
+.registro,
+.verificar {
+  width: 100%;
+  max-width: 320px;
+  animation: scaleIn 0.6s ease-out 0.4s both;
+}
+
+.verificar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-container .logueo h2,
+.form-container .registro h2,
+.form-container .verificar h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-terciario);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.form-container .subtitle {
+  color: var(--color-datos);
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.form-container .input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-objetos);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+@keyframes checkmark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -60%) rotate(45deg) scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -60%) rotate(45deg) scale(1);
+  }
+}
+
+.checkbox-label:hover {
+  color: #fff;
+}
+
+.form-container input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-bordes);
+  border-radius: 8px;
+  background: var(--color-fondo-secundario);
+  color: var(--color-objetos);
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.form-container input::placeholder {
+  color: var(--color-datos);
+  transition: color 0.3s ease;
+}
+
+.form-container input:focus {
+  outline: none;
+  border-color: var(--color-terciario);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--color-terciario) 20%, transparent);
+  transform: translateY(-2px);
+  background: color-mix(
+    in srgb,
+    var(--color-fondo-secundario) 85%,
+    var(--color-terciario) 15%
+  );
+}
+
+.form-container input:focus::placeholder {
+  color: color-mix(in srgb, var(--color-datos) 70%, var(--color-objetos) 30%);
+}
+
+.input-group-codigo label {
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+/* Estilo específico para el input de código de verificación */
+.codigo-inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.codigo-input {
+  width: 40px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  animation: scaleIn 0.5s ease-out;
+}
+
+.codigo-input:focus {
+  animation: pulse 0.6s infinite;
+}
+
+.form-container .btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-terciario);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-container .btn-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+}
+
+.form-container .btn-primary:hover {
+  background: var(--color-terciario-hover);
+  transform: translateY(-2px);
+}
+
+.form-container .btn-primary:hover::before {
+  left: 100%;
+}
+
+.form-container .btn-primary:active {
+  transform: translateY(0);
+  animation: pulse 0.6s;
+}
+
+.form-container .register-link {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--color-datos);
+  font-size: 0.85rem;
+}
+
+.form-container .register-link a {
+  color: var(--color-terciario);
+  text-decoration: none;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.form-container .register-link a::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--color-terciario);
+  transition: width 0.3s ease;
+}
+
+.form-container .register-link a:hover {
+  color: var(--color-objetos);
+  transform: translateY(-1px);
+}
+
+.form-container .register-link a:hover::after {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+  }
+
+  input {
+    font-size: 1rem;
+    padding: 12px;
+    border-radius: 8px;
+    width: 80%;
+    margin: 0 auto;
+  }
+
+  .input-group {
+    text-align: center;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .input-group label {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .input-group-codigo {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .form-container .btn-primary {
+    font-size: 1rem;
+    width: 80%;
+    align-items: center;
+    margin: 0 auto;
+  }
+
+  button {
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: center;
+  }
+
+  .side-container {
+    display: none;
+  }
+
+  .form-container {
+    flex: 1;
+    padding: 20px;
+    min-width: auto;
+    background-image: url("./assets/fondos/ASU-carruselMobile.webp");
+    background-size: cover;
+    background-position: center;
+    border-radius: 0;
+    position: relative;
+  }
+
+  .form-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1;
+    border-radius: 0;
+  }
+
+  .logueo,
+  .registro,
+  .verificar {
+    max-width: 100%;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .form-container .logueo h2,
+  .form-container .registro h2,
+  .form-container .verificar h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+
+  .form-container .subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 25px;
+  }
+
+  .form-container .input-group {
+    margin-bottom: 16px;
+  }
+
+  .form-container .input-group label {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .form-container input {
+    padding: 14px 12px;
+    font-size: 16px;
+  }
+
+  .codigo-input {
+    width: 35px;
+    font-size: 1.2rem;
+    padding: 8px;
+  }
+
+  .codigo-inputs {
+    gap: 8px;
+  }
+
+  .form-container .btn-primary {
+    padding: 14px 20px;
+    font-size: 1rem;
+    margin-top: 20px;
+  }
+
+  .btn-secondary {
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+
+  .form-container .register-link {
+    font-size: 0.8rem;
+    margin-top: 15px;
+  }
+
+  .checkbox-group {
+    justify-content: center;
+    align-items: center; /* Mejora la alineación vertical */
+    width: 100%;
+    max-width: 300px; /* Limita el ancho para mejor centrado */
+    margin: 0 auto; /* Centra el grupo horizontalmente */
+  }
+
+  .checkbox-label {
+    font-size: 0.85rem;
+    justify-content: center; /* Asegura que el contenido interno esté centrado */
+    width: 100%; /* Hace que el label ocupe todo el ancho disponible */
+  }
+
+  .checkmark {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex-shrink: 0; /* Evita que el checkbox se encoja */
+  }
+
+  /* Modal responsive */
+  .modal-content {
+    width: 95%;
+    max-width: 360px;
+    padding: 28px 24px;
+    margin: 20px auto;
+    border-radius: 14px;
+  }
+
+  .message-modal-content {
+    padding-top: 20px;
+  }
+
+  .modal-content h2 {
+    font-size: 1.4rem;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .modal-content p {
+    margin-bottom: 28px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px 20px;
+  }
+
+  .modal-close {
+    font-size: 26px;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Botón de cerrar responsive */
+  .close-btn {
+    top: 15px;
+    right: 15px;
+    font-size: 28px;
+  }
+}
+
+/* Estilos para la modal */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.3s ease-out;
+  display: none;
+  backdrop-filter: blur(4px);
+}
+
+.modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.modal-content {
+  background: linear-gradient(
+    135deg,
+    var(--color-secundario) 0%,
+    var(--color-primario) 100%
+  );
+  margin: 0 auto;
+  padding: 32px;
+  border: 1px solid var(--color-bordes);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  position: relative;
+  color: var(--color-objetos);
+  animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.modal-content h2 {
+  text-align: center;
+  margin-top: 0;
+  color: var(--color-terciario);
+  font-size: 1.6rem;
+  padding-bottom: 12px;
+  font-weight: 700;
+}
+
+.message-modal-content {
+  padding-top: 24px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--color-datos);
+  font-size: 28px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+  color: var(--color-objetos);
+  background: var(--color-hoover);
+  transform: scale(1.1);
+}
+
+.modal-content p {
+  margin-bottom: 32px;
+  color: var(--color-texto-secundario);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+#messageText {
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-secondary {
+  padding: 12px 28px;
+  min-height: 44px;
+  background: var(--color-bordes);
+  color: var(--color-objetos);
+  border: 1px solid var(--color-bordes);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  min-width: 120px;
+}
+
+.btn-secondary:hover {
+  background: var(--color-hoover);
+  border-color: var(--color-objetos);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilo para el botón OK en modales de mensaje */
+#messageOk {
+  background: var(--color-terciario);
+  color: #fff;
+  padding: 12px 32px;
+  font-weight: 600;
+  border-radius: 10px;
+  min-width: 140px;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#messageOk:hover {
+  background: var(--color-terciario-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px
+    color-mix(in srgb, var(--color-terciario) 30%, transparent);
+}
+
+#messageOk:active {
+  transform: translateY(0);
+}
+
+/* Estilo para el botón de cerrar en verificación */
+.close-btn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--color-datos);
+  font-size: 32px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: none;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.close-btn.show,
+.close-btn[style*="display: block"] {
+  display: flex;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+  color: var(--color-objetos);
+  background: var(--color-hoover);
+  transform: scale(1.1);
+}

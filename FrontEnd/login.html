@@ -5,145 +5,272 @@
  * @license KevinPineda
  * @copyright © 2025 Kevin Pineda. Todos los derechos reservados.
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>G-Net - Red Social Universitaria</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="loginStyle.css">
-</head>
-<body>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="loginStyle.css" />
+  </head>
+  <body>
     <div class="container">
-                  <div class="theme">
-                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-</svg>
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" color="#000">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
-</svg>
+      <div class="theme">
+        <svg
+          class="sun"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+          />
+        </svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-6"
+          color="#000"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
+          />
+        </svg>
+      </div>
+      <!-- Panel lateral con imagen de fondo -->
+      <div class="side-container">
+        <div class="side-content">
+          <h1>Bienvenido a UFG Social</h1>
+          <p>
+            La red social
+            <span class="highlight">Universitaria de la UFG</span>, impulsada
+            por IA, donde puedes conectarte, compartir y colaborar con la
+            comunidad de la Francisco Gavidia.
+          </p>
+        </div>
+      </div>
 
-</div>
-        <!-- Panel lateral con imagen de fondo -->
-        <div class="side-container">
-            <div class="side-content">
-                <h1>Bienvenido a UFG Social</h1>
-                <p>La red social <span class="highlight">Universitaria de la UFG</span>, impulsada por IA, donde puedes conectarte, compartir y colaborar con la comunidad de la Francisco Gavidia.</p>
+      <!-- Formulario de login -->
+      <div class="form-container">
+        <div class="logueo" style="display: block">
+          <h2>UFG</h2>
+          <p class="subtitle">Inicia Sesión con tu cuenta</p>
+          <form>
+            <div class="input-group">
+              <label>Correo Electrónico:</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="correo@gmail.com"
+                required
+              />
             </div>
+
+            <div class="input-group">
+              <label>Contraseña</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Contraseña"
+                required
+              />
+            </div>
+            <span class="recoovery"
+              >¿Olvidaste tu contraseña?
+              <a href="#" id="showRecovery">Recuperar</a></span
+            >
+
+            <button type="submit" class="btn-primary">Iniciar Sesión</button>
+
+            <p class="register-link">
+              ¿No tienes una cuenta aun?
+              <a href="#" id="showRegister">Registrate</a>
+            </p>
+          </form>
         </div>
 
-        <!-- Formulario de login -->
-        <div class="form-container">
-            <div class="logueo" style="display: block;">
-                <h2>UFG</h2>
-                <p class="subtitle">Inicia Sesión con tu cuenta</p>
-                <form>
-                    <div class="input-group">
-                        <label>Correo Electrónico:</label>
-                        <input type="email" name="email" placeholder="correo@gmail.com" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Contraseña</label>
-                        <input type="password" name="password" placeholder="Contraseña" required>
-                    </div>
-                    
-                   
-                    
-                    <button type="submit" class="btn-primary">Iniciar Sesión</button>
-                    
-                    <p class="register-link">¿No tienes una cuenta aun? <a href="#" id="showRegister">Registrate</a></p>
-                </form>
+        <!-- Formulario de registro -->
+        <div class="registro" style="display: none">
+          <h2>Regístrate</h2>
+          <p class="subtitle">Únete a la red social universitaria</p>
+
+          <form>
+            <div class="input-group">
+              <label>Nombre</label>
+              <input type="text" name="nombre" placeholder="Nombre" required />
             </div>
 
-            <!-- Formulario de registro -->
-            <div class="registro" style="display: none;">
-                <h2>Regístrate</h2>
-                <p class="subtitle">Únete a la red social universitaria</p>
-                
-                <form>
-                    <div class="input-group">
-                        <label>Nombre</label>
-                        <input type="text" name="nombre" placeholder="Nombre" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Correo Electrónico</label>
-                        <input type="email" name="email" placeholder="correo@gmail.com" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Contraseña</label>
-                        <input type="password" name="password" placeholder="Contraseña" required>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Confirmar Contraseña</label>
-                        <input type="password" name="confirmPassword" placeholder="Confirmar Contraseña" required>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary">Registrarse</button>
-                    
-                    <p class="register-link">¿Ya tienes una cuenta? <a href="#" id="showLogin">Inicia Sesión</a></p>
-                </form>
+            <div class="input-group">
+              <label>Correo Electrónico</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="correo@gmail.com"
+                required
+              />
             </div>
 
-            <!-- Formulario de verificación -->
-            <div class="verificar" style="display: none;">
-                <h2>Verificar Cuenta</h2>
-                <p class="subtitle">Ingresa el codigo enviado a tu correo</p>
-                
-                <form>
-                    <div class="input-group-codigo">
-                        <label>Codigo de Verificación</label>
-                        <div class="codigo-inputs">
-                            <input type="text" class="codigo-input" maxlength="1" required>
-                            <input type="text" class="codigo-input" maxlength="1" required>
-                            <input type="text" class="codigo-input" maxlength="1" required>
-                            <input type="text" class="codigo-input" maxlength="1" required>
-                            <input type="text" class="codigo-input" maxlength="1" required>
-                            <input type="text" class="codigo-input" maxlength="1" required>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn-primary">Verificar</button>
-                    
-                    <p class="register-link"><a href="#" id="resendCode">Reenviar codigo</a></p>
-                </form>
+            <div class="input-group">
+              <label>Contraseña</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Contraseña"
+                required
+              />
             </div>
 
-            <button type="button" class="close-btn" id="backToRegister" style="display: none;">&times;</button>
+            <div class="input-group">
+              <label>Confirmar Contraseña</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirmar Contraseña"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn-primary">Registrarse</button>
+
+            <p class="register-link">
+              ¿Ya tienes una cuenta?
+              <a href="#" id="showLogin">Inicia Sesión</a>
+            </p>
+          </form>
         </div>
+
+        <!-- Formulario de verificación -->
+        <div class="verificar" style="display: none">
+          <h2>Verificar Cuenta</h2>
+          <p class="subtitle">Ingresa el codigo enviado a tu correo</p>
+
+          <form>
+            <div class="input-group-codigo">
+              <label>Codigo de Verificación</label>
+              <div class="codigo-inputs">
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Verificar</button>
+
+            <p class="register-link">
+              <a href="#" id="resendCode">Reenviar codigo</a>
+            </p>
+          </form>
+        </div>
+
+        <!-- Formulario de recuperación de contraseña -->
+        <div class="recuperar" style="display: none">
+          <h2>Recuperar Contraseña</h2>
+          <p class="subtitle">Ingresa tu correo para recuperar tu contraseña</p>
+
+          <form>
+            <div class="input-group">
+              <label>Correo Electrónico</label>
+              <input
+                type="email"
+                name="emailRecovery"
+                placeholder="correo@gmail.com"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn-primary">Enviar Código</button>
+
+            <p class="register-link">
+              <a href="#" id="backToLogin">Volver al inicio</a>
+            </p>
+          </form>
+        </div>
+
+        <button
+          type="button"
+          class="close-btn"
+          id="backToRegister"
+          style="display: none"
+        >
+          &times;
+        </button>
+      </div>
     </div>
 
     <!-- Modal para reenviar codigo -->
     <div id="resendModal" class="modal">
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <h2>Reenviar Codigo</h2>
-            <p>¿Estas seguro de que quieres reenviar el codigo de verificación a tu correo electrónico?</p>
-            <div class="modal-buttons">
-                <button id="confirmResend" class="btn-primary">Si, reenviar</button>
-                <button id="cancelResend" class="btn-secondary">Cancelar</button>
-            </div>
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Reenviar Codigo</h2>
+        <p>
+          ¿Estas seguro de que quieres reenviar el codigo de verificación a tu
+          correo electrónico?
+        </p>
+        <div class="modal-buttons">
+          <button id="confirmResend" class="btn-primary">Si, reenviar</button>
+          <button id="cancelResend" class="btn-secondary">Cancelar</button>
         </div>
+      </div>
     </div>
 
     <!-- Modal para mensajes -->
     <div id="messageModal" class="modal">
-        <div class="modal-overlay"></div>
-        <div class="modal-content message-modal-content">
-            <span class="modal-close">&times;</span>
-            <p id="messageText"></p>
-            <button id="messageOk" class="btn-primary">Aceptar</button>
-        </div>
+      <div class="modal-overlay"></div>
+      <div class="modal-content message-modal-content">
+        <span class="modal-close">&times;</span>
+        <p id="messageText"></p>
+        <button id="messageOk" class="btn-primary">Aceptar</button>
+      </div>
     </div>
 
     <script src="loginScript.js"></script>
-</body>
+  </body>
 </html>
-
-
-

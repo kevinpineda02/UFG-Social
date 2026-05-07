@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.querySelector(".logueo");
   const registroForm = document.querySelector(".registro");
   const verificarForm = document.querySelector(".verificar");
+  const recuperarForm = document.querySelector(".recuperar");
   const formContainer = document.querySelector(".form-container");
   const themeToggle = document.querySelector(".theme");
   const sunIcon = document.querySelector(".theme .sun");
@@ -17,6 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const showRegisterBtn = document.getElementById("showRegister");
   const showLoginBtn = document.getElementById("showLogin");
+  const showRecoveryBtn = document.getElementById("showRecovery");
+  const backToLoginBtn = document.getElementById("backToLogin");
   const resendCodeBtn = document.getElementById("resendCode");
 
   function applyLoginTheme(themeName) {
@@ -100,6 +103,20 @@ document.addEventListener("DOMContentLoaded", function () {
     showLoginBtn.addEventListener("click", function (e) {
       e.preventDefault();
       switchForm(registroForm, loginForm);
+    });
+  }
+
+  if (showRecoveryBtn) {
+    showRecoveryBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      switchForm(loginForm, recuperarForm);
+    });
+  }
+
+  if (backToLoginBtn) {
+    backToLoginBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      switchForm(recuperarForm, loginForm);
     });
   }
 
@@ -262,6 +279,64 @@ document.addEventListener("DOMContentLoaded", function () {
   if (backToRegisterBtn) {
     backToRegisterBtn.addEventListener("click", function () {
       switchForm(verificarForm, registroForm);
+    });
+  }
+
+  const recuperarFormElement = recuperarForm.querySelector("form");
+  if (recuperarFormElement) {
+    recuperarFormElement.addEventListener("submit", function (e) {
+      if (!recuperarFormElement.reportValidity()) {
+        return;
+      }
+      e.preventDefault();
+
+      const submitBtn = recuperarFormElement.querySelector(".btn-primary");
+      const emailRecovery = recuperarFormElement
+        .querySelector('input[name="emailRecovery"]')
+        .value.trim();
+
+      const originalText = submitBtn ? submitBtn.textContent : "Enviar Código";
+      if (submitBtn) {
+        submitBtn.textContent = "Enviando..";
+        submitBtn.style.opacity = "0.7";
+      }
+
+      fetch("/recovery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailRecovery }),
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            console.warn(
+              data.message || "Error al enviar código de recuperación",
+            );
+            if (submitBtn) {
+              submitBtn.textContent = originalText;
+              submitBtn.style.opacity = "1";
+            }
+            return;
+          }
+
+          showMessage(data.message || "Código de recuperación enviado");
+
+          try {
+            localStorage.setItem("pendingRecoveryEmail", emailRecovery);
+          } catch (e) {}
+
+          if (submitBtn) {
+            submitBtn.textContent = originalText;
+            submitBtn.style.opacity = "1";
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          if (submitBtn) {
+            submitBtn.textContent = originalText;
+            submitBtn.style.opacity = "1";
+          }
+        });
     });
   }
 

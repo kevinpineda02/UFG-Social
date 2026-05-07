@@ -404,10 +404,28 @@ body {
   width: 100%;
 }
 
+#showRecovery {
+  position: relative;
+  left: 5px;
+  color: var(--color-terciario);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.recoovery {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: 1.0rem;
+  padding-bottom: 10px;
+  color: var(--color-objetos);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   body {
     overflow: auto;
+
   }
 
   input {
@@ -459,22 +477,14 @@ body {
     flex: 1;
     padding: 20px;
     min-width: auto;
-    background-image: url("./assets/fondos/ASU-carruselMobile.webp");
+    background: var(--color-primario);
     background-size: cover;
     background-position: center;
     border-radius: 0;
     position: relative;
   }
 
-  .form-container::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    z-index: 1;
-    border-radius: 0;
-  }
+  
 
   .logueo,
   .registro,
@@ -493,12 +503,14 @@ body {
   }
 
   .form-container .subtitle {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     margin-bottom: 25px;
   }
 
   .form-container .input-group {
     margin-bottom: 16px;
+    justify-content: start;
+    align-items: start;
   }
 
   .form-container .input-group label {
@@ -533,7 +545,7 @@ body {
   }
 
   .form-container .register-link {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     margin-top: 15px;
   }
 

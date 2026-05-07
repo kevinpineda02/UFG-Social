@@ -28,7 +28,7 @@
         <!-- Panel lateral con imagen de fondo -->
         <div class="side-container">
             <div class="side-content">
-                <h1>Bienvenido a G-Net</h1>
+                <h1>Bienvenido a UFG Social</h1>
                 <p>La red social <span class="highlight">Universitaria de la UFG</span>, impulsada por IA, donde puedes conectarte, compartir y colaborar con la comunidad de la Francisco Gavidia.</p>
             </div>
         </div>
@@ -36,7 +36,7 @@
         <!-- Formulario de login -->
         <div class="form-container">
             <div class="logueo" style="display: block;">
-                <h2>G-Net</h2>
+                <h2>UFG</h2>
                 <p class="subtitle">Inicia Sesión con tu cuenta</p>
                 <form>
                     <div class="input-group">
@@ -45,22 +45,22 @@
                     </div>
                     
                     <div class="input-group">
-                        <label>ContraseÃ±a</label>
-                        <input type="password" name="password" placeholder="ContraseÃ±a" required>
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="Contraseña" required>
                     </div>
                     
                    
                     
                     <button type="submit" class="btn-primary">Iniciar Sesión</button>
                     
-                    <p class="register-link">¿No tienes una cuenta aÃºn? <a href="#" id="showRegister">RegÃ­strate</a></p>
+                    <p class="register-link">¿No tienes una cuenta aun? <a href="#" id="showRegister">Registrate</a></p>
                 </form>
             </div>
 
             <!-- Formulario de registro -->
             <div class="registro" style="display: none;">
-                <h2>RegÃ­strate</h2>
-                <p class="subtitle">Ãšnete a la red social universitaria</p>
+                <h2>Regístrate</h2>
+                <p class="subtitle">Únete a la red social universitaria</p>
                 
                 <form>
                     <div class="input-group">
@@ -74,13 +74,13 @@
                     </div>
                     
                     <div class="input-group">
-                        <label>ContraseÃ±a</label>
-                        <input type="password" name="password" placeholder="ContraseÃ±a" required>
+                        <label>Contraseña</label>
+                        <input type="password" name="password" placeholder="Contraseña" required>
                     </div>
                     
                     <div class="input-group">
-                        <label>Confirmar ContraseÃ±a</label>
-                        <input type="password" name="confirmPassword" placeholder="Confirmar ContraseÃ±a" required>
+                        <label>Confirmar Contraseña</label>
+                        <input type="password" name="confirmPassword" placeholder="Confirmar Contraseña" required>
                     </div>
                     
                     <button type="submit" class="btn-primary">Registrarse</button>
@@ -92,11 +92,11 @@
             <!-- Formulario de verificación -->
             <div class="verificar" style="display: none;">
                 <h2>Verificar Cuenta</h2>
-                <p class="subtitle">Ingresa el cÃ³digo enviado a tu correo</p>
+                <p class="subtitle">Ingresa el codigo enviado a tu correo</p>
                 
                 <form>
                     <div class="input-group-codigo">
-                        <label>CÃ³digo de Verificación</label>
+                        <label>Codigo de Verificación</label>
                         <div class="codigo-inputs">
                             <input type="text" class="codigo-input" maxlength="1" required>
                             <input type="text" class="codigo-input" maxlength="1" required>
@@ -107,9 +107,9 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn-primary" 0">Verificar</button>
+                    <button type="submit" class="btn-primary">Verificar</button>
                     
-                    <p class="register-link"><a href="#" id="resendCode">Reenviar cÃ³digo</a></p>
+                    <p class="register-link"><a href="#" id="resendCode">Reenviar codigo</a></p>
                 </form>
             </div>
 
@@ -117,15 +117,15 @@
         </div>
     </div>
 
-    <!-- Modal para reenviar cÃ³digo -->
+    <!-- Modal para reenviar codigo -->
     <div id="resendModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
             <span class="modal-close">&times;</span>
-            <h2>Reenviar CÃ³digo</h2>
-            <p>¿EstÃ¡s seguro de que quieres reenviar el cÃ³digo de verificación a tu correo electrónico?</p>
+            <h2>Reenviar Codigo</h2>
+            <p>¿Estas seguro de que quieres reenviar el codigo de verificación a tu correo electrónico?</p>
             <div class="modal-buttons">
-                <button id="confirmResend" class="btn-primary">SÃ­, reenviar</button>
+                <button id="confirmResend" class="btn-primary">Si, reenviar</button>
                 <button id="cancelResend" class="btn-secondary">Cancelar</button>
             </div>
         </div>

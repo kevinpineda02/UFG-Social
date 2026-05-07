@@ -359,7 +359,7 @@ function tiempoTranscurrido(fecha) {
 // FunciónONES ORIGINALES
 // ===========================================
 
-const AVATAR_POR_DEFECTO = "/UFGSocial/assets/Logo/LogoAzul.jpg";
+const AVATAR_POR_DEFECTO = "./assets/Logo/LogoAzul.jpg";
 
 function normalizarAvatar(avatar) {
   if (!avatar) return AVATAR_POR_DEFECTO;
@@ -665,7 +665,7 @@ function crearPublicacionDesdeBackend(
     username: publicacionData.autor.username || "Usuario Anónimo",
     handle: publicacionData.autor.handle || "@anonimo",
     avatar:
-      publicacionData.autor.avatar || "/HomeNew/publicaciones/UFGPerfil.jpg",
+      publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
   };
 
   // Convertir fecha ISO a timestamp para compatibilidad
@@ -1791,7 +1791,7 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
     username: publicacionData.autor.username || "Usuario Anónimo",
     handle: publicacionData.autor.handle || "@anonimo",
     avatar:
-      publicacionData.autor.avatar || "/HomeNew/publicaciones/UFGPerfil.jpg",
+      publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
   };
 
   // Inicializar array de comentarios si no existe

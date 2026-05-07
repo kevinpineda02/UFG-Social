@@ -15,6 +15,7 @@
   --color-fondo-campo: #161616;
   --color-fondo-secundario: #2a2a2a;
   --color-terciario-hover: #d15a1f;
+  --color-span: #ef6c22;
 }
 
 /* Variables para modo claro */
@@ -34,4 +35,5 @@
   --color-fondo-campo: #f8f9fa;
   --color-fondo-secundario: #f0f0f0;
   --color-terciario-hover: #1e1bcc;
+  --color-span: #f6af17;
 }

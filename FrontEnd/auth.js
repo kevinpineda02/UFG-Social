@@ -39,7 +39,7 @@ function getUserAvatar(user) {
   if (user && user.profileImage) {
     return `<img src="${user.profileImage}" alt="Avatar usuario">`;
   }
-  return `<img src="/UFGSocial/assets/Logo/LogoAzul.jpg" alt="Avatar predeterminado">`;
+  return `<img src="./assets/Logo/LogoAzul.jpg" alt="Avatar predeterminado">`;
 }
 
 function updateUserInterface() {

@@ -136,6 +136,10 @@ body {
   border-radius: 0px 15px 15px 0px;
 }
 
+:root.modo-claro .side-container {
+  background-image: url("./assets/fondos/ufg-login.webp");
+}
+
 .side-container::before {
   content: "";
   position: absolute;
@@ -148,7 +152,7 @@ body {
 }
 
 :root.modo-claro .side-container::before {
-  background: rgba(0, 0, 0, 0.407);
+  background: rgba(0, 0, 0, 0.285);
   
 }
 
@@ -176,7 +180,7 @@ body {
 }
 
 .highlight {
-  color: var(--color-terciario);
+  color: var(--color-span);
   font-weight: 600;
 }
 

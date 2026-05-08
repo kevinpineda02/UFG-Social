@@ -127,17 +127,17 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       e.preventDefault();
-      const email = loginFormElement
-        .querySelector('input[name="email"]')
+      const correo = loginFormElement
+        .querySelector('input[name="correo"]')
         .value.trim();
-      const password = loginFormElement.querySelector(
-        'input[name="password"]',
+      const contrasena = loginFormElement.querySelector(
+        'input[name="contrasena"]',
       ).value;
 
-      fetch("/login", {
+      fetch("http://localhost:8081/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ correo, contrasena }),
       })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
@@ -166,14 +166,11 @@ document.addEventListener("DOMContentLoaded", function () {
       e.preventDefault();
 
       const submitBtn = registroFormElement.querySelector(".btn-primary");
-      const nombre = registroFormElement
-        .querySelector('input[name="nombre"]')
+      const correo = registroFormElement
+        .querySelector('input[name="correo"]')
         .value.trim();
-      const email = registroFormElement
-        .querySelector('input[name="email"]')
-        .value.trim();
-      const password = registroFormElement.querySelector(
-        'input[name="password"]',
+      const contrasena = registroFormElement.querySelector(
+        'input[name="contrasena"]',
       ).value;
 
       const originalText = submitBtn ? submitBtn.textContent : "Registrarse";
@@ -182,10 +179,10 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.opacity = "0.7";
       }
 
-      fetch("/register", {
+      fetch("http://localhost:8081/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, password }),
+        body: JSON.stringify({ correo, contrasena }),
       })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
@@ -201,7 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
           showMessage(data.message || "Registro exitoso");
 
           try {
-            localStorage.setItem("pendingEmail", email);
+            localStorage.setItem("pendingEmail", correo);
           } catch (e) {}
 
           switchForm(registroForm, verificarForm);

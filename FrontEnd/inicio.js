@@ -10,7 +10,7 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL = "http://localhost:8081/api";
+const API_BASE_URL = "http://127.0.0.1:8081/api";
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL}/health`,

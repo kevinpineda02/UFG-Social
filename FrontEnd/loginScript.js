@@ -122,10 +122,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const loginFormElement = loginForm.querySelector("form");
   if (loginFormElement) {
+    const passwordError = loginFormElement.querySelector(".password-error");
+
+    function clearPasswordError() {
+      if (passwordError) {
+        passwordError.textContent = "";
+        passwordError.classList.remove("is-visible");
+      }
+    }
+
+    function showPasswordError(message) {
+      if (passwordError) {
+        passwordError.textContent = message;
+        passwordError.classList.add("is-visible");
+        return;
+      }
+      showMessage(message);
+    }
+
     loginFormElement.addEventListener("submit", function (e) {
       if (!loginFormElement.reportValidity()) {
         return;
       }
+      clearPasswordError();
       e.preventDefault();
       const correo = loginFormElement
         .querySelector('input[name="correo"]')
@@ -134,21 +153,30 @@ document.addEventListener("DOMContentLoaded", function () {
         'input[name="contrasena"]',
       ).value;
 
-      fetch("http://localhost:8081/auth/login", {
+      fetch("http://127.0.0.1:8081/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
       })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
-            console.warn(data.message || "Error en el servidor");
+            const mensaje =
+              res.status === 401 || res.status === 403
+                ? data.message || "Contraseña incorrecta"
+                : data.message || "Error en el servidor";
+            if (res.status === 401 || res.status === 403) {
+              showPasswordError(mensaje);
+            } else {
+              showMessage(mensaje);
+            }
             return;
           }
           if (data.redirect) {
             window.location.replace(data.redirect);
           } else {
-            showMessage(data.message || "Logueado correctamente");
+            window.location.replace("inicio.html");
           }
         })
         .catch((err) => {
@@ -179,7 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.opacity = "0.7";
       }
 
-      fetch("http://localhost:8081/auth/register", {
+      fetch("http://127.0.0.1:8081/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
@@ -194,8 +222,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             return;
           }
-
-          showMessage(data.message || "Registro exitoso");
 
           try {
             localStorage.setItem("pendingEmail", correo);
@@ -226,15 +252,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const resendModal = document.getElementById("resendModal");
   const messageModal = document.getElementById("messageModal");
-  const modalClose = document.querySelector(".modal-close");
   const cancelResend = document.getElementById("cancelResend");
   const confirmResend = document.getElementById("confirmResend");
-
-  if (modalClose) {
-    modalClose.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
 
   if (cancelResend) {
     cancelResend.addEventListener("click", function () {
@@ -257,14 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  const messageClose = messageModal.querySelector(".modal-close");
   const messageOk = document.getElementById("messageOk");
-
-  if (messageClose) {
-    messageClose.addEventListener("click", function () {
-      messageModal.classList.remove("show");
-    });
-  }
 
   if (messageOk) {
     messageOk.addEventListener("click", function () {

@@ -44,7 +44,9 @@ function getUserAvatar(user) {
 
 function updateUserInterface() {
   if (currentUser) {
-    const nombreUsuarioPerfil = document.querySelector(".nombre-usuario-perfil h3");
+    const nombreUsuarioPerfil = document.querySelector(
+      ".nombre-usuario-perfil h3",
+    );
     if (nombreUsuarioPerfil) {
       nombreUsuarioPerfil.textContent = currentUser.username;
     }
@@ -54,12 +56,16 @@ function updateUserInterface() {
       handlePerfil.textContent = `@${currentUser.username.toLowerCase()}`;
     }
 
-    const nombreUsuarioHeader = document.querySelector(".usuario-header .nombre-usuario");
+    const nombreUsuarioHeader = document.querySelector(
+      ".usuario-header .nombre-usuario",
+    );
     if (nombreUsuarioHeader) {
       nombreUsuarioHeader.textContent = currentUser.username;
     }
 
-    const avatarElements = document.querySelectorAll(".mi-perfil .avatar, .usuario-header .avatar");
+    const avatarElements = document.querySelectorAll(
+      ".mi-perfil .avatar, .usuario-header .avatar",
+    );
     avatarElements.forEach((avatarContainer) => {
       avatarContainer.innerHTML = getUserAvatar(currentUser);
     });

@@ -10,7 +10,7 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL = "http://localhost:3001/api";
+const API_BASE_URL = "http://localhost:8081/api";
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL}/health`,
@@ -664,8 +664,7 @@ function crearPublicacionDesdeBackend(
   const autorData = {
     username: publicacionData.autor.username || "Usuario Anónimo",
     handle: publicacionData.autor.handle || "@anonimo",
-    avatar:
-      publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
+    avatar: publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
   };
 
   // Convertir fecha ISO a timestamp para compatibilidad
@@ -1790,8 +1789,7 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
   const autorData = {
     username: publicacionData.autor.username || "Usuario Anónimo",
     handle: publicacionData.autor.handle || "@anonimo",
-    avatar:
-      publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
+    avatar: publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
   };
 
   // Inicializar array de comentarios si no existe

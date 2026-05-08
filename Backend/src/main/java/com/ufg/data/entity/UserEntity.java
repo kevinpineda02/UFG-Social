@@ -24,26 +24,30 @@ public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue
     Integer id;
+
     @Column(nullable = false)
     String correo;
+
+    @Column(name = "contraseña")
     String contrasena;
 
     @Enumerated(EnumType.STRING)
-    Role role;
+    @Column(name = "rol")
+    Rol rol;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority(rol.name()));
     }
 
     @Override
     public @Nullable String getPassword() {
-        return "";
+        return contrasena;
     }
 
     @Override
     public String getUsername() {
-        return "";
+        return correo;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.ufg.data.entity;
 
-public enum Role {
+public enum Rol {
     ADMIN,
     USER
 }

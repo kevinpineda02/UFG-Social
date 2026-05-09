@@ -9,7 +9,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.querySelector(".logueo");
   const registroForm = document.querySelector(".registro");
-  const verificarForm = document.querySelector(".verificar");
   const recuperarForm = document.querySelector(".recuperar");
   const formContainer = document.querySelector(".form-container");
   const themeToggle = document.querySelector(".theme");
@@ -20,7 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const showLoginBtn = document.getElementById("showLogin");
   const showRecoveryBtn = document.getElementById("showRecovery");
   const backToLoginBtn = document.getElementById("backToLogin");
-  const resendCodeBtn = document.getElementById("resendCode");
 
   function applyLoginTheme(themeName) {
     const html = document.documentElement;
@@ -82,13 +80,6 @@ document.addEventListener("DOMContentLoaded", function () {
       hideForm.style.display = "none";
       showForm.style.display = "block";
       showForm.style.animation = "scaleIn 0.5s ease-out forwards";
-
-      const closeBtn = document.getElementById("backToRegister");
-      if (showForm === verificarForm) {
-        closeBtn.style.display = "block";
-      } else {
-        closeBtn.style.display = "none";
-      }
     }, 300);
   }
 
@@ -173,6 +164,14 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             return;
           }
+          if (data.token) {
+            try {
+              localStorage.setItem("jwt", data.token);
+              document.cookie = `jwt=${encodeURIComponent(data.token)}; path=/; SameSite=Lax`;
+            } catch (error) {
+              console.warn("No se pudo guardar el token", error);
+            }
+          }
           if (data.redirect) {
             window.location.replace(data.redirect);
           } else {
@@ -200,8 +199,43 @@ document.addEventListener("DOMContentLoaded", function () {
       const contrasena = registroFormElement.querySelector(
         'input[name="contrasena"]',
       ).value;
-
       const originalText = submitBtn ? submitBtn.textContent : "Registrarse";
+      const confirmPasswordInput = registroFormElement.querySelector(
+        'input[name="confirmPassword"]',
+      );
+      const registerError =
+        registroFormElement.querySelector(".register-error");
+      const confirmPassword = confirmPasswordInput.value;
+
+      function clearRegisterError() {
+        if (registerError) {
+          registerError.textContent = "";
+          registerError.classList.remove("is-visible");
+        }
+      }
+
+      function showRegisterError(message) {
+        if (registerError) {
+          registerError.textContent = message;
+          registerError.classList.add("is-visible");
+          return;
+        }
+        showMessage(message);
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener("input", clearRegisterError, {
+          once: true,
+        });
+      }
+
+      clearRegisterError();
+
+      if (contrasena !== confirmPassword) {
+        showRegisterError("Las contraseñas no coinciden");
+        return;
+      }
+
       if (submitBtn) {
         submitBtn.textContent = "Registrando...";
         submitBtn.style.opacity = "0.7";
@@ -215,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
-            console.warn(data.message || "Error al registrar");
+            showMessage(data.message || "Error al registrar la cuenta");
             if (submitBtn) {
               submitBtn.textContent = originalText;
               submitBtn.style.opacity = "1";
@@ -224,13 +258,28 @@ document.addEventListener("DOMContentLoaded", function () {
           }
 
           try {
-            localStorage.setItem("pendingEmail", correo);
+            localStorage.removeItem("gnet_perfil_setup_done");
+            localStorage.removeItem("gnet_perfil_usuario");
           } catch (e) {}
 
-          switchForm(registroForm, verificarForm);
+          if (data.token) {
+            try {
+              localStorage.setItem("jwt", data.token);
+              document.cookie = `jwt=${encodeURIComponent(data.token)}; path=/; SameSite=Lax`;
+            } catch (error) {
+              console.warn("No se pudo guardar el token", error);
+            }
+          }
+
           if (submitBtn) {
             submitBtn.textContent = originalText;
             submitBtn.style.opacity = "1";
+          }
+
+          if (data.redirect) {
+            window.location.replace(data.redirect);
+          } else {
+            window.location.replace("inicio.html");
           }
         })
         .catch((err) => {
@@ -243,34 +292,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  if (resendCodeBtn) {
-    resendCodeBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      document.getElementById("resendModal").classList.add("show");
-    });
-  }
-
-  const resendModal = document.getElementById("resendModal");
   const messageModal = document.getElementById("messageModal");
-  const cancelResend = document.getElementById("cancelResend");
-  const confirmResend = document.getElementById("confirmResend");
-
-  if (cancelResend) {
-    cancelResend.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
-
-  if (confirmResend) {
-    confirmResend.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
 
   window.addEventListener("click", function (event) {
-    if (event.target === resendModal) {
-      resendModal.classList.remove("show");
-    }
     if (event.target === messageModal) {
       messageModal.classList.remove("show");
     }
@@ -281,13 +305,6 @@ document.addEventListener("DOMContentLoaded", function () {
   if (messageOk) {
     messageOk.addEventListener("click", function () {
       messageModal.classList.remove("show");
-    });
-  }
-
-  const backToRegisterBtn = document.getElementById("backToRegister");
-  if (backToRegisterBtn) {
-    backToRegisterBtn.addEventListener("click", function () {
-      switchForm(verificarForm, registroForm);
     });
   }
 
@@ -348,62 +365,4 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
   }
-
-  const verificarFormElement = verificarForm.querySelector("form");
-  if (verificarFormElement) {
-    verificarFormElement.addEventListener("submit", function (e) {
-      if (!verificarFormElement.reportValidity()) {
-        return;
-      }
-      e.preventDefault();
-
-      const codigoInputs = document.querySelectorAll(".codigo-input");
-      const codigo = Array.from(codigoInputs)
-        .map((input) => input.value)
-        .join("");
-
-      const pendingEmail = localStorage.getItem("pendingEmail");
-
-      fetch("/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pendingEmail, code: codigo }),
-      })
-        .then(async (res) => {
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            console.warn(data.message || "Código inválido o expirado");
-            return;
-          }
-          try {
-            localStorage.removeItem("pendingEmail");
-          } catch (e) {}
-          if (data.redirect) {
-            window.location.replace(data.redirect);
-          } else {
-            showMessage(data.message || "Cuenta verificada exitosamente");
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    });
-  }
-
-  const codigoInputs = document.querySelectorAll(".codigo-input");
-  codigoInputs.forEach((input, index) => {
-    input.addEventListener("input", function (e) {
-      this.value = this.value.replace(/[^0-9]/g, "");
-
-      if (this.value.length === 1 && index < 5) {
-        codigoInputs[index + 1].focus();
-      }
-    });
-
-    input.addEventListener("keydown", function (e) {
-      if (e.key === "Backspace" && this.value === "" && index > 0) {
-        codigoInputs[index - 1].focus();
-      }
-    });
-  });
 });

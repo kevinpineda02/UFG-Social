@@ -95,7 +95,13 @@
             </div>
 
             <button type="submit" class="btn-primary">Iniciar Sesión</button>
-
+            <div class="recovery-panel">
+              <span
+                >¿Se te olvidó la contraseña?<a href="#" id="showRecovery"
+                  >Recupérala aquí</a
+                ></span
+              >
+            </div>
             <p class="register-link">
               ¿No tienes una cuenta aun?
               <a href="#" id="showRegister">Registrate</a>
@@ -137,6 +143,10 @@
                 placeholder="Confirmar Contraseña"
                 required
               />
+              <small
+                class="input-error register-error"
+                aria-live="polite"
+              ></small>
             </div>
 
             <button type="submit" class="btn-primary">Registrarse</button>
@@ -144,62 +154,6 @@
             <p class="register-link">
               ¿Ya tienes una cuenta?
               <a href="#" id="showLogin">Inicia Sesión</a>
-            </p>
-          </form>
-        </div>
-
-        <!-- Formulario de verificación -->
-        <div class="verificar" style="display: none">
-          <h2>Verificar Cuenta</h2>
-          <p class="subtitle">Ingresa el codigo enviado a tu correo</p>
-
-          <form>
-            <div class="input-group-codigo">
-              <label>Codigo de Verificación</label>
-              <div class="codigo-inputs">
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" class="btn-primary">Verificar</button>
-
-            <p class="register-link">
-              <a href="#" id="resendCode">Reenviar codigo</a>
             </p>
           </form>
         </div>
@@ -226,31 +180,6 @@
               <a href="#" id="backToLogin">Volver al inicio</a>
             </p>
           </form>
-        </div>
-
-        <button
-          type="button"
-          class="close-btn"
-          id="backToRegister"
-          style="display: none"
-        >
-          &times;
-        </button>
-      </div>
-    </div>
-
-    <!-- Modal para reenviar codigo -->
-    <div id="resendModal" class="modal">
-      <div class="modal-overlay"></div>
-      <div class="modal-content">
-        <h2>Reenviar Codigo</h2>
-        <p>
-          ¿Estas seguro de que quieres reenviar el codigo de verificación a tu
-          correo electrónico?
-        </p>
-        <div class="modal-buttons">
-          <button id="confirmResend" class="btn-primary">Si, reenviar</button>
-          <button id="cancelResend" class="btn-secondary">Cancelar</button>
         </div>
       </div>
     </div>

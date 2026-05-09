@@ -66,7 +66,7 @@
 
       <!-- Formulario de login -->
       <div class="form-container">
-        <div class="logueo" style="display: block">
+        <div class="logueo" style="display: none">
           <h2>UFG</h2>
           <p class="subtitle">Inicia Sesión con tu cuenta</p>
           <form>
@@ -148,6 +148,55 @@
           </form>
         </div>
 
+        <!-- Formulario de datos de usuario-->
+<div class="form-one-loguin">
+  <form>
+    <h2 class="form-title">Crear Cuenta</h2>    
+    
+    <!-- Contenedor para mostrar la imagen -->
+    <div class="profile-image" id="profileImagePreview" aria-label="Foto de perfil"></div>
+    
+    <div class="input-group" id="input-account">
+      <label>Nombre: </label>
+      <input
+        type="text"
+        name="nombre"
+        placeholder="Nombre"
+        required
+      />
+    </div>
+    
+    <div class="input-group" id="input-account">
+      <label>Nombre de Usuario: </label>
+      <input
+        type="text"
+        name="username"
+        placeholder="Nombre de Usuario"
+        required
+      />
+    </div>
+    
+    <div class="profile">
+      <label class="profile-label">Foto de Perfil:</label>
+      <div class="file-input-wrapper">
+        <label for="profileImage" class="custom-file-input">
+          <span class="browse-btn">Explorar...</span>
+          <span class="file-name" id="fileName">No file selected.</span>
+        </label>
+        <input
+          type="file"
+          id="profileImage"
+          name="profileImage"
+          accept="image/*"
+          class="hidden-file-input"
+        />
+      </div>
+    </div>
+    
+    <button type="submit" class="btn-primary">Crear Cuenta</button>
+  </form>
+</div>
+
         <!-- Formulario de verificación -->
         <div class="verificar" style="display: none">
           <h2>Verificar Cuenta</h2>
@@ -208,7 +257,6 @@
         <div class="recuperar" style="display: none">
           <h2>Recuperar Contraseña</h2>
           <p class="subtitle">Ingresa tu correo para recuperar tu contraseña</p>
-
           <form>
             <div class="input-group">
               <label>Correo Electrónico</label>
@@ -219,9 +267,7 @@
                 required
               />
             </div>
-
             <button type="submit" class="btn-primary">Enviar Código</button>
-
             <p class="register-link">
               <a href="#" id="backToLogin">Volver al inicio</a>
             </p>

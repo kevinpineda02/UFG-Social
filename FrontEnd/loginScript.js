@@ -21,6 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const showRecoveryBtn = document.getElementById("showRecovery");
   const backToLoginBtn = document.getElementById("backToLogin");
   const resendCodeBtn = document.getElementById("resendCode");
+  const profileInput = document.getElementById("profileImage");
+  const fileNameSpan = document.getElementById("fileName");
+  const profilePreview = document.getElementById("profileImagePreview");
+  const defaultProfilePreview = "./assets/perfil/perfil1.png";
 
   function applyLoginTheme(themeName) {
     const html = document.documentElement;
@@ -406,4 +410,39 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  if (profileInput && fileNameSpan && profilePreview) {
+    let currentPreviewUrl = null;
+
+    profilePreview.style.backgroundImage = `url("${defaultProfilePreview}")`;
+    profilePreview.style.backgroundSize = "cover";
+    profilePreview.style.backgroundPosition = "center";
+    profilePreview.style.backgroundRepeat = "no-repeat";
+
+    profileInput.addEventListener("change", function () {
+      const selectedFile = this.files && this.files[0];
+
+      if (selectedFile) {
+        fileNameSpan.textContent = selectedFile.name;
+        fileNameSpan.classList.add("selected");
+
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+        }
+
+        currentPreviewUrl = URL.createObjectURL(selectedFile);
+        profilePreview.style.backgroundImage = `url("${currentPreviewUrl}")`;
+      } else {
+        fileNameSpan.textContent = "No file selected.";
+        fileNameSpan.classList.remove("selected");
+        profilePreview.style.backgroundImage = `url("${defaultProfilePreview}")`;
+
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+          currentPreviewUrl = null;
+        }
+      }
+    });
+  }
 });
+

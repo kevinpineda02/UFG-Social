@@ -437,6 +437,96 @@ body {
   color: var(--color-objetos);
 }
 
+.form-title{
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-terciario);
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.form-one-loguin {
+  display: block;
+  position: relative;
+  bottom: 40px;
+  flex-direction: column;
+  max-width: 1200px;
+  width: 60%;
+}
+
+.form-one-loguin .profile-image {
+  width: 120px;
+  height: 120px;
+  background: var(--color-bordes) url("./assets/perfil/perfil1.png") center/cover no-repeat;
+  border-radius: 50%;
+  margin: 0 auto 20px auto;
+  overflow: hidden;
+}
+
+.profile-label{
+  color: var(--color-objetos);
+  bottom: 8px;
+  position: relative;
+}
+
+.profile{
+  padding-top: 2px;
+  padding-bottom: 15px;
+}
+
+/* Ocultar el input original */
+.hidden-file-input {
+  display: none;
+}
+
+/* Wrapper del input personalizado */
+.file-input-wrapper {
+  width: 100%;
+}
+
+/* Label que actúa como el input visible */
+.custom-file-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  background-color: var(--color-fondo-secundario);
+  border-radius: 8px;
+  border: var(--color-bordes) 1px solid;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.custom-file-input:hover {
+  background-color: #444444;
+}
+
+/* Botón "Explorar..." */
+.browse-btn {
+  padding: 12px 18px;
+  background-color: #ffffff;
+  color: #000000;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Texto del nombre del archivo */
+.file-name {
+  color: #999999;
+  font-size: 14px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-name.selected {
+  color: #ffffff;
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
   body {

@@ -1,17 +1,16 @@
 package com.ufg.data.entity;
 
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.Nullable;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DialectOverride;
 
-import java.util.Collection;
-import java.util.List;
+import java.math.BigInteger;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -19,54 +18,34 @@ import java.util.List;
 @NoArgsConstructor
 
 @Entity
-@Table(name = "Credenciales")
-public class UserEntity implements UserDetails {
+@Table(name = "usuarios")
+public class UserEntity {
+
     @Id
-    @GeneratedValue
-    Integer id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
 
-    @Column(nullable = false)
-    String correo;
+    @OneToOne
+    @JoinColumn(name = "id_credenciales", nullable = false)
+    private CredentialEntity credenciales;
 
-    @Column(name = "contraseña")
-    String contrasena;
+    @Column(name = "nombre")
+    String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "rol")
-    Rol rol;
+    @Column(name = "nombre_usuario")
+    String username;
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(rol.name()));
-    }
+    @Column(name = "seguidores")
+    Integer followers;
 
-    @Override
-    public @Nullable String getPassword() {
-        return contrasena;
-    }
+    @Column(name = "seguidos")
+    Integer followed;
 
-    @Override
-    public String getUsername() {
-        return correo;
-    }
+    @Column(name = "foto_perfil")
+    String profilePhoto;
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    @CreationTimestamp()
+    @Column(name = "fecha_creacion", updatable = false)
+    LocalDateTime creationDate;
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
 }

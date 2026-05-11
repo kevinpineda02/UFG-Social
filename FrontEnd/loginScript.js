@@ -19,6 +19,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const showLoginBtn = document.getElementById("showLogin");
   const showRecoveryBtn = document.getElementById("showRecovery");
   const backToLoginBtn = document.getElementById("backToLogin");
+  const profileInput = document.getElementById("profileImage");
+  const fileNameSpan = document.getElementById("fileName");
+  const profilePreview = document.getElementById("profileImagePreview");
+  const defaultProfilePreview = "./assets/perfil/perfil1.png";
 
   function applyLoginTheme(themeName) {
     const html = document.documentElement;
@@ -365,4 +369,97 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
   }
+
+  const verificarFormElement = verificarForm.querySelector("form");
+  if (verificarFormElement) {
+    verificarFormElement.addEventListener("submit", function (e) {
+      if (!verificarFormElement.reportValidity()) {
+        return;
+      }
+      e.preventDefault();
+
+      const codigoInputs = document.querySelectorAll(".codigo-input");
+      const codigo = Array.from(codigoInputs)
+        .map((input) => input.value)
+        .join("");
+
+      const pendingEmail = localStorage.getItem("pendingEmail");
+
+      fetch("/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: pendingEmail, code: codigo }),
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            console.warn(data.message || "Código inválido o expirado");
+            return;
+          }
+          try {
+            localStorage.removeItem("pendingEmail");
+          } catch (e) {}
+          if (data.redirect) {
+            window.location.replace(data.redirect);
+          } else {
+            showMessage(data.message || "Cuenta verificada exitosamente");
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    });
+  }
+
+  const codigoInputs = document.querySelectorAll(".codigo-input");
+  codigoInputs.forEach((input, index) => {
+    input.addEventListener("input", function (e) {
+      this.value = this.value.replace(/[^0-9]/g, "");
+
+      if (this.value.length === 1 && index < 5) {
+        codigoInputs[index + 1].focus();
+      }
+    });
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Backspace" && this.value === "" && index > 0) {
+        codigoInputs[index - 1].focus();
+      }
+    });
+  });
+
+  if (profileInput && fileNameSpan && profilePreview) {
+    let currentPreviewUrl = null;
+
+    profilePreview.style.backgroundImage = `url("${defaultProfilePreview}")`;
+    profilePreview.style.backgroundSize = "cover";
+    profilePreview.style.backgroundPosition = "center";
+    profilePreview.style.backgroundRepeat = "no-repeat";
+
+    profileInput.addEventListener("change", function () {
+      const selectedFile = this.files && this.files[0];
+
+      if (selectedFile) {
+        fileNameSpan.textContent = selectedFile.name;
+        fileNameSpan.classList.add("selected");
+
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+        }
+
+        currentPreviewUrl = URL.createObjectURL(selectedFile);
+        profilePreview.style.backgroundImage = `url("${currentPreviewUrl}")`;
+      } else {
+        fileNameSpan.textContent = "No file selected.";
+        fileNameSpan.classList.remove("selected");
+        profilePreview.style.backgroundImage = `url("${defaultProfilePreview}")`;
+
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+          currentPreviewUrl = null;
+        }
+      }
+    });
+  }
 });
+

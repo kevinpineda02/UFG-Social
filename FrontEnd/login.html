@@ -66,7 +66,7 @@
 
       <!-- Formulario de login -->
       <div class="form-container">
-        <div class="logueo" style="display: block">
+        <div class="logueo" style="display: none">
           <h2>UFG</h2>
           <p class="subtitle">Inicia Sesión con tu cuenta</p>
           <form>
@@ -158,11 +158,66 @@
           </form>
         </div>
 
+        <!-- Formulario de verificación -->
+        <div class="verificar" style="display: none">
+          <h2>Verificar Cuenta</h2>
+          <p class="subtitle">Ingresa el codigo enviado a tu correo</p>
+
+          <form>
+            <div class="input-group-codigo">
+              <label>Codigo de Verificación</label>
+              <div class="codigo-inputs">
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+                <input
+                  type="text"
+                  class="codigo-input"
+                  maxlength="1"
+                  required
+                />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Verificar</button>
+
+            <p class="register-link">
+              <a href="#" id="resendCode">Reenviar codigo</a>
+            </p>
+          </form>
+        </div>
+
         <!-- Formulario de recuperación de contraseña -->
         <div class="recuperar" style="display: none">
           <h2>Recuperar Contraseña</h2>
           <p class="subtitle">Ingresa tu correo para recuperar tu contraseña</p>
-
           <form>
             <div class="input-group">
               <label>Correo Electrónico</label>
@@ -173,9 +228,7 @@
                 required
               />
             </div>
-
             <button type="submit" class="btn-primary">Enviar Código</button>
-
             <p class="register-link">
               <a href="#" id="backToLogin">Volver al inicio</a>
             </p>

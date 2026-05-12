@@ -28,15 +28,15 @@ function getCookie(name) {
 
 function getStoredToken() {
   try {
-    return localStorage.getItem("jwt") || getCookie("jwt");
+    return localStorage.getItem("token") || localStorage.getItem("jwt") || getCookie("jwt");
   } catch (error) {
     return getCookie("jwt");
   }
 }
 
-async function getUserInfo(token) {
+async function getUserInfo() {
   try {
-    const token = getTokenFromStorageOrCookie();
+    const token = getStoredToken() || getTokenFromStorageOrCookie();
     const headers = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -101,7 +101,7 @@ function updateUserInterface() {
 }
 
 function checkAuthentication() {
-  const token = getTokenFromStorageOrCookie() || getCookie("jwt");
+  const token = getStoredToken() || getTokenFromStorageOrCookie();
   if (!token) {
     window.location.replace("/login.html");
     return false;
@@ -123,6 +123,7 @@ function checkAuthentication() {
 function logout() {
   document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   try {
+    localStorage.removeItem("token");
     localStorage.removeItem("jwt");
   } catch (error) {}
   currentUser = null;

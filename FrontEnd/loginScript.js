@@ -323,12 +323,6 @@ document.addEventListener("DOMContentLoaded", function () {
             submitBtn.textContent = originalText;
             submitBtn.style.opacity = "1";
           }
-
-          if (data.redirect) {
-            window.location.replace(data.redirect);
-          } else {
-            window.location.replace("inicio.html");
-          }
         })
         .catch((err) => {
           console.error(err);

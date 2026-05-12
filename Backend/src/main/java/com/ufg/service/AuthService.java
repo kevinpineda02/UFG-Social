@@ -1,17 +1,16 @@
 package com.ufg.service;
 
 import com.ufg.auth.AuthResponse;
-import com.ufg.auth.LoginRequest;
-import com.ufg.auth.RegisterRequest;
+import com.ufg.domain.LoginRequest;
+import com.ufg.domain.RegisterRequest;
 import com.ufg.data.entity.Rol;
-import com.ufg.data.entity.UserEntity;
-import com.ufg.data.repository.UserRepository;
+import com.ufg.data.entity.CredentialEntity;
+import com.ufg.data.repository.CredentialRepository;
 import com.ufg.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final CredentialRepository credentialRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -32,7 +31,7 @@ public class AuthService {
         );
 
         //Si la autenticación falla lanza excepción, si pasa busca el usuario
-        UserDetails user = userRepository.findByCorreo(request.getCorreo())
+        UserDetails user = credentialRepository.findByCorreo(request.getCorreo())
                 .orElseThrow();
 
         String token = jwtService.getToken(user);
@@ -44,18 +43,22 @@ public class AuthService {
 
     //Metodo de Registro de usuarios
     public AuthResponse register(RegisterRequest request) {
-        UserEntity user = UserEntity.builder()
+        CredentialEntity user = CredentialEntity.builder()
                 .correo(request.getCorreo())
                 .contrasena(passwordEncoder.encode(request.getContrasena()))
                 .rol(Rol.USER)
                 .build();
 
-        //Guardamos usuario
-        userRepository.save(user);
+        // Guardar usuario
+        CredentialEntity savedUser = credentialRepository.save(user);
 
-        //se manda token
-        return AuthResponse.builder().
-                token(jwtService.getToken(user))
+        // Generar token con el ID
+        String token = jwtService.getToken(savedUser);
+
+        // RETORNAR TAMBIÉN EL ID
+        return AuthResponse.builder()
+                .token(token)
+                .credentialId(savedUser.getId())
                 .build();
     }
 }

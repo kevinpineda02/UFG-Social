@@ -9,7 +9,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.querySelector(".logueo");
   const registroForm = document.querySelector(".registro");
-  const verificarForm = document.querySelector(".verificar");
+  // verificación por correo eliminada — flujo directo al formulario de datos
   const recuperarForm = document.querySelector(".recuperar");
   const formContainer = document.querySelector(".form-container");
   const themeToggle = document.querySelector(".theme");
@@ -88,9 +88,10 @@ document.addEventListener("DOMContentLoaded", function () {
       showForm.style.animation = "scaleIn 0.5s ease-out forwards";
 
       const closeBtn = document.getElementById("backToRegister");
-      if (showForm === verificarForm) {
+      // Mostrar botón de cierre solo si se muestra el formulario de datos de usuario
+      if (showForm && showForm.classList && showForm.classList.contains("form-one-loguin")) {
         closeBtn.style.display = "block";
-      } else {
+      } else if (closeBtn) {
         closeBtn.style.display = "none";
       }
     }, 300);
@@ -177,16 +178,49 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             return;
           }
-          if (data.redirect) {
-            window.location.replace(data.redirect);
-          } else {
-            window.location.replace("inicio.html");
-          }
+          try { const token = data.token || data.accessToken || data.jwt; if (token) localStorage.setItem("token", token); } catch (e) {}
+          // Tras autenticar, verificar si el perfil del usuario está completo
+          const tokenSaved = (data.token || data.accessToken || data.jwt) || (localStorage.getItem("token"));
+          checkProfileAndRedirect(tokenSaved, data.redirect || "inicio.html", loginForm);
         })
         .catch((err) => {
           console.error(err);
         });
     });
+  }
+
+  async function checkProfileAndRedirect(token, fallbackRedirect, hideFormEl) {
+    try {
+      const headers = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("http://localhost:8081/user/me", {
+        method: "GET",
+        headers,
+        credentials: "include",
+      });
+      const profile = await res.json().catch(() => ({}));
+
+      const hasProfile = profile && profile.name && profile.username && profile.profilePhoto;
+      if (hasProfile) {
+        window.location.replace(fallbackRedirect);
+        return;
+      }
+
+      // Si no tiene perfil completo, mostrar formulario de datos de usuario
+      const userDataPanel = document.querySelector('.form-one-loguin');
+      if (userDataPanel) {
+        // guardar bandera para que, si viene desde otras páginas, se muestre el panel
+        try { localStorage.setItem('requireProfile', '1'); } catch (e) {}
+        if (hideFormEl) switchForm(hideFormEl, userDataPanel);
+        else userDataPanel.style.display = 'block';
+      } else {
+        window.location.replace(fallbackRedirect);
+      }
+    } catch (err) {
+      console.error('Error comprobando perfil:', err);
+      window.location.replace(fallbackRedirect);
+    }
   }
 
   const registroFormElement = registroForm.querySelector("form");
@@ -213,6 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       fetch("http://127.0.0.1:8081/auth/register", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
       })
@@ -228,10 +263,28 @@ document.addEventListener("DOMContentLoaded", function () {
           }
 
           try {
-            localStorage.setItem("pendingEmail", correo);
+            const token = data.token || data.accessToken || data.jwt;
+            if (token) {
+              localStorage.setItem("token", token);
+              console.log('✓ Token guardado en localStorage:', token.substring(0, 20) + '...');
+            } else {
+              console.warn('⚠ No se recibió token en respuesta de registro');
+            }
+            if (data.credentialId) {
+              localStorage.setItem("credentialId", String(data.credentialId));
+              console.log('✓ credentialId guardado:', data.credentialId);
+            }
           } catch (e) {}
 
-          switchForm(registroForm, verificarForm);
+          // Asegurar que, si el backend estableció cookie HttpOnly, esté disponible
+          // antes de mostrar el formulario; por eso usamos credentials: 'include' arriba.
+          const userDataPanel = document.querySelector('.form-one-loguin');
+          if (userDataPanel) {
+            switchForm(registroForm, userDataPanel);
+          } else {
+            // fallback a inicio si no existe el panel
+            window.location.replace('inicio.html');
+          }
           if (submitBtn) {
             submitBtn.textContent = originalText;
             submitBtn.style.opacity = "1";
@@ -247,51 +300,23 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  if (resendCodeBtn) {
-    resendCodeBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      document.getElementById("resendModal").classList.add("show");
-    });
-  }
-
-  const resendModal = document.getElementById("resendModal");
   const messageModal = document.getElementById("messageModal");
-  const cancelResend = document.getElementById("cancelResend");
-  const confirmResend = document.getElementById("confirmResend");
-
-  if (cancelResend) {
-    cancelResend.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
-
-  if (confirmResend) {
-    confirmResend.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
-
-  window.addEventListener("click", function (event) {
-    if (event.target === resendModal) {
-      resendModal.classList.remove("show");
-    }
-    if (event.target === messageModal) {
-      messageModal.classList.remove("show");
-    }
-  });
-
   const messageOk = document.getElementById("messageOk");
 
   if (messageOk) {
     messageOk.addEventListener("click", function () {
-      messageModal.classList.remove("show");
+      if (messageModal) messageModal.classList.remove("show");
     });
   }
 
   const backToRegisterBtn = document.getElementById("backToRegister");
   if (backToRegisterBtn) {
     backToRegisterBtn.addEventListener("click", function () {
-      switchForm(verificarForm, registroForm);
+      // cerrar formulario de datos y volver a registro
+      const userDataFormEl = document.querySelector('.form-one-loguin');
+      if (userDataFormEl) {
+        switchForm(userDataFormEl, registroForm);
+      }
     });
   }
 
@@ -353,63 +378,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  const verificarFormElement = verificarForm.querySelector("form");
-  if (verificarFormElement) {
-    verificarFormElement.addEventListener("submit", function (e) {
-      if (!verificarFormElement.reportValidity()) {
-        return;
-      }
-      e.preventDefault();
-
-      const codigoInputs = document.querySelectorAll(".codigo-input");
-      const codigo = Array.from(codigoInputs)
-        .map((input) => input.value)
-        .join("");
-
-      const pendingEmail = localStorage.getItem("pendingEmail");
-
-      fetch("/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pendingEmail, code: codigo }),
-      })
-        .then(async (res) => {
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            console.warn(data.message || "Código inválido o expirado");
-            return;
-          }
-          try {
-            localStorage.removeItem("pendingEmail");
-          } catch (e) {}
-          if (data.redirect) {
-            window.location.replace(data.redirect);
-          } else {
-            showMessage(data.message || "Cuenta verificada exitosamente");
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    });
-  }
-
-  const codigoInputs = document.querySelectorAll(".codigo-input");
-  codigoInputs.forEach((input, index) => {
-    input.addEventListener("input", function (e) {
-      this.value = this.value.replace(/[^0-9]/g, "");
-
-      if (this.value.length === 1 && index < 5) {
-        codigoInputs[index + 1].focus();
-      }
-    });
-
-    input.addEventListener("keydown", function (e) {
-      if (e.key === "Backspace" && this.value === "" && index > 0) {
-        codigoInputs[index - 1].focus();
-      }
-    });
-  });
+  // Verificación por código eliminada: no hay manejo de inputs de código
 
   if (profileInput && fileNameSpan && profilePreview) {
     let currentPreviewUrl = null;
@@ -440,6 +409,110 @@ document.addEventListener("DOMContentLoaded", function () {
         if (currentPreviewUrl) {
           URL.revokeObjectURL(currentPreviewUrl);
           currentPreviewUrl = null;
+        }
+      }
+    });
+  }
+
+  // Handler para el formulario de datos de usuario (después de crear la cuenta)
+  const userDataForm = document.querySelector(".form-one-loguin form");
+  if (userDataForm) {
+    // Si venimos forzados a completar perfil desde otra página, mostrar el panel
+    try {
+      if (localStorage.getItem('requireProfile') === '1') {
+        const panel = document.querySelector('.form-one-loguin');
+        if (panel) panel.style.display = 'block';
+        localStorage.removeItem('requireProfile');
+      }
+    } catch (e) {}
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function getTokenFromStorageOrCookie() {
+      try {
+        const stored = localStorage.getItem("token");
+        if (stored) return stored;
+      } catch (e) {}
+
+      const match = document.cookie.match(new RegExp('(^| )jwt=([^;]+)'));
+      if (match) return match[2];
+      return null;
+    }
+
+    userDataForm.addEventListener("submit", async function (e) {
+      if (!userDataForm.reportValidity()) return;
+      e.preventDefault();
+
+      const submitBtn = userDataForm.querySelector('.btn-primary') || userDataForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : null;
+      if (submitBtn) {
+        submitBtn.textContent = "Enviando...";
+        submitBtn.style.opacity = "0.7";
+      }
+
+      try {
+        const name = userDataForm.querySelector('input[name="nombre"]').value.trim();
+        const username = userDataForm.querySelector('input[name="username"]').value.trim();
+        const fileInput = userDataForm.querySelector('input[name="profileImage"]');
+        let profileImageData = null;
+
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+          profileImageData = await fileToBase64(fileInput.files[0]);
+        }
+
+        const credentialId = localStorage.getItem("credentialId");
+        const body = {
+          name,
+          username,
+          credentialId: credentialId ? Number(credentialId) : null,
+          profilePhoto: profileImageData || null,
+        };
+
+        const token = getTokenFromStorageOrCookie();
+        console.log('Token encontrado:', token ? token.substring(0, 20) + '...' : 'NINGUNO');
+
+        const headers = { "Content-Type": "application/json" };
+        if (token) { headers["Authorization"] = `Bearer ${token}`; console.log('✓ Header Authorization añadido'); } else { console.warn('⚠ Sin token, usando solo credentials: include'); }
+
+        console.log('📤 Enviando POST /user con body:', { name, username, credentialId: credentialId ? Number(credentialId) : null, profilePhotoLength: profileImageData ? profileImageData.length : 0 });
+        console.log('📤 Headers:', headers);
+
+        const res = await fetch("http://localhost:8081/user", {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        console.log('📥 Respuesta Status:', res.status, 'Data:', data);
+        
+        if (!res.ok) {
+          const msg = data.message || data.error || `Error ${res.status} en el registro de datos de usuario`;
+          console.error('❌ Error del servidor:', msg);
+          showMessage(msg);
+          throw new Error(msg);
+        }
+        console.log('✓ Éxito: Perfil guardado');
+
+        // Si el servidor devuelve una redirección, usarla; si no, llevar a inicio.html
+        if (data.redirect) {
+          window.location.replace(data.redirect);
+        } else {
+          window.location.replace("inicio.html");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (submitBtn) {
+          submitBtn.textContent = originalText || "Crear Cuenta";
+          submitBtn.style.opacity = "1";
         }
       }
     });

@@ -387,7 +387,7 @@ function obtenerDatosUsuario() {
     return {
       username: usuario.username || usuario.name || "Usuario",
       handle: `@${(usuario.username || usuario.name || "usuario").toLowerCase().replace(/\s+/g, "")}`,
-      avatar: usuario.profileImage || AVATAR_POR_DEFECTO,
+      avatar: usuario.profilePhoto || AVATAR_POR_DEFECTO,
     };
   }
 

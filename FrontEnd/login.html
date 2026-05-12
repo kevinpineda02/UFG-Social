@@ -66,7 +66,7 @@
 
       <!-- Formulario de login -->
       <div class="form-container">
-        <div class="logueo" style="display: none">
+        <div class="logueo" style="display: block">
           <h2>UFG</h2>
           <p class="subtitle">Inicia Sesión con tu cuenta</p>
           <form>
@@ -149,7 +149,7 @@
         </div>
 
         <!-- Formulario de datos de usuario-->
-<div class="form-one-loguin">
+<div class="form-one-loguin" style="display: none;">
   <form>
     <h2 class="form-title">Crear Cuenta</h2>    
     
@@ -197,61 +197,7 @@
   </form>
 </div>
 
-        <!-- Formulario de verificación -->
-        <div class="verificar" style="display: none">
-          <h2>Verificar Cuenta</h2>
-          <p class="subtitle">Ingresa el codigo enviado a tu correo</p>
-
-          <form>
-            <div class="input-group-codigo">
-              <label>Codigo de Verificación</label>
-              <div class="codigo-inputs">
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-                <input
-                  type="text"
-                  class="codigo-input"
-                  maxlength="1"
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" class="btn-primary">Verificar</button>
-
-            <p class="register-link">
-              <a href="#" id="resendCode">Reenviar codigo</a>
-            </p>
-          </form>
-        </div>
+        <!-- Formulario de verificación eliminado: flujo directo al formulario de datos de usuario -->
 
         <!-- Formulario de recuperación de contraseña -->
         <div class="recuperar" style="display: none">
@@ -285,21 +231,7 @@
       </div>
     </div>
 
-    <!-- Modal para reenviar codigo -->
-    <div id="resendModal" class="modal">
-      <div class="modal-overlay"></div>
-      <div class="modal-content">
-        <h2>Reenviar Codigo</h2>
-        <p>
-          ¿Estas seguro de que quieres reenviar el codigo de verificación a tu
-          correo electrónico?
-        </p>
-        <div class="modal-buttons">
-          <button id="confirmResend" class="btn-primary">Si, reenviar</button>
-          <button id="cancelResend" class="btn-secondary">Cancelar</button>
-        </div>
-      </div>
-    </div>
+    <!-- Modal de reenvío eliminado porque no se usa (verificación por email removida) -->
 
     <!-- Modal para mensajes -->
     <div id="messageModal" class="modal">

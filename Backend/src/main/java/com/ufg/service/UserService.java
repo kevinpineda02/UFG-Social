@@ -7,6 +7,8 @@ import com.ufg.data.repository.UserRepository;
 import com.ufg.domain.UserDtos;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UserService implements IUserService {
 
@@ -63,5 +65,17 @@ public class UserService implements IUserService {
         UserEntity saveEntity = userRepository.save(entity);
 
         return transformEntity(saveEntity);
+    }
+
+    @Override
+    public UserDtos searchUserId(Long id) {
+
+        UserEntity entity = userRepository.findById(id).orElse(null);
+
+        if(entity == null){
+            return null;
+        }
+
+        return transformEntity(entity);
     }
 }

@@ -10,4 +10,7 @@ public interface IUserService {
 
     //Metodo para crear Usuario
      UserDtos createUser(UserDtos userDtos);
+
+     //Metodo de lectura de usuario por id
+      UserDtos searchUserId(Long id);
 }

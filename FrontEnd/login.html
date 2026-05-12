@@ -159,53 +159,52 @@
         </div>
 
         <!-- Formulario de datos de usuario-->
-<div class="form-one-loguin" style="display: none;">
-  <form>
-    <h2 class="form-title">Crear Cuenta</h2>    
-    
-    <!-- Contenedor para mostrar la imagen -->
-    <div class="profile-image" id="profileImagePreview" aria-label="Foto de perfil"></div>
-    
-    <div class="input-group" id="input-account">
-      <label>Nombre: </label>
-      <input
-        type="text"
-        name="nombre"
-        placeholder="Nombre"
-        required
-      />
-    </div>
-    
-    <div class="input-group" id="input-account">
-      <label>Nombre de Usuario: </label>
-      <input
-        type="text"
-        name="username"
-        placeholder="Nombre de Usuario"
-        required
-      />
-    </div>
-    
-    <div class="profile">
-      <label class="profile-label">Foto de Perfil:</label>
-      <div class="file-input-wrapper">
-        <label for="profileImage" class="custom-file-input">
-          <span class="browse-btn">Explorar...</span>
-          <span class="file-name" id="fileName">No file selected.</span>
-        </label>
-        <input
-          type="file"
-          id="profileImage"
-          name="profileImage"
-          accept="image/*"
-          class="hidden-file-input"
-        />
-      </div>
-    </div>
-    
-    <button type="submit" class="btn-primary">Crear Cuenta</button>
-  </form>
-</div>
+        <div class="form-one-loguin" style="display: none">
+          <form>
+            <h2 class="form-title">Crear Cuenta</h2>
+
+            <!-- Contenedor para mostrar la imagen -->
+            <div
+              class="profile-image"
+              id="profileImagePreview"
+              aria-label="Foto de perfil"
+            ></div>
+
+            <div class="input-group" id="input-account">
+              <label>Nombre: </label>
+              <input type="text" name="nombre" placeholder="Nombre" required />
+            </div>
+
+            <div class="input-group" id="input-account">
+              <label>Nombre de Usuario: </label>
+              <input
+                type="text"
+                name="username"
+                placeholder="Nombre de Usuario"
+                required
+              />
+            </div>
+
+            <div class="profile">
+              <label class="profile-label">Foto de Perfil:</label>
+              <div class="file-input-wrapper">
+                <label for="profileImage" class="custom-file-input">
+                  <span class="browse-btn">Explorar...</span>
+                  <span class="file-name" id="fileName">No file selected.</span>
+                </label>
+                <input
+                  type="file"
+                  id="profileImage"
+                  name="profileImage"
+                  accept="image/*"
+                  class="hidden-file-input"
+                />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Crear Cuenta</button>
+          </form>
+        </div>
 
         <!-- Formulario de verificación eliminado: flujo directo al formulario de datos de usuario -->
 
@@ -229,15 +228,6 @@
             </p>
           </form>
         </div>
-
-        <button
-          type="button"
-          class="close-btn"
-          id="backToRegister"
-          style="display: none"
-        >
-          &times;
-        </button>
       </div>
     </div>
 

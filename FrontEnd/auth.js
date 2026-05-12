@@ -14,7 +14,7 @@ function getTokenFromStorageOrCookie() {
     if (stored) return stored;
   } catch (e) {}
 
-  const match = document.cookie.match(new RegExp('(^| )jwt=([^;]+)'));
+  const match = document.cookie.match(new RegExp("(^| )jwt=([^;]+)"));
   if (match) return match[2];
   return null;
 }
@@ -28,7 +28,11 @@ function getCookie(name) {
 
 function getStoredToken() {
   try {
-    return localStorage.getItem("token") || localStorage.getItem("jwt") || getCookie("jwt");
+    return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("jwt") ||
+      getCookie("jwt")
+    );
   } catch (error) {
     return getCookie("jwt");
   }
@@ -40,9 +44,8 @@ async function getUserInfo() {
     const headers = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const response = await fetch("http://localhost:8081/user/me", {
+    const response = await fetch("http://127.0.0.1:8081/user/me", {
       method: "GET",
-      credentials: "include",
       headers,
     });
     if (response.ok) {
@@ -107,16 +110,8 @@ function checkAuthentication() {
     return false;
   }
 
-  // Verificar si el usuario tiene perfil completo; si no, forzar completar datos
-  getUserInfo().then((user) => {
-    try {
-      const hasProfile = user && user.name && user.username && user.profilePhoto;
-      if (!hasProfile) {
-        try { localStorage.setItem('requireProfile', '1'); } catch (e) {}
-        window.location.replace('/login.html');
-      }
-    } catch (e) {}
-  });
+  // Mientras GET /user no esté mapeado, no forzar comprobaciones extra.
+  // Con token presente, permitir el acceso a inicio.html.
   return true;
 }
 

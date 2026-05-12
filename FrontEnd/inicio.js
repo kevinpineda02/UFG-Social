@@ -748,12 +748,9 @@ function obtenerDatosUsuario() {
   // Si hay usuario autenticado, usarlo
   if (usuario) {
     return {
-      username: usernameBase,
-      handle: handleBase,
-      avatar: avatarBase,
-      seguidores: normalizarContador(seguidoresBase),
-      seguidos: normalizarContador(seguidosBase),
-      bio: perfilLocal?.bio || localStorage.getItem("usuario_bio") || "",
+      username: usuario.username || usuario.name || "Usuario",
+      handle: `@${(usuario.username || usuario.name || "usuario").toLowerCase().replace(/\s+/g, "")}`,
+      avatar: usuario.profileImage || AVATAR_POR_DEFECTO,
     };
   }
 

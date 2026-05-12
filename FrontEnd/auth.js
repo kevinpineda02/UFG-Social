@@ -8,6 +8,17 @@
 
 let currentUser = null;
 
+function getTokenFromStorageOrCookie() {
+  try {
+    const stored = localStorage.getItem("token");
+    if (stored) return stored;
+  } catch (e) {}
+
+  const match = document.cookie.match(new RegExp('(^| )jwt=([^;]+)'));
+  if (match) return match[2];
+  return null;
+}
+
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -25,10 +36,14 @@ function getStoredToken() {
 
 async function getUserInfo(token) {
   try {
-    const response = await fetch("http://127.0.0.1:8081/user-info", {
+    const token = getTokenFromStorageOrCookie();
+    const headers = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const response = await fetch("http://localhost:8081/user/me", {
       method: "GET",
       credentials: "include",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers,
     });
     if (response.ok) {
       const data = await response.json();
@@ -49,8 +64,8 @@ async function getUserInfo(token) {
 }
 
 function getUserAvatar(user) {
-  if (user && user.profileImage) {
-    return `<img src="${user.profileImage}" alt="Avatar usuario">`;
+  if (user && user.profilePhoto) {
+    return `<img src="${user.profilePhoto}" alt="Avatar usuario">`;
   }
   return `<img src="./assets/Logo/LogoAzul.jpg" alt="Avatar predeterminado">`;
 }
@@ -86,12 +101,22 @@ function updateUserInterface() {
 }
 
 function checkAuthentication() {
-  const token = getStoredToken();
+  const token = getTokenFromStorageOrCookie() || getCookie("jwt");
   if (!token) {
-    window.location.replace("/");
+    window.location.replace("/login.html");
     return false;
   }
-  getUserInfo(token);
+
+  // Verificar si el usuario tiene perfil completo; si no, forzar completar datos
+  getUserInfo().then((user) => {
+    try {
+      const hasProfile = user && user.name && user.username && user.profilePhoto;
+      if (!hasProfile) {
+        try { localStorage.setItem('requireProfile', '1'); } catch (e) {}
+        window.location.replace('/login.html');
+      }
+    } catch (e) {}
+  });
   return true;
 }
 

@@ -1,6 +1,5 @@
 package com.ufg.domain;
 
-import com.ufg.data.entity.CredentialEntity;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,17 +11,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 
-public class User {
+public class UserDtos {
     private Long id;
-    private Integer credentialId;
+    private Long credentialId;
 
     @NotBlank(message = "El nombre no puede estar vacio")
     private String name;
     @NotBlank(message = "El nombre de usuario no puede estar vacio")
     private String username;
 
-    private Integer followers;
-    private Integer followed;
+    private Integer followers = 0;
+    private Integer followed = 0;
     private String profilePhoto;
     private LocalDateTime creationDate;
 }

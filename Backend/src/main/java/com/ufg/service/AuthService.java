@@ -49,12 +49,16 @@ public class AuthService {
                 .rol(Rol.USER)
                 .build();
 
-        //Guardamos usuario
-        credentialRepository.save(user);
+        // Guardar usuario
+        CredentialEntity savedUser = credentialRepository.save(user);
 
-        //se manda token
-        return AuthResponse.builder().
-                token(jwtService.getToken(user))
+        // Generar token con el ID
+        String token = jwtService.getToken(savedUser);
+
+        // RETORNAR TAMBIÉN EL ID
+        return AuthResponse.builder()
+                .token(token)
+                .credentialId(savedUser.getId())
                 .build();
     }
 }

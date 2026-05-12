@@ -3,7 +3,6 @@ package com.ufg.data.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,7 +12,6 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 
@@ -27,25 +25,27 @@ public class UserEntity {
 
     @OneToOne
     @JoinColumn(name = "id_credenciales", nullable = false)
-    private CredentialEntity credenciales;
+    private CredentialEntity credential;
 
     @Column(name = "nombre")
-    String name;
+    private String name;
 
     @Column(name = "nombre_usuario")
-    String username;
+    private String username;
 
-    @Column(name = "seguidores")
-    Integer followers;
+    @Column(name = "seguidores", nullable = false)
+    private Integer followers = 0;
 
-    @Column(name = "seguidos")
-    Integer followed;
+    @Column(name = "seguidos", nullable = false)
+    private Integer followed = 0;
 
     @Column(name = "foto_perfil")
-    String profilePhoto;
+    private String profilePhoto;
 
     @CreationTimestamp()
     @Column(name = "fecha_creacion", updatable = false)
-    LocalDateTime creationDate;
+    private LocalDateTime creationDate;
 
 }
+
+

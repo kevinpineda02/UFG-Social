@@ -39,7 +39,8 @@ public class UserEntity {
     @Column(name = "seguidos", nullable = false)
     private Integer followed = 0;
 
-    @Column(name = "foto_perfil")
+    @Lob
+    @Column(name = "foto_perfil", columnDefinition = "LONGTEXT")
     private String profilePhoto;
 
     @CreationTimestamp()

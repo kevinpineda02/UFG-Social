@@ -594,6 +594,47 @@ Comunidad</button></li>
     
     
     
+    <!-- Modal de configuración inicial de perfil -->
+    <div id="perfil-inicial-overlay" class="perfil-inicial-overlay" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="perfil-inicial-modal" role="document" onclick="event.stopPropagation()">
+            <div class="perfil-inicial-header">
+                <h2>Configura tu perfil</h2>
+                <p>Solo se mostrará la primera vez que ingreses.</p>
+            </div>
+
+            <div class="perfil-inicial-contenido">
+                <div class="perfil-inicial-avatar-columna">
+                    <img id="perfil-inicial-preview" src="./assets/Logo/LogoAzul.jpg" alt="Vista previa de perfil">
+                    <label for="perfil-inicial-avatar-url">URL de tu foto de perfil</label>
+                    <input id="perfil-inicial-avatar-url" type="url" placeholder="https://..." required>
+                </div>
+
+                <div class="perfil-inicial-campos">
+                    <label for="perfil-inicial-username">Nombre de usuario</label>
+                    <input id="perfil-inicial-username" type="text" placeholder="Tu nombre de usuario" maxlength="40" required>
+
+                    <label for="perfil-inicial-handle">Handle</label>
+                    <input id="perfil-inicial-handle" type="text" readonly>
+
+                    <div class="perfil-inicial-contadores">
+                        <div class="perfil-inicial-contador">
+                            <span>Seguidores iniciales</span>
+                            <strong id="perfil-inicial-seguidores">0</strong>
+                        </div>
+                        <div class="perfil-inicial-contador">
+                            <span>Siguiendo iniciales</span>
+                            <strong id="perfil-inicial-seguidos">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="perfil-inicial-acciones">
+                <button id="perfil-inicial-guardar" type="button" class="btn-primary">Guardar perfil</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de alerta personalizado -->
     <div id="modal-alert-overlay" class="modal-overlay modal-alert-overlay" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="modal-content modal-alert" role="document" onclick="event.stopPropagation()">
@@ -615,5 +656,6 @@ Comunidad</button></li>
 
     <!-- Script de autenticación (debe cargarse primero) -->
     <script src="inicio.js"></script>
+    <script src="auth.js"></script>
 </html>
 

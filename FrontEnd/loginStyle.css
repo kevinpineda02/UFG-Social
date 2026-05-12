@@ -153,7 +153,6 @@ body {
 
 :root.modo-claro .side-container::before {
   background: rgba(0, 0, 0, 0.285);
-  
 }
 
 .side-content {
@@ -210,22 +209,14 @@ body {
 }
 
 .logueo,
-.registro,
-.verificar {
+.registro {
   width: 100%;
   max-width: 320px;
   animation: scaleIn 0.6s ease-out 0.4s both;
 }
 
-.verificar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .form-container .logueo h2,
-.form-container .registro h2,
-.form-container .verificar h2 {
+.form-container .registro h2 {
   font-size: 2rem;
   font-weight: 700;
   color: var(--color-terciario);
@@ -241,7 +232,45 @@ body {
 }
 
 .input-group {
-  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.input-error {
+  display: block;
+  min-height: 18px;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: #ff0000;
+}
+
+.input-error:not(.is-visible) {
+  visibility: hidden;
+}
+
+.input-error.is-visible {
+  visibility: visible;
+}
+
+.recovery-panel {
+  position: relative;
+  display: flex;
+  top: 5px;
+  padding-bottom: 3px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: var(--color-datos);
+}
+
+.recovery-panel a {
+  color: var(--color-terciario);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.recovery-panel a:hover {
+  color: var(--color-terciario-hover);
+  text-decoration: underline;
 }
 
 .form-container .input-group label {
@@ -301,30 +330,6 @@ body {
   color: color-mix(in srgb, var(--color-datos) 70%, var(--color-objetos) 30%);
 }
 
-.input-group-codigo label {
-  text-align: center;
-  padding-bottom: 10px;
-}
-
-/* Estilo específico para el input de código de verificación */
-.codigo-inputs {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.codigo-input {
-  width: 40px;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 600;
-  animation: scaleIn 0.5s ease-out;
-}
-
-.codigo-input:focus {
-  animation: pulse 0.6s infinite;
-}
-
 .form-container .btn-primary {
   width: 100%;
   padding: 12px;
@@ -335,9 +340,10 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 8px;
   position: relative;
   overflow: hidden;
+  margin-top: 25px;
+  margin-bottom: 8px;
 }
 
 .form-container .btn-primary::before {
@@ -370,10 +376,9 @@ body {
 }
 
 .form-container .register-link {
-  text-align: center;
-  margin-top: 20px;
+  margin-top: 10px;
   color: var(--color-datos);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .form-container .register-link a {
@@ -416,16 +421,105 @@ body {
   display: flex;
   justify-content: center;
   margin-top: 10px;
-  font-size: 1.0rem;
+  font-size: 1rem;
   padding-bottom: 10px;
   color: var(--color-objetos);
 }
+
+.form-title{
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-terciario);
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.form-one-loguin {
+  display: block;
+  position: relative;
+  bottom: 40px;
+  flex-direction: column;
+  max-width: 1200px;
+  width: 60%;
+}
+
+.form-one-loguin .profile-image {
+  width: 120px;
+  height: 120px;
+  background: var(--color-bordes) url("./assets/perfil/perfil1.png") center/cover no-repeat;
+  border-radius: 50%;
+  margin: 0 auto 20px auto;
+  overflow: hidden;
+}
+
+.profile-label{
+  color: var(--color-objetos);
+  bottom: 8px;
+  position: relative;
+}
+
+.profile{
+  padding-top: 2px;
+  padding-bottom: 15px;
+}
+
+/* Ocultar el input original */
+.hidden-file-input {
+  display: none;
+}
+
+/* Wrapper del input personalizado */
+.file-input-wrapper {
+  width: 100%;
+}
+
+/* Label que actúa como el input visible */
+.custom-file-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  background-color: var(--color-fondo-secundario);
+  border-radius: 8px;
+  border: var(--color-bordes) 1px solid;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.custom-file-input:hover {
+  background-color: #444444;
+}
+
+/* Botón "Explorar..." */
+.browse-btn {
+  padding: 12px 18px;
+  background-color: #ffffff;
+  color: #000000;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Texto del nombre del archivo */
+.file-name {
+  color: #999999;
+  font-size: 14px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-name.selected {
+  color: #ffffff;
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {
   body {
     overflow: auto;
-
   }
 
   input {
@@ -447,12 +541,6 @@ body {
   .input-group label {
     text-align: center;
     margin-bottom: 6px;
-  }
-
-  .input-group-codigo {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
   }
 
   .form-container .btn-primary {
@@ -484,11 +572,8 @@ body {
     position: relative;
   }
 
-  
-
   .logueo,
-  .registro,
-  .verificar {
+  .registro {
     max-width: 100%;
     width: 100%;
     position: relative;
@@ -496,8 +581,7 @@ body {
   }
 
   .form-container .logueo h2,
-  .form-container .registro h2,
-  .form-container .verificar h2 {
+  .form-container .registro h2 {
     font-size: 1.8rem;
     margin-bottom: 15px;
   }
@@ -521,16 +605,6 @@ body {
   .form-container input {
     padding: 14px 12px;
     font-size: 16px;
-  }
-
-  .codigo-input {
-    width: 35px;
-    font-size: 1.2rem;
-    padding: 8px;
-  }
-
-  .codigo-inputs {
-    gap: 8px;
   }
 
   .form-container .btn-primary {
@@ -605,12 +679,6 @@ body {
     padding: 14px 20px;
   }
 
-  .modal-close {
-    font-size: 26px;
-    width: 40px;
-    height: 40px;
-  }
-
   /* Botón de cerrar responsive */
   .close-btn {
     top: 15px;
@@ -649,11 +717,7 @@ body {
 }
 
 .modal-content {
-  background: linear-gradient(
-    135deg,
-    var(--color-secundario) 0%,
-    var(--color-primario) 100%
-  );
+  background: var(--color-primario);
   margin: 0 auto;
   padding: 32px;
   border: 1px solid var(--color-bordes);
@@ -668,6 +732,16 @@ body {
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
+#messageOk {
+  position: relative;
+  transform: translateX(75%);
+}
+
+#messageText {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
 .modal-content h2 {
   text-align: center;
   margin-top: 0;
@@ -679,33 +753,6 @@ body {
 
 .message-modal-content {
   padding-top: 24px;
-}
-
-.modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: var(--color-datos);
-  font-size: 28px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 8px;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-}
-
-.modal-close:hover,
-.modal-close:focus {
-  color: var(--color-objetos);
-  background: var(--color-hoover);
-  transform: scale(1.1);
 }
 
 .modal-content p {
@@ -763,13 +810,7 @@ body {
 
 #messageOk:hover {
   background: var(--color-terciario-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px
-    color-mix(in srgb, var(--color-terciario) 30%, transparent);
-}
-
-#messageOk:active {
-  transform: translateY(0);
+  cursor: pointer;
 }
 
 /* Estilo para el botón de cerrar en verificación */

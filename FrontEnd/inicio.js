@@ -10,7 +10,7 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL = "http://localhost:8081/api";
+const API_BASE_URL = "http://127.0.0.1:8081/api";
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL}/health`,
@@ -25,6 +25,332 @@ const API_ENDPOINTS = {
 // Estado de conexión con el backend
 let backendConectado = false;
 let usarBackend = true; // Cambiar a false para usar solo localStorage
+
+const PERFIL_LOCAL_KEY = "gnet_perfil_usuario";
+const PERFIL_SETUP_KEY = "gnet_perfil_setup_done";
+
+function normalizarTexto(valor, valorDefecto = "") {
+  return typeof valor === "string" && valor.trim()
+    ? valor.trim()
+    : valorDefecto;
+}
+
+function normalizarHandle(valor, nombreUsuario = "usuario") {
+  const limpio = normalizarTexto(valor);
+  if (limpio) {
+    return limpio.startsWith("@") ? limpio : `@${limpio}`;
+  }
+
+  return `@${normalizarTexto(nombreUsuario, "usuario")
+    .toLowerCase()
+    .replace(/\s+/g, "")}`;
+}
+
+function normalizarContador(valor) {
+  const numero = Number(valor);
+  return Number.isFinite(numero) && numero >= 0 ? numero : 0;
+}
+
+function extraerContadorUsuario(usuario, claves) {
+  if (!usuario) {
+    return 0;
+  }
+
+  for (const clave of claves) {
+    if (usuario[clave] != null) {
+      return normalizarContador(usuario[clave]);
+    }
+  }
+
+  return 0;
+}
+
+function obtenerPerfilLocal() {
+  try {
+    const perfil = localStorage.getItem(PERFIL_LOCAL_KEY);
+    return perfil ? JSON.parse(perfil) : null;
+  } catch (error) {
+    console.warn("No se pudo leer el perfil local", error);
+    return null;
+  }
+}
+
+function guardarPerfilLocal(perfil) {
+  try {
+    localStorage.setItem(PERFIL_LOCAL_KEY, JSON.stringify(perfil));
+    return true;
+  } catch (error) {
+    console.error("No se pudo guardar el perfil local", error);
+    return false;
+  }
+}
+
+function marcarPerfilInicialCompletado() {
+  try {
+    localStorage.setItem(PERFIL_SETUP_KEY, "1");
+  } catch (error) {
+    console.warn("No se pudo marcar el perfil como configurado", error);
+  }
+}
+
+function perfilInicialCompletado() {
+  try {
+    if (localStorage.getItem(PERFIL_SETUP_KEY) === "1") {
+      return true;
+    }
+
+    const perfilLocal = obtenerPerfilLocal();
+    return Boolean(
+      perfilLocal &&
+      perfilLocal.username &&
+      perfilLocal.username !== "Invitado",
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
+function actualizarContadoresPerfil(seguidores, seguidos) {
+  const contadorSeguidores = document.querySelector(".contador-seguidores");
+  const contadorSeguidos = document.querySelector(".contador-seguidos");
+
+  if (contadorSeguidores) {
+    contadorSeguidores.textContent = normalizarContador(seguidores);
+  }
+
+  if (contadorSeguidos) {
+    contadorSeguidos.textContent = normalizarContador(seguidos);
+  }
+}
+
+function guardarDatosUsuarioLocales(
+  username,
+  handle,
+  avatar,
+  seguidores = null,
+  seguidos = null,
+  bio = null,
+) {
+  const datosActuales = obtenerPerfilLocal() || {};
+  const perfil = {
+    username: normalizarTexto(username, datosActuales.username || "Usuario"),
+    handle: normalizarHandle(handle, username || datosActuales.username),
+    avatar: normalizarAvatar(avatar || datosActuales.avatar),
+    seguidores:
+      seguidores != null
+        ? normalizarContador(seguidores)
+        : normalizarContador(datosActuales.seguidores),
+    seguidos:
+      seguidos != null
+        ? normalizarContador(seguidos)
+        : normalizarContador(datosActuales.seguidos),
+    bio:
+      bio != null
+        ? bio
+        : typeof datosActuales.bio === "string"
+          ? datosActuales.bio
+          : "",
+  };
+
+  return guardarPerfilLocal(perfil);
+}
+
+function actualizarPerfilEnPantalla(datosUsuario) {
+  if (!datosUsuario) {
+    return;
+  }
+
+  const imagen = normalizarAvatar(datosUsuario.avatar);
+  const username = normalizarTexto(datosUsuario.username, "Usuario");
+  const handle = normalizarHandle(datosUsuario.handle, username);
+  const seguidores = normalizarContador(datosUsuario.seguidores);
+  const seguidos = normalizarContador(datosUsuario.seguidos);
+
+  const fotoPrincipal = document.getElementById("foto-perfil-preview");
+  if (fotoPrincipal) {
+    fotoPrincipal.src = imagen;
+  }
+
+  const avatarSidebar = document.querySelector(".mi-perfil .avatar img");
+  if (avatarSidebar) {
+    avatarSidebar.src = imagen;
+  }
+
+  const avatarHeader = document.querySelector(".usuario-header .avatar img");
+  if (avatarHeader) {
+    avatarHeader.src = imagen;
+  }
+
+  const nombreSidebar = document.querySelector(
+    ".mi-perfil .nombre-usuario-perfil h3",
+  );
+  if (nombreSidebar) {
+    nombreSidebar.textContent = username;
+  }
+
+  const handleSidebar = document.querySelector(
+    ".mi-perfil .nombre-usuario-perfil p",
+  );
+  if (handleSidebar) {
+    handleSidebar.textContent = handle;
+  }
+
+  const nombreHeader = document.querySelector(
+    ".usuario-header .nombre-usuario",
+  );
+  if (nombreHeader) {
+    nombreHeader.textContent = username;
+  }
+
+  actualizarContadoresPerfil(seguidores, seguidos);
+}
+
+function prepararModalPerfilInicial(datosUsuario) {
+  const overlay = document.getElementById("perfil-inicial-overlay");
+  const inputAvatar = document.getElementById("perfil-inicial-avatar-url");
+  const inputUsername = document.getElementById("perfil-inicial-username");
+  const inputHandle = document.getElementById("perfil-inicial-handle");
+  const previewAvatar = document.getElementById("perfil-inicial-preview");
+  const textoSeguidores = document.getElementById("perfil-inicial-seguidores");
+  const textoSeguidos = document.getElementById("perfil-inicial-seguidos");
+  const btnGuardar = document.getElementById("perfil-inicial-guardar");
+
+  if (
+    !overlay ||
+    !inputAvatar ||
+    !inputUsername ||
+    !inputHandle ||
+    !previewAvatar
+  ) {
+    return;
+  }
+
+  inputAvatar.value = normalizarAvatar(datosUsuario.avatar);
+  inputUsername.value = normalizarTexto(datosUsuario.username, "Usuario");
+  inputHandle.value = normalizarHandle(
+    datosUsuario.handle,
+    inputUsername.value,
+  );
+  previewAvatar.src = normalizarAvatar(inputAvatar.value);
+
+  if (textoSeguidores) {
+    textoSeguidores.textContent = normalizarContador(datosUsuario.seguidores);
+  }
+
+  if (textoSeguidos) {
+    textoSeguidos.textContent = normalizarContador(datosUsuario.seguidos);
+  }
+
+  inputAvatar.oninput = function () {
+    previewAvatar.src = normalizarAvatar(inputAvatar.value);
+  };
+
+  inputUsername.oninput = function () {
+    inputHandle.value = normalizarHandle(null, inputUsername.value);
+  };
+
+  if (btnGuardar) {
+    btnGuardar.onclick = function () {
+      const nombre = inputUsername.value.trim();
+      const handle = inputHandle.value.trim();
+      const avatar = inputAvatar.value.trim();
+
+      if (!nombre) {
+        mostrarAlertaError("Error", "El nombre de usuario es obligatorio");
+        return;
+      }
+
+      if (!avatar) {
+        mostrarAlertaError(
+          "Error",
+          "Debes colocar la URL de una foto de perfil",
+        );
+        return;
+      }
+
+      const seguidores = normalizarContador(textoSeguidores?.textContent);
+      const seguidos = normalizarContador(textoSeguidos?.textContent);
+      const perfilGuardado = {
+        username: nombre,
+        handle: normalizarHandle(handle, nombre),
+        avatar: normalizarAvatar(avatar),
+        seguidores,
+        seguidos,
+        bio: localStorage.getItem("usuario_bio") || "",
+      };
+
+      guardarPerfilLocal(perfilGuardado);
+      marcarPerfilInicialCompletado();
+      guardarDatosUsuarioLocales(
+        perfilGuardado.username,
+        perfilGuardado.handle,
+        perfilGuardado.avatar,
+        perfilGuardado.seguidores,
+        perfilGuardado.seguidos,
+        perfilGuardado.bio,
+      );
+
+      if (window.setCurrentUser) {
+        const usuarioActual = getCurrentUser ? getCurrentUser() : null;
+        window.setCurrentUser({
+          ...(usuarioActual || {}),
+          username: perfilGuardado.username,
+          name: perfilGuardado.username,
+          profileImage: perfilGuardado.avatar,
+          seguidores: perfilGuardado.seguidores,
+          seguidos: perfilGuardado.seguidos,
+        });
+      }
+
+      actualizarPerfilEnPantalla(perfilGuardado);
+      overlay.classList.remove("active");
+      document.body.classList.remove("modal-open");
+      mostrarAlertaExito("¡Listo!", "Tu perfil quedó configurado");
+    };
+  }
+
+  overlay.classList.add("active");
+  document.body.classList.add("modal-open");
+}
+
+function inicializarPerfilDesdeBackend() {
+  const datosUsuario = obtenerDatosUsuario();
+  const perfilExistente = obtenerPerfilLocal();
+  const yaTeniaPerfil = Boolean(
+    perfilExistente &&
+    perfilExistente.username &&
+    perfilExistente.username !== "Invitado",
+  );
+
+  guardarDatosUsuarioLocales(
+    datosUsuario.username,
+    datosUsuario.handle,
+    datosUsuario.avatar,
+    datosUsuario.seguidores,
+    datosUsuario.seguidos,
+    datosUsuario.bio,
+  );
+  actualizarPerfilEnPantalla(datosUsuario);
+
+  if (!yaTeniaPerfil && !perfilInicialCompletado()) {
+    prepararModalPerfilInicial(datosUsuario);
+  }
+}
+
+function getStoredToken() {
+  try {
+    return localStorage.getItem("jwt");
+  } catch (error) {
+    return null;
+  }
+}
+
+function getAuthHeaders(extraHeaders = {}) {
+  const token = getStoredToken();
+  return token
+    ? { ...extraHeaders, Authorization: `Bearer ${token}` }
+    : extraHeaders;
+}
 
 // ===========================================
 // FunciónONES DE API BACKEND
@@ -57,7 +383,9 @@ async function verificarConexionBackend() {
 // Obtener todas las publicaciones del backend
 async function obtenerPublicacionesBackend() {
   try {
-    const response = await fetch(API_ENDPOINTS.publicaciones);
+    const response = await fetch(API_ENDPOINTS.publicaciones, {
+      headers: getAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -93,6 +421,7 @@ async function crearPublicacionBackend(
 
     const response = await fetch(API_ENDPOINTS.publicaciones, {
       method: "POST",
+      headers: getAuthHeaders(),
       body: formData,
     });
 
@@ -115,6 +444,7 @@ async function darLikeBackend(publicacionId) {
       `${API_ENDPOINTS.publicaciones}/${publicacionId}/like`,
       {
         method: "POST",
+        headers: getAuthHeaders(),
       },
     );
 
@@ -137,6 +467,7 @@ async function quitarLikeBackend(publicacionId) {
       `${API_ENDPOINTS.publicaciones}/${publicacionId}/like`,
       {
         method: "DELETE",
+        headers: getAuthHeaders(),
       },
     );
 
@@ -161,9 +492,9 @@ async function AgregarComentarioBackend(publicacionId, contenido) {
       `${API_ENDPOINTS.publicaciones}/${publicacionId}/comentarios`,
       {
         method: "POST",
-        headers: {
+        headers: getAuthHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
           contenido: contenido,
           autorUsername: datosUsuario.username,
@@ -192,6 +523,7 @@ async function eliminarPublicacionBackend(publicacionId) {
       `${API_ENDPOINTS.publicaciones}/${publicacionId}`,
       {
         method: "DELETE",
+        headers: getAuthHeaders(),
       },
     );
 
@@ -379,24 +711,61 @@ function normalizarAvatar(avatar) {
 
 // Función para obtener datos del usuario desde el backend (currentUser)
 function obtenerDatosUsuario() {
+  const perfilLocal = obtenerPerfilLocal();
+
   // Obtener usuario del sistema de autenticación (auth.js)
   const usuario = getCurrentUser && getCurrentUser();
+
+  const usernameBase = normalizarTexto(
+    perfilLocal?.username || usuario?.username || usuario?.name,
+    "Usuario",
+  );
+  const handleBase = normalizarHandle(
+    perfilLocal?.handle || usuario?.handle,
+    usernameBase,
+  );
+  const avatarBase = normalizarTexto(
+    perfilLocal?.avatar || usuario?.profileImage,
+    AVATAR_POR_DEFECTO,
+  );
+  const seguidoresBase =
+    perfilLocal?.seguidores ??
+    extraerContadorUsuario(usuario, [
+      "seguidores",
+      "followers",
+      "followersCount",
+      "contadorSeguidores",
+    ]);
+  const seguidosBase =
+    perfilLocal?.seguidos ??
+    extraerContadorUsuario(usuario, [
+      "seguidos",
+      "following",
+      "followingCount",
+      "contadorSeguidos",
+    ]);
 
   // Si hay usuario autenticado, usarlo
   if (usuario) {
     return {
-      username: usuario.username || usuario.name || "Usuario",
-      handle: `@${(usuario.username || usuario.name || "usuario").toLowerCase().replace(/\s+/g, "")}`,
-      avatar: usuario.profileImage || AVATAR_POR_DEFECTO,
+      username: usernameBase,
+      handle: handleBase,
+      avatar: avatarBase,
+      seguidores: normalizarContador(seguidoresBase),
+      seguidos: normalizarContador(seguidosBase),
+      bio: perfilLocal?.bio || localStorage.getItem("usuario_bio") || "",
     };
   }
 
   // Si no hay usuario logueado, usar valores predeterminados
   console.warn("⚠️ No hay usuario autenticado");
   return {
-    username: "Invitado",
-    handle: "@invitado",
-    avatar: AVATAR_POR_DEFECTO,
+    username: perfilLocal?.username || "Invitado",
+    handle: perfilLocal?.handle || "@invitado",
+    avatar: perfilLocal?.avatar || AVATAR_POR_DEFECTO,
+    seguidores: normalizarContador(perfilLocal?.seguidores),
+    seguidos: normalizarContador(perfilLocal?.seguidos),
+    bio: perfilLocal?.bio || "",
   };
 }
 
@@ -4040,6 +4409,9 @@ function guardarNuevaFotoPerfil(imagenUrl) {
     datosUsuario.username,
     datosUsuario.handle,
     imagenUrl,
+    datosUsuario.seguidores,
+    datosUsuario.seguidos,
+    datosUsuario.bio,
   );
 
   // Los datos se sincronizarán automáticamente con el backend
@@ -4048,14 +4420,7 @@ function guardarNuevaFotoPerfil(imagenUrl) {
 // Función para cargar foto de perfil al iniciar
 function cargarFotoPerfilInicial() {
   const datosUsuario = obtenerDatosUsuario();
-  const avatarInicial = AVATAR_POR_DEFECTO;
-
-  // Guardar el avatar por defecto para evitar que reaparezca uno legacy
-  guardarDatosUsuarioLocales(
-    datosUsuario.username,
-    datosUsuario.handle,
-    avatarInicial,
-  );
+  const avatarInicial = normalizarAvatar(datosUsuario.avatar);
 
   // Actualizar preview de perfil
   const fotoPerfilPreview = document.getElementById("foto-perfil-preview");
@@ -4083,13 +4448,12 @@ function cargarFotoPerfilInicial() {
   if (handleSidebar) {
     handleSidebar.textContent = datosUsuario.handle;
   }
+
+  actualizarContadoresPerfil(datosUsuario.seguidores, datosUsuario.seguidos);
 }
 
 // Event listeners para la Funciónonalidad de perfil
 document.addEventListener("DOMContentLoaded", function () {
-  // Cargar foto de perfil inicial
-  cargarFotoPerfilInicial();
-
   // Configurar input de foto de perfil
   const inputFotoPerfil = document.getElementById("input-foto-perfil");
   if (inputFotoPerfil) {
@@ -4121,9 +4485,19 @@ document.addEventListener("DOMContentLoaded", function () {
   if (btnCancelarPerfil) {
     btnCancelarPerfil.addEventListener("click", cancelarCambiosPerfil);
   }
+});
 
-  // Cargar datos existentes en los inputs
+window.addEventListener("gnet:user-loaded", function () {
+  cargarFotoPerfilInicial();
   cargarDatosPerfilEnInputs();
+  inicializarPerfilDesdeBackend();
+});
+
+window.addEventListener("gnet:user-updated", function (event) {
+  if (event.detail) {
+    actualizarPerfilEnPantalla(event.detail);
+    cargarDatosPerfilEnInputs();
+  }
 });
 
 // Función para cargar datos del perfil en los inputs
@@ -4188,6 +4562,9 @@ function guardarCambiosPerfil() {
     nuevoUsername,
     handleFormateado,
     datosActuales.avatar,
+    datosActuales.seguidores,
+    datosActuales.seguidos,
+    nuevaBio,
   );
 
   if (exito) {
@@ -4203,6 +4580,8 @@ function guardarCambiosPerfil() {
       nuevoUsername,
       handleFormateado,
       datosActuales.avatar,
+      datosActuales.seguidores,
+      datosActuales.seguidos,
     );
 
     // Actualizar handle en el input
@@ -4222,7 +4601,13 @@ function cancelarCambiosPerfil() {
 }
 
 // Función para actualizar toda la interfaz con nuevos datos
-function actualizarInterfazConNuevosDatos(username, handle, avatar) {
+function actualizarInterfazConNuevosDatos(
+  username,
+  handle,
+  avatar,
+  seguidores = 0,
+  seguidos = 0,
+) {
   // Actualizar sidebar
   const nombreSidebar = document.querySelector(
     ".mi-perfil .nombre-usuario-perfil h3",
@@ -4237,6 +4622,8 @@ function actualizarInterfazConNuevosDatos(username, handle, avatar) {
   if (handleSidebar) {
     handleSidebar.textContent = handle;
   }
+
+  actualizarContadoresPerfil(seguidores, seguidos);
 
   // Actualizar todas las publicaciones del usuario
   const publicacionesUsuario = document.querySelectorAll(".publicacion");

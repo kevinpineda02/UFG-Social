@@ -15,19 +15,32 @@ function getCookie(name) {
   return null;
 }
 
-async function getUserInfo() {
+function getStoredToken() {
   try {
-    const response = await fetch("/user-info", {
+    return localStorage.getItem("jwt") || getCookie("jwt");
+  } catch (error) {
+    return getCookie("jwt");
+  }
+}
+
+async function getUserInfo(token) {
+  try {
+    const response = await fetch("http://127.0.0.1:8081/user-info", {
       method: "GET",
       credentials: "include",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
     if (response.ok) {
       const data = await response.json();
       currentUser = data.user;
       updateUserInterface();
+      window.dispatchEvent(
+        new CustomEvent("gnet:user-loaded", { detail: currentUser }),
+      );
       return data.user;
     } else {
-      throw new Error("No se pudo obtener información del usuario");
+      console.warn("No se pudo obtener información del usuario");
+      return null;
     }
   } catch (error) {
     console.error("Error al obtener información del usuario:", error);
@@ -73,17 +86,20 @@ function updateUserInterface() {
 }
 
 function checkAuthentication() {
-  const token = getCookie("jwt");
+  const token = getStoredToken();
   if (!token) {
     window.location.replace("/");
     return false;
   }
-  getUserInfo();
+  getUserInfo(token);
   return true;
 }
 
 function logout() {
   document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  try {
+    localStorage.removeItem("jwt");
+  } catch (error) {}
   currentUser = null;
   window.location.replace("/");
 }
@@ -91,6 +107,15 @@ function logout() {
 function getCurrentUser() {
   return currentUser;
 }
+
+function setCurrentUser(user) {
+  currentUser = user;
+  updateUserInterface();
+  window.dispatchEvent(new CustomEvent("gnet:user-updated", { detail: user }));
+  return currentUser;
+}
+
+window.setCurrentUser = setCurrentUser;
 
 document.addEventListener("DOMContentLoaded", function () {
   checkAuthentication();

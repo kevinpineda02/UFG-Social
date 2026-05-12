@@ -9,7 +9,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.querySelector(".logueo");
   const registroForm = document.querySelector(".registro");
-  const verificarForm = document.querySelector(".verificar");
   const recuperarForm = document.querySelector(".recuperar");
   const formContainer = document.querySelector(".form-container");
   const themeToggle = document.querySelector(".theme");
@@ -20,7 +19,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const showLoginBtn = document.getElementById("showLogin");
   const showRecoveryBtn = document.getElementById("showRecovery");
   const backToLoginBtn = document.getElementById("backToLogin");
-  const resendCodeBtn = document.getElementById("resendCode");
+  const profileInput = document.getElementById("profileImage");
+  const fileNameSpan = document.getElementById("fileName");
+  const profilePreview = document.getElementById("profileImagePreview");
+  const defaultProfilePreview = "./assets/perfil/perfil1.png";
 
   function applyLoginTheme(themeName) {
     const html = document.documentElement;
@@ -82,13 +84,6 @@ document.addEventListener("DOMContentLoaded", function () {
       hideForm.style.display = "none";
       showForm.style.display = "block";
       showForm.style.animation = "scaleIn 0.5s ease-out forwards";
-
-      const closeBtn = document.getElementById("backToRegister");
-      if (showForm === verificarForm) {
-        closeBtn.style.display = "block";
-      } else {
-        closeBtn.style.display = "none";
-      }
     }, 300);
   }
 
@@ -122,10 +117,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const loginFormElement = loginForm.querySelector("form");
   if (loginFormElement) {
+    const passwordError = loginFormElement.querySelector(".password-error");
+
+    function clearPasswordError() {
+      if (passwordError) {
+        passwordError.textContent = "";
+        passwordError.classList.remove("is-visible");
+      }
+    }
+
+    function showPasswordError(message) {
+      if (passwordError) {
+        passwordError.textContent = message;
+        passwordError.classList.add("is-visible");
+        return;
+      }
+      showMessage(message);
+    }
+
     loginFormElement.addEventListener("submit", function (e) {
       if (!loginFormElement.reportValidity()) {
         return;
       }
+      clearPasswordError();
       e.preventDefault();
       const correo = loginFormElement
         .querySelector('input[name="correo"]')
@@ -134,21 +148,38 @@ document.addEventListener("DOMContentLoaded", function () {
         'input[name="contrasena"]',
       ).value;
 
-      fetch("http://localhost:8081/auth/login", {
+      fetch("http://127.0.0.1:8081/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
       })
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
-            console.warn(data.message || "Error en el servidor");
+            const mensaje =
+              res.status === 401 || res.status === 403
+                ? data.message || "Contraseña incorrecta"
+                : data.message || "Error en el servidor";
+            if (res.status === 401 || res.status === 403) {
+              showPasswordError(mensaje);
+            } else {
+              showMessage(mensaje);
+            }
             return;
+          }
+          if (data.token) {
+            try {
+              localStorage.setItem("jwt", data.token);
+              document.cookie = `jwt=${encodeURIComponent(data.token)}; path=/; SameSite=Lax`;
+            } catch (error) {
+              console.warn("No se pudo guardar el token", error);
+            }
           }
           if (data.redirect) {
             window.location.replace(data.redirect);
           } else {
-            showMessage(data.message || "Logueado correctamente");
+            window.location.replace("inicio.html");
           }
         })
         .catch((err) => {
@@ -172,14 +203,49 @@ document.addEventListener("DOMContentLoaded", function () {
       const contrasena = registroFormElement.querySelector(
         'input[name="contrasena"]',
       ).value;
-
       const originalText = submitBtn ? submitBtn.textContent : "Registrarse";
+      const confirmPasswordInput = registroFormElement.querySelector(
+        'input[name="confirmPassword"]',
+      );
+      const registerError =
+        registroFormElement.querySelector(".register-error");
+      const confirmPassword = confirmPasswordInput.value;
+
+      function clearRegisterError() {
+        if (registerError) {
+          registerError.textContent = "";
+          registerError.classList.remove("is-visible");
+        }
+      }
+
+      function showRegisterError(message) {
+        if (registerError) {
+          registerError.textContent = message;
+          registerError.classList.add("is-visible");
+          return;
+        }
+        showMessage(message);
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener("input", clearRegisterError, {
+          once: true,
+        });
+      }
+
+      clearRegisterError();
+
+      if (contrasena !== confirmPassword) {
+        showRegisterError("Las contraseñas no coinciden");
+        return;
+      }
+
       if (submitBtn) {
         submitBtn.textContent = "Registrando...";
         submitBtn.style.opacity = "0.7";
       }
 
-      fetch("http://localhost:8081/auth/register", {
+      fetch("http://127.0.0.1:8081/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
@@ -187,7 +253,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
-            console.warn(data.message || "Error al registrar");
+            showMessage(data.message || "Error al registrar la cuenta");
             if (submitBtn) {
               submitBtn.textContent = originalText;
               submitBtn.style.opacity = "1";
@@ -195,16 +261,29 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
           }
 
-          showMessage(data.message || "Registro exitoso");
-
           try {
-            localStorage.setItem("pendingEmail", correo);
+            localStorage.removeItem("gnet_perfil_setup_done");
+            localStorage.removeItem("gnet_perfil_usuario");
           } catch (e) {}
 
-          switchForm(registroForm, verificarForm);
+          if (data.token) {
+            try {
+              localStorage.setItem("jwt", data.token);
+              document.cookie = `jwt=${encodeURIComponent(data.token)}; path=/; SameSite=Lax`;
+            } catch (error) {
+              console.warn("No se pudo guardar el token", error);
+            }
+          }
+
           if (submitBtn) {
             submitBtn.textContent = originalText;
             submitBtn.style.opacity = "1";
+          }
+
+          if (data.redirect) {
+            window.location.replace(data.redirect);
+          } else {
+            window.location.replace("inicio.html");
           }
         })
         .catch((err) => {
@@ -217,65 +296,19 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  if (resendCodeBtn) {
-    resendCodeBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      document.getElementById("resendModal").classList.add("show");
-    });
-  }
-
-  const resendModal = document.getElementById("resendModal");
   const messageModal = document.getElementById("messageModal");
-  const modalClose = document.querySelector(".modal-close");
-  const cancelResend = document.getElementById("cancelResend");
-  const confirmResend = document.getElementById("confirmResend");
-
-  if (modalClose) {
-    modalClose.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
-
-  if (cancelResend) {
-    cancelResend.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
-
-  if (confirmResend) {
-    confirmResend.addEventListener("click", function () {
-      resendModal.classList.remove("show");
-    });
-  }
 
   window.addEventListener("click", function (event) {
-    if (event.target === resendModal) {
-      resendModal.classList.remove("show");
-    }
     if (event.target === messageModal) {
       messageModal.classList.remove("show");
     }
   });
 
-  const messageClose = messageModal.querySelector(".modal-close");
   const messageOk = document.getElementById("messageOk");
-
-  if (messageClose) {
-    messageClose.addEventListener("click", function () {
-      messageModal.classList.remove("show");
-    });
-  }
 
   if (messageOk) {
     messageOk.addEventListener("click", function () {
       messageModal.classList.remove("show");
-    });
-  }
-
-  const backToRegisterBtn = document.getElementById("backToRegister");
-  if (backToRegisterBtn) {
-    backToRegisterBtn.addEventListener("click", function () {
-      switchForm(verificarForm, registroForm);
     });
   }
 
@@ -394,4 +427,39 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  if (profileInput && fileNameSpan && profilePreview) {
+    let currentPreviewUrl = null;
+
+    profilePreview.style.backgroundImage = `url("${defaultProfilePreview}")`;
+    profilePreview.style.backgroundSize = "cover";
+    profilePreview.style.backgroundPosition = "center";
+    profilePreview.style.backgroundRepeat = "no-repeat";
+
+    profileInput.addEventListener("change", function () {
+      const selectedFile = this.files && this.files[0];
+
+      if (selectedFile) {
+        fileNameSpan.textContent = selectedFile.name;
+        fileNameSpan.classList.add("selected");
+
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+        }
+
+        currentPreviewUrl = URL.createObjectURL(selectedFile);
+        profilePreview.style.backgroundImage = `url("${currentPreviewUrl}")`;
+      } else {
+        fileNameSpan.textContent = "No file selected.";
+        fileNameSpan.classList.remove("selected");
+        profilePreview.style.backgroundImage = `url("${defaultProfilePreview}")`;
+
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+          currentPreviewUrl = null;
+        }
+      }
+    });
+  }
 });
+

@@ -47,6 +47,15 @@ public class UserEntity {
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime creationDate;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.followers == null) {
+            this.followers = 0;
+        }
+        if (this.followed == null) {
+            this.followed = 0;
+        }
+    }
 }
 
 

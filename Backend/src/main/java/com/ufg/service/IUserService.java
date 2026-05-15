@@ -3,6 +3,8 @@ package com.ufg.service;
 import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.UserDtos;
 
+import java.util.List;
+
 public interface IUserService {
 
     //Metodo para Transformar entidad a objeto
@@ -13,4 +15,7 @@ public interface IUserService {
 
      //Metodo de lectura de usuario por id
       UserDtos searchUserId(Long id);
+
+      //Metodo para lectura de todos los usuarios
+      List<UserDtos>  searchUsers();
 }

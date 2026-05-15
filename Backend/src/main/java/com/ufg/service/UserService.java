@@ -7,7 +7,8 @@ import com.ufg.data.repository.UserRepository;
 import com.ufg.domain.UserDtos;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UserService implements IUserService {
@@ -78,4 +79,19 @@ public class UserService implements IUserService {
 
         return transformEntity(entity);
     }
+
+    @Override
+    public List<UserDtos> searchUsers() {
+        List<UserEntity> entities = userRepository.findAll();
+
+        List<UserDtos> usersDtos = new ArrayList<>();
+
+        for(UserEntity user : entities){
+            usersDtos.add(transformEntity(user));
+        }
+
+        return usersDtos;
+    }
+
+
 }

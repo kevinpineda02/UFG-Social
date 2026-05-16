@@ -4,6 +4,7 @@ package com.ufg.controller;
 import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.UserDtos;
 import com.ufg.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +20,13 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserDtos> createdUser(@RequestBody UserDtos userDtos){
+    public ResponseEntity<UserDtos> createdUser(@Valid @RequestBody UserDtos userDtos){
         UserDtos createdUserDtos = userService.createUser(userDtos);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUserDtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDtos> UserById(@PathVariable Long id){
+    public ResponseEntity<UserDtos> UserById(@Valid @PathVariable Long id){
         UserDtos userDtos = userService.searchUserId(id);
         return ResponseEntity.ok(userDtos);
     }
@@ -33,7 +34,7 @@ public class UserController {
 
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserDtos>> searchUsers(UserEntity entity){
+    public ResponseEntity<List<UserDtos>> searchUsers(@Valid UserEntity entity){
         List<UserDtos> dtos = userService.searchUsers();
         return ResponseEntity.ok(dtos);
     }

@@ -1,4 +1,4 @@
-package com.ufg.service;
+package com.ufg.service.contract;
 
 import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.UserDtos;
@@ -18,4 +18,5 @@ public interface IUserService {
 
       //Metodo para lectura de todos los usuarios
       List<UserDtos>  searchUsers();
+
 }

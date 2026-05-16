@@ -10,6 +10,7 @@ import org.hibernate.annotations.DialectOverride;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -46,6 +47,9 @@ public class UserEntity {
     @CreationTimestamp()
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime creationDate;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PublicationEntity> publications;
 
     @PrePersist
     public void prePersist() {

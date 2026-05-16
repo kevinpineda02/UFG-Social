@@ -5,6 +5,7 @@ import com.ufg.data.entity.CredentialEntity;
 import com.ufg.data.entity.UserEntity;
 import com.ufg.data.repository.UserRepository;
 import com.ufg.domain.UserDtos;
+import com.ufg.service.contract.IUserService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

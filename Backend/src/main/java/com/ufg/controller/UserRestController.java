@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
-public class UserController {
+public class UserRestController {
 
     @Autowired
     UserService userService;
@@ -30,8 +30,6 @@ public class UserController {
         UserDtos userDtos = userService.searchUserId(id);
         return ResponseEntity.ok(userDtos);
     }
-
-
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDtos>> searchUsers(@Valid UserEntity entity){

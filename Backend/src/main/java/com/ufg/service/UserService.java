@@ -20,6 +20,7 @@ public class UserService implements IUserService {
         this.userRepository = userRepository;
     }
 
+    //Transformar Entidad
     @Override
     public UserDtos transformEntity(UserEntity entity) {
         UserDtos userDtos = new UserDtos();
@@ -36,6 +37,7 @@ public class UserService implements IUserService {
         return userDtos;
     }
 
+    //Transformar el usuario a entidad
     public UserEntity transformToEntity(UserDtos userDtos) {
         UserEntity entity = new UserEntity();
 
@@ -58,6 +60,7 @@ public class UserService implements IUserService {
 
 
 
+    //Crear Usuario
     @Override
     public UserDtos createUser(UserDtos userDtos) {
         //Transforma el Dto a entidad
@@ -69,6 +72,7 @@ public class UserService implements IUserService {
         return transformEntity(saveEntity);
     }
 
+    //Buscar Usuario Por ID
     @Override
     public UserDtos searchUserId(Long id) {
 
@@ -81,6 +85,7 @@ public class UserService implements IUserService {
         return transformEntity(entity);
     }
 
+    //Buscar por usuario
     @Override
     public List<UserDtos> searchUsers() {
         List<UserEntity> entities = userRepository.findAll();

@@ -5,7 +5,7 @@ import com.ufg.data.entity.UserEntity;
 import com.ufg.data.repository.UserRepository;
 import com.ufg.domain.LoginRequest;
 import com.ufg.domain.RegisterRequest;
-import com.ufg.data.entity.Rol;
+import com.ufg.data.Rol;
 import com.ufg.data.entity.CredentialEntity;
 import com.ufg.data.repository.CredentialRepository;
 import com.ufg.jwt.JwtService;

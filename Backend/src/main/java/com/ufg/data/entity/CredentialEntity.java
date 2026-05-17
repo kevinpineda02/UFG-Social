@@ -1,5 +1,6 @@
 package com.ufg.data.entity;
 
+import com.ufg.data.Rol;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

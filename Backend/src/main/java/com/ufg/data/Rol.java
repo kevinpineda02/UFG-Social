@@ -1,4 +1,4 @@
-package com.ufg.data.entity;
+package com.ufg.data;
 
 public enum Rol {
     ADMIN,

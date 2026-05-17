@@ -11,18 +11,21 @@ public interface IPublication {
     //Transfomar de entidad a objeto
     PublicationDtos transformEntity(PublicationEntity entity);
 
+    //Transformar Objeto a entidad
+    PublicationEntity transformObject(PublicationDtos dtos);
+
     //Leer todas las publicaciones
     List<PublicationDtos> searchPublication();
 
+    //Buscar publicaciones de un usuario
+    List<PublicationDtos> searchPublicationUser(Long idUser);
+
     //Leer publicacion de un usuario
-    PublicationDtos searchPublicationUser(Long id);
+    PublicationDtos editPublication(Long id, PublicationDtos dtos);
 
     //Eliminar Publicacion
     PublicationDtos deletePublication(Long id, UserEntity userAuthenticate);
 
-    //Editar Publicacion
-    PublicationDtos editPublication(Long id);
-
     //Crear Publicacion
-    PublicationDtos createPublication(PublicationEntity entity, UserEntity user);
+    PublicationDtos createPublication(PublicationDtos dtos);
 }

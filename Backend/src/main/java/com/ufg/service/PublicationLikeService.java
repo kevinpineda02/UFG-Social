@@ -8,6 +8,7 @@ import com.ufg.data.repository.PublicationRepository;
 import com.ufg.data.repository.UserRepository;
 import com.ufg.domain.PublicationDtos;
 import com.ufg.service.contract.IPublicationLikeService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -73,6 +74,7 @@ public class PublicationLikeService implements IPublicationLikeService {
     }
 
     @Override
+    @Transactional
     public PublicationDtos unlikePublication(Long publicationId, Long userId) {
 
         PublicationEntity publication = publicationRepository.findById(publicationId).orElse(null);

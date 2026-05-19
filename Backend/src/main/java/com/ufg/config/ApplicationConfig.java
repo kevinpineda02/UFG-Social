@@ -1,4 +1,4 @@
-package com.ufg.auth.config;
+package com.ufg.config;
 
 import com.ufg.data.repository.CredentialRepository;
 import lombok.RequiredArgsConstructor;

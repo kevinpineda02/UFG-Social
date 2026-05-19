@@ -1,5 +1,6 @@
 package com.ufg.controller;
 
+import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.PublicationCommentDtos;
 import com.ufg.domain.PublicationDtos;
 import com.ufg.domain.PublicationImageDtos;
@@ -176,5 +177,13 @@ public class PublicationRestController {
         PublicationImageDtos deletedImage = publicationImageService.deleteImage(imageId);
 
         return ResponseEntity.ok(deletedImage);
+    }
+
+    @DeleteMapping("{publicationId}")
+    public ResponseEntity<PublicationDtos> deletePublication(@PathVariable Long publicationId, UserEntity userAuthenticate){
+
+        PublicationDtos deletepublication = publicationService.deletePublication(publicationId,userAuthenticate);
+
+        return ResponseEntity.ok(deletepublication);
     }
 }

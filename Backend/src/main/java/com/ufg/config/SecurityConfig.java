@@ -1,4 +1,4 @@
-package com.ufg.auth.config;
+package com.ufg.config;
 
 import com.ufg.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +52,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authRequest ->
                         authRequest
                                 .requestMatchers("/auth/**").permitAll()
+                                .requestMatchers
+                                        ( "/swagger-ui/**",
+                                        "/swagger-ui.html",
+                                        "/v3/api-docs/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManager ->

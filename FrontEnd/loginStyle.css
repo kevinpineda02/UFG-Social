@@ -208,6 +208,13 @@ body {
   min-width: 350px;
 }
 
+.recoovery-title{
+color: var(--color-terciario);
+position: relative;
+bottom: 10px;
+font-size: 1.7rem;
+}
+
 .logueo,
 .registro {
   width: 100%;
@@ -417,6 +424,12 @@ body {
   font-weight: 600;
 }
 
+#showRecovery:hover {
+  color: var(--color-objetos);
+  transition: all 0.3s ease;
+  text-decoration: underline;
+}
+
 .recoovery {
   display: flex;
   justify-content: center;
@@ -448,6 +461,7 @@ body {
   height: 120px;
   background: var(--color-bordes) url("./assets/perfil/perfil1.png") center/cover no-repeat;
   border-radius: 50%;
+  border: var(--color-bordes) 2px solid;
   margin: 0 auto 20px auto;
   overflow: hidden;
 }
@@ -684,6 +698,17 @@ body {
     right: 15px;
     font-size: 28px;
   }
+
+  .recovery-panel{
+    padding-top: 15px;
+    gap: 8px;
+  justify-content: center;  
+}
+
+.register-link {
+  text-align: center;
+}
+
 }
 
 /* Estilos para la modal */

@@ -15,6 +15,18 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 body {
   background-color: var(--color-primario);
   color: var(--color-objetos);
@@ -64,7 +76,7 @@ body {
 
 .titulo {
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 800;
   padding-left: 20px;
   color: var(--color-terciario);
   display: flex;
@@ -116,7 +128,6 @@ body {
   border-radius: 8px;
   display: flex;
   position: relative;
-  top: 4px;
 }
 
 .mensaje-btn:hover {
@@ -192,13 +203,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px;
+  padding: 80px 20px 20px 20px;
   gap: 20px;
+  animation: fadeInContenido 0.6s ease-out 0.4s both;
 }
 
 .secciones {
   background-color: var(--color-secundario);
-  max-width: 250px;
+  max-width: 300px;
   width: 20%;
   padding: 10px;
   border-radius: 10px;
@@ -207,7 +219,7 @@ body {
   flex-direction: row;
   gap: 10px;
   position: fixed;
-  left: 60px;
+  left: 30px;
   top: 310px;
   z-index: 100;
   padding-top: 20px;
@@ -271,8 +283,8 @@ body {
 .publicaciones {
   display: flex;
   flex-direction: column;
-  max-width: 500px;
-  width: 500px;
+  max-width: 800px;
+  width: 60%;
   padding: 20px 20px 10px 20px;
   background-color: var(--color-secundario);
   border-radius: 10px;
@@ -302,7 +314,7 @@ body {
 .separador {
   margin: 15px 0;
   height: 1px;
-  max-width: 450px;
+  max-width: 800px;
   width: 100%;
   background-color: var(--color-objetos);
 }
@@ -340,8 +352,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 30px;
-  max-width: 500px;
-  width: 500px;
+  max-width: 800px;
+  width: 60%;
   margin-top: 20px;
 }
 
@@ -359,14 +371,25 @@ body {
 
 /* Mantener ancho fijo igual que el feed principal para publicaciones independientes */
 .contenedor-publicacion {
-  max-width: 500px;
-  width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 35px;
+  background-color: var(--color-secundario);
+  border-radius: 12px;
+  box-shadow: var(--color-sombra) 0px 2px 12px 2px;
+  animation: slideInTop 0.6s ease-out 0.3s both;
+  transition:
+    background-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.3s ease;
+  overflow: hidden;
+  /* Eliminar estas líneas que sobrescriben el ancho */
+  /* max-width: 800px; */
+  /* width: 60%; */
+  /* margin-left: auto; */
+  /* margin-right: auto; */
+  /* margin-bottom: 35px; */
 }
 
 @media (max-width: 520px) {
+  .publicaciones,
   .contenedor-publicacion,
   .feed-publicaciones {
     width: 100%;
@@ -1053,15 +1076,15 @@ body.modal-open {
 .publicacion .separador {
   margin: 15px 0;
   height: 1px;
-  max-width: 450px;
+  max-width: 800px;
   width: 100%;
   background-color: var(--color-bordes);
 }
 
 .mi-perfil {
   background-color: var(--color-secundario);
-  max-width: 250px;
-  width: 20%;
+  width: 100%;
+  max-width: 300px;
   padding: 10px;
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
@@ -1069,7 +1092,7 @@ body.modal-open {
   flex-direction: column;
   gap: 6px;
   position: fixed;
-  left: 60px;
+  left: 30px;
   top: 100px;
   z-index: 100;
   align-items: center;
@@ -1080,6 +1103,8 @@ body.modal-open {
     background-color 0.4s ease,
     box-shadow 0.4s ease,
     transform 0.3s ease;
+
+  will-change: transform;
 }
 
 .nombre-usuario-perfil h3 {
@@ -1448,16 +1473,8 @@ body.modal-open {
 .iconos-container {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* Alinea al inicio */
-  gap: 85px; /* Espaciado exacto de 15px entre botones */
-  width: 100%;
-}
-
-/* Mejoras para el contenedor de iconos */
-.iconos-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: relative;
+  left: 50px;
   width: 100%;
 }
 
@@ -2889,6 +2906,15 @@ body.modal-open {
   }
 }
 
+@keyframes fadeInContenido {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Clase para animaciones dinámicas desde arriba */
 .animate-from-top {
   animation: slideInTop 0.4s ease-out both;
@@ -3088,7 +3114,9 @@ body.modal-open {
     }
 
     .iconos-container {
-      gap: 50px; /* Ajusta el espaciado entre los iconos */
+      gap: 30px;
+      position: relative;
+      left: 15px; /* Ajusta el espaciado entre los iconos */
     }
 
     /* Publicaciones responsive */
@@ -3185,16 +3213,34 @@ body.modal-open {
   color: var(--color-terciario);
 }
 
+.btn-Agregar-opcion {
+  background: var(--color-terciario);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+}
+
 /* ==================== ESTILOS DE SECCIÓN DE PERFIL ==================== */
 
 /* Contenedor principal de la sección de perfil */
 .seccion-perfil {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 15px;
+  max-width: 900px;
+  width: 100%;
+  padding: 30px;
+  position: relative;
+  margin: 10px auto;
+  left: 50px;
+  box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   background: var(--color-secundario);
   border-radius: 12px;
-  border: 1px solid var(--color-bordes);
   margin-top: 20px;
 }
 
@@ -3287,6 +3333,7 @@ body.modal-open {
   font-weight: 600;
   color: var(--color-texto-principal);
   font-size: 0.9rem;
+  margin-top: 15px;
 }
 
 .campo-edicion input,
@@ -3299,6 +3346,7 @@ body.modal-open {
   font-size: 0.9rem;
   transition: all 0.3s ease;
   resize: none;
+  margin-top: 15px;
 }
 
 .campo-edicion textarea {
@@ -3327,6 +3375,8 @@ body.modal-open {
 
 /* Botones de acción del perfil */
 .perfil-acciones {
+  position: relative;
+  margin-left: auto;
   display: flex;
   gap: 12px;
 }
@@ -3339,11 +3389,11 @@ body.modal-open {
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.85rem;
+  margin-top: 25px;
 }
 
 .btn-guardar-perfil:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
 .btn-guardar-perfil {
@@ -3446,4 +3496,65 @@ body.modal-open {
     width: 35px;
     height: 35px;
   }
+}
+
+/* ===== Estilos para Modal de Imagen Expandida ===== */
+.modal-imagen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-imagen.active {
+  display: flex;
+}
+
+.modal-imagen .modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-imagen .btn-cerrar-modal {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10001;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.modal-imagen .btn-cerrar-modal:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: rotate(90deg);
+}
+
+.modal-imagen .imagen-modal {
+  width: 100%;
+  height: auto;
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }

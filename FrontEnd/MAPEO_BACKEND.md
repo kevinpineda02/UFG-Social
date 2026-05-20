@@ -1,248 +1,145 @@
-# Mapeo de Peticiones al Backend - UFGSocial
+# Mapeo de Peticiones al Backend - UFGSocial (PublicationRestController)
 
-**Fecha**: 4 de mayo de 2026  
-**Estado**: Conversión completa a consumo de backend (sin fallback a localStorage)
-
----
-
-## Configuración Base
-
-- **Base URL**: `http://localhost:3001/api`
-- **Protocolo**: REST/HTTP con JSON
-- **Autenticación**: JWT en cookies (gestiona auth.js)
+**Base URL**: `http://localhost:8081`
 
 ---
 
-## Endpoints en Uso
+## Endpoints de Publicaciones
 
-### 1. **Verificación de Salud**
-
+### 1. Listar todas (feed general)
 ```
-GET /health
+GET /publication
+```
+- **Uso**: `obtenerPublicacionesBackend()` en `inicio.js`
+- **Respuesta**: `PublicationDto[]`
+
+### 2. Crear publicación
+```
+POST /publication
+Content-Type: application/json
+Authorization: Bearer <token>
+```
+- **Uso**: `crearPublicacionBackend()` en `inicio.js`
+- **Body**:
+```json
+{
+  "idUser": 120001,
+  "description": "texto",
+  "videoUrl": null,
+  "images": [
+    { "imageUrl": "data:image/png;base64,...", "orderImage": 1 }
+  ]
+}
 ```
 
-- **Uso**: `verificarConexionBackend()` - Verificar si el backend está disponible
-- **Archivo**: `inicio.js` línea ~30
-- **Respuesta esperada**: `{ message: string }`
-- **Crítico**: SÍ - La aplicación requiere conexión
+### 3. Listar por usuario
+```
+GET /publication/user/{userId}
+```
+- **Uso**: `obtenerPublicacionesPorUsuario(userId)` en `inicio.js`
+
+### 4. Dar like
+```
+POST /publication/{publicationId}/like/{userId}
+```
+- **Uso**: `darLikeBackend(publicationId)` en `inicio.js`
+
+### 5. Quitar like
+```
+DELETE /publication/{publicationId}/like/{userId}
+```
+- **Uso**: `quitarLikeBackend(publicationId)` en `inicio.js`
+
+### 6. Verificar like
+```
+GET /publication/{publicationId}/like/{userId}
+```
+- **Respuesta**: `true` / `false`
+- **Uso**: `verificarLikeBackend(publicationId)` en `inicio.js`
+
+### 7. Contar likes
+```
+GET /publication/{publicationId}/likes/count
+```
+- **Respuesta**: `5` (número)
+- **Uso**: `obtenerCantidadLikesBackend(publicationId)` en `inicio.js`
+
+### 8. Listar imágenes
+```
+GET /publication/{publicationId}/images
+```
+
+### 9. Agregar imagen
+```
+POST /publication/{publicationId}/images
+```
+
+### 10. Eliminar imagen
+```
+DELETE /publication/images/{imageId}
+```
+
+### 11. Listar comentarios
+```
+GET /publication/{publicationId}/comments
+```
+- **Uso**: `obtenerComentariosBackend(publicationId)` en `inicio.js`
+
+### 12. Crear comentario
+```
+POST /publication/{publicationId}/comments/{userId}
+Content-Type: application/json
+```
+- **Body**: `{ "comment": "texto del comentario" }`
+- **Uso**: `agregarComentarioBackend(publicationId, texto)` en `inicio.js`
+
+### 13. Eliminar comentario
+```
+DELETE /publication/comments/{commentId}/user/{userId}
+```
+- **Uso**: `eliminarComentarioBackend(commentId)` en `inicio.js`
 
 ---
 
-### 2. **Obtener Todas las Publicaciones**
-
-```
-GET /publicaciones
-```
-
-- **Uso**: `obtenerPublicacionesBackend()` - Cargar feed de publicaciones
-- **Archivo**: `inicio.js` línea ~57
-- **Llamado desde**: `cargarPublicaciones()` via `obtenerPublicacionesHybrid()`
-- **Respuesta esperada**:
+## Formato de Publicación (PublicationDto)
 
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": "pub_123",
-      "contenido": "Texto de la publicación",
-      "autor": "username",
-      "autorHandle": "@username",
-      "autorAvatar": "url/avatar.jpg",
-      "fecha": "2026-05-04T10:30:00Z",
-      "fechaCreacion": "2026-05-04T10:30:00Z",
-      "likes": 5,
-      "imagen": "url/imagen.jpg (opcional)",
-      "comentarios": 2
-    }
+  "id": 60001,
+  "idUser": 120001,
+  "description": "texto de la publicación",
+  "videoUrl": null,
+  "likes": 5,
+  "coments": 2,
+  "user": "Kevin Pineda",
+  "username": "kevinpineda",
+  "profilePhoto": "data:image/png;base64,...",
+  "images": [
+    { "idImage": 1, "imageUrl": "data:image/png;base64,...", "orderImage": 1 }
   ]
 }
 ```
 
 ---
 
-### 3. **Crear Nueva Publicación**
+## Funciones del Frontend
 
-```
-POST /publicaciones
-```
+| Función | Endpoint | Método |
+|---------|----------|--------|
+| `obtenerPublicacionesBackend()` | `/publication` | GET |
+| `obtenerPublicacionesPorUsuario(id)` | `/publication/user/{id}` | GET |
+| `crearPublicacionBackend(texto, imagenes)` | `/publication` | POST |
+| `darLikeBackend(pubId)` | `/publication/{id}/like/{userId}` | POST |
+| `quitarLikeBackend(pubId)` | `/publication/{id}/like/{userId}` | DELETE |
+| `verificarLikeBackend(pubId)` | `/publication/{id}/like/{userId}` | GET |
+| `obtenerCantidadLikesBackend(pubId)` | `/publication/{id}/likes/count` | GET |
+| `obtenerComentariosBackend(pubId)` | `/publication/{id}/comments` | GET |
+| `agregarComentarioBackend(pubId, texto)` | `/publication/{id}/comments/{userId}` | POST |
+| `eliminarComentarioBackend(commentId)` | `/publication/comments/{id}/user/{userId}` | DELETE |
+| `eliminarPublicacionBackend(pubId)` | `/publication/{id}` | DELETE |
 
-- **Uso**: `crearPublicacionBackend()` - Crear publicación con imagen/texto
-- **Archivo**: `inicio.js` línea ~73
-- **Body**: `FormData` (para soportar archivos)
-  - `contenido`: string (requerido)
-  - `autorUsername`: string
-  - `autorHandle`: string
-  - `autorAvatar`: string
-  - `categoria`: string (opcional, default: "general")
-  - `etiquetas`: JSON string array (opcional)
-  - `imagen`: File object (opcional)
-- **Respuesta esperada**: Objeto publicación creada con ID
-
----
-
-### 4. **Dar Like a Publicación**
-
-```
-POST /publicaciones/{id}/like
-DELETE /publicaciones/{id}/like
-```
-
-- **Uso**: `darLikePublicacion()` y `quitarLikePublicacion()`
-- **Archivo**: `inicio.js` línea ~108-138
-- **Parámetros**:
-  - `id`: ID de la publicación
-- **Respuesta esperada**: `{ success: true, likes: number }`
-
----
-
-### 5. **Agregar Comentario a Publicación**
-
-```
-POST /publicaciones/{id}/comentarios
-```
-
-- **Uso**: `agregarComentarioBackend()` - Crear comentario
-- **Archivo**: `inicio.js` línea ~154+
-- **Body**: `JSON`
-  - `contenido`: string (texto del comentario)
-  - `autorUsername`: string
-  - `autorHandle`: string
-  - `autorAvatar`: string
-- **Respuesta esperada**: Objeto comentario creado
-
----
-
-### 6. **Información del Usuario Autenticado**
-
-```
-GET /user-info
-```
-
-- **Ubicación**: `auth.js` línea ~23
-- **Uso**: `getUserInfo()` - Obtener datos del usuario actual
-- **Autenticación**: Requiere JWT en cookie
-- **Respuesta esperada**:
-
-```json
-{
-  "user": {
-    "username": "username",
-    "name": "Nombre Completo",
-    "profileImage": "url/avatar.jpg",
-    "email": "user@example.com",
-    "id": "user_id"
-  }
-}
-```
-
----
-
-## Flujo de Datos
-
-### Al Cargar la Página
-
-1. `auth.js` → `checkAuthentication()` → `getUserInfo()` → `currentUser` global
-2. `getUserInfo()` hace GET `/user-info`
-3. Se actualiza la interfaz via `updateUserInterface()`
-4. `inicio.js` → `inicializarBackend()` → `verificarConexionBackend()` → GET `/health`
-5. `cargarPublicaciones()` → `obtenerPublicacionesHybrid()` → GET `/publicaciones`
-
-### Datos del Usuario
-
-- **Fuente Principal**: `currentUser` (desde `/user-info` en auth.js)
-- **Acceso**: `getCurrentUser()` devuelve el objeto user
-- **Función**: `obtenerDatosUsuario()` extrae username, handle, avatar
-- **Sin localStorage**: Ya no se guardan datos de usuario en localStorage
-
-### Publicaciones
-
-- **Carga Inicial**: GET `/publicaciones` al iniciar página
-- **Creación Nueva**: POST `/publicaciones` con FormData
-- **Sin Sync localStorage**: Las publicaciones ya no se sincronizaban con localStorage
-
----
-
-## Cambios Realizados (4 de mayo)
-
-### ✅ Eliminado
-
-- `obtenerDatosUsuarioLocales()` - Cargaba datos de localStorage
-- `guardarDatosUsuarioLocales()` - Guardaba datos en localStorage
-- `obtenerAvatarLocal()` - Obtenía avatar de localStorage
-- 6 llamadas a `guardarPublicaciones()` - Sincronizaba con localStorage
-- Función `obtenerPublicacionesLocalStorage()` - Ya no se usa
-- Fallback a localStorage en `obtenerPublicacionesHybrid()`
-
-### ✅ Actualizado
-
-- `obtenerDatosUsuario()` - Ahora solo obtiene de `currentUser` (backend)
-- `obtenerPublicacionesHybrid()` - Siempre usa backend, sin fallback
-- `inicializarBackend()` - Error obligatorio si no hay conexión
-
-### ⏳ Aún con localStorage
-
-- Comentarios: `cargarComentarios()` y `guardarComentarios()` aún usan localStorage
-- (Pendiente para próximas iteraciones)
-
----
-
-## Variables Globales Clave
+## Helper
 
 ```javascript
-// En auth.js
-let currentUser = null;  // Objeto usuario del backend (/user-info)
-function getCurrentUser()  // Retorna currentUser
-
-// En inicio.js
-const API_BASE_URL = "http://localhost:3001/api"
-const API_ENDPOINTS = {
-  health: "...",
-  publicaciones: "...",
-  usuario: "..."
-}
-let backendConectado = false;  // Estado de conexión
-let usarBackend = true;  // Control para cambiar modo
+getUserIdForApi()  // Obtiene el userId desde JWT o localStorage
 ```
-
----
-
-## Debugging
-
-### Verificar estado del backend
-
-```javascript
-// En consola del navegador
-backendConectado; // true/false
-currentUser; // null o {username, name, profileImage, ...}
-```
-
-### Logs importante
-
-- ✅ "Backend conectado" - Backend disponible
-- ❌ "Backend no disponible" - Falta conexión (ERROR CRÍTICO ahora)
-- 📡 "Obteniendo publicaciones del backend" - Llamada GET /publicaciones
-- 📦 "X publicaciones nuevas" - Procesando respuesta
-
----
-
-## Requisitos del Backend
-
-Para que la aplicación funcione correctamente, el backend debe:
-
-1. ✅ Estar ejecutándose en `http://localhost:3001`
-2. ✅ Exponer `/api/health` (verificación simple)
-3. ✅ Tener middleware de autenticación JWT en cookies
-4. ✅ Exponer `/user-info` (retornar usuario autenticado)
-5. ✅ Exponer `/api/publicaciones` (GET/POST)
-6. ✅ Exponer `/api/publicaciones/{id}/like` (POST/DELETE)
-7. ✅ Exponer `/api/publicaciones/{id}/comentarios` (GET/POST)
-
----
-
-## Próximos Pasos
-
-- [ ] Migrar comentarios a backend (remover guardarComentarios/cargarComentarios)
-- [ ] Agregar endpoint de actualización de perfil (PUT `/usuario`)
-- [ ] Agregar endpoint de búsqueda (GET `/publicaciones/search`)
-- [ ] Agregar autenticación de refresh token

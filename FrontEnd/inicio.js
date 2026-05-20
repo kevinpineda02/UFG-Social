@@ -10,17 +10,47 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL = "http://127.0.0.1:8081/api";
+const API_BASE_URL_HOME = "http://localhost:8081";
 const API_ENDPOINTS = {
   // Verificación de salud del backend
-  health: `${API_BASE_URL}/health`,
+  health: `${API_BASE_URL_HOME}/health`,
 
-  // Publicaciones
-  publicaciones: `${API_BASE_URL}/publicaciones`,
+  // Publicaciones (PublicationRestController)
+  publication: `${API_BASE_URL_HOME}/publication`,
 
-  // Usuario (gestión de perfil)
-  usuario: `${API_BASE_URL}/usuario`,
+  // Usuario
+  usuario: `${API_BASE_URL_HOME}/user`,
 };
+
+function getUserIdForApi() {
+  const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+  let userId = null;
+
+  // Intentar obtener el ID de varias propiedades posibles
+  if (user?.id) userId = user.id;
+  else if (user?.userId) userId = user.userId;
+  else if (user?.usuarioId) userId = user.usuarioId;
+  else if (user?.idUser) userId = user.idUser;
+  else userId = getStoredUserId();
+
+  // Convertir a número si es string
+  if (userId) {
+    const numericId = Number(userId);
+    if (!isNaN(numericId) && numericId > 0) {
+      console.log(
+        `👤 UserId obtenido: ${userId} (tipo: ${typeof userId}) → ${numericId} (número)`,
+      );
+      return numericId;
+    }
+  }
+
+  console.error("❌ No se pudo obtener un userId válido:", {
+    user,
+    userId,
+    storedId: getStoredUserId(),
+  });
+  return null;
+}
 
 // Estado de conexión con el backend
 let backendConectado = false;
@@ -49,6 +79,87 @@ function normalizarHandle(valor, nombreUsuario = "usuario") {
 function normalizarContador(valor) {
   const numero = Number(valor);
   return Number.isFinite(numero) && numero >= 0 ? numero : 0;
+}
+
+// ===========================================
+// HELPERS PARA IDS Y NORMALIZACIÓN BACKEND
+// ===========================================
+
+function extraerIdNumerico(valor) {
+  if (valor == null) return null;
+
+  const texto = String(valor);
+
+  const limpio = texto
+    .replace("pub_", "")
+    .replace("comment_backend_", "")
+    .replace("comment_", "")
+    .trim();
+
+  const numero = Number(limpio);
+
+  return Number.isFinite(numero) && numero > 0 ? numero : null;
+}
+
+function normalizarComentarioBackend(comentario) {
+  if (!comentario) return null;
+
+  const id = comentario.id ?? comentario.commentId ?? comentario.idComment;
+
+  const userId =
+    comentario.idUser ??
+    comentario.userId ??
+    comentario.usuarioId ??
+    comentario.idUsuario;
+
+  const username =
+    comentario.username ??
+    comentario.nombreUsuario ??
+    comentario.user ??
+    comentario.name ??
+    "usuario";
+
+  const nombre =
+    comentario.user ??
+    comentario.name ??
+    comentario.nombre ??
+    username ??
+    "Usuario";
+
+  const avatar =
+    comentario.profilePhoto ??
+    comentario.avatar ??
+    comentario.fotoPerfil ??
+    comentario.foto_perfil ??
+    AVATAR_POR_DEFECTO;
+
+  const texto =
+    comentario.comment ??
+    comentario.contenido ??
+    comentario.comentario ??
+    comentario.text ??
+    "";
+
+  const fecha =
+    comentario.creationDate ??
+    comentario.fechaCreacion ??
+    comentario.createdAt ??
+    comentario.fecha_creacion ??
+    new Date().toISOString();
+
+  return {
+    id: `comment_backend_${id}`,
+    backendId: id,
+    userId: userId,
+    username: username,
+    nombre: nombre,
+    handle: normalizarHandle(username, username),
+    avatar: normalizarAvatar(avatar),
+    contenido: texto,
+    fechaCreacion: fecha,
+    likes: comentario.likes ?? 0,
+    liked: comentario.liked ?? false,
+  };
 }
 
 function extraerContadorUsuario(usuario, claves) {
@@ -161,8 +272,21 @@ function actualizarPerfilEnPantalla(datosUsuario) {
   }
 
   const imagen = normalizarAvatar(datosUsuario.avatar);
-  const username = normalizarTexto(datosUsuario.username, "Usuario");
-  const handle = normalizarHandle(datosUsuario.handle, username);
+  const username = normalizarTexto(
+    datosUsuario.user ||
+      datosUsuario.name ||
+      datosUsuario.nombre ||
+      datosUsuario.username,
+    "Usuario",
+  );
+  const usernameHandle = normalizarTexto(
+    datosUsuario.username || datosUsuario.handle?.replace("@", "") || username,
+    username,
+  );
+  const handle = normalizarHandle(
+    datosUsuario.handle || usernameHandle,
+    usernameHandle,
+  );
   const seguidores = normalizarContador(datosUsuario.seguidores);
   const seguidos = normalizarContador(datosUsuario.seguidos);
 
@@ -294,9 +418,11 @@ function prepararModalPerfilInicial(datosUsuario) {
         const usuarioActual = getCurrentUser ? getCurrentUser() : null;
         window.setCurrentUser({
           ...(usuarioActual || {}),
+          user: perfilGuardado.username,
           username: perfilGuardado.username,
           name: perfilGuardado.username,
           profileImage: perfilGuardado.avatar,
+          profilePhoto: perfilGuardado.avatar,
           seguidores: perfilGuardado.seguidores,
           seguidos: perfilGuardado.seguidos,
         });
@@ -346,9 +472,24 @@ function getStoredToken() {
 }
 
 function getAuthHeaders(extraHeaders = {}) {
-  const token = getStoredToken();
-  return token
-    ? { ...extraHeaders, Authorization: `Bearer ${token}` }
+  const token = typeof getStoredToken === "function" ? getStoredToken() : null;
+  const fallbackToken =
+    typeof getTokenFromStorageOrCookie === "function"
+      ? getTokenFromStorageOrCookie()
+      : null;
+  const effectiveToken = token || fallbackToken;
+  if (!effectiveToken) {
+    console.warn(
+      "⚠️ getAuthHeaders: No se encontró ningún token en localStorage/cookies",
+    );
+  } else {
+    console.log(
+      "🔑 Token encontrado:",
+      effectiveToken.substring(0, 30) + "...",
+    );
+  }
+  return effectiveToken
+    ? { ...extraHeaders, Authorization: `Bearer ${effectiveToken}` }
     : extraHeaders;
 }
 
@@ -358,169 +499,490 @@ function getAuthHeaders(extraHeaders = {}) {
 
 // Verificar conexión con el backend
 async function verificarConexionBackend() {
+  // Probar health primero, luego publication
   try {
     const response = await fetch(API_ENDPOINTS.health, {
       method: "GET",
-      timeout: 5000,
     });
 
     if (response.ok) {
-      const data = await response.json();
       backendConectado = true;
-      console.log("✅ Backend conectado:", data.message);
+      console.log("✅ Backend conectado (health)");
       return true;
     }
-  } catch (error) {
-    console.warn(
-      "⚠️ Backend no disponible, usando localStorage:",
-      error.message,
-    );
-    backendConectado = false;
-    return false;
-  }
+  } catch (_) {}
+
+  // Fallback: probar el endpoint de publicaciones
+  try {
+    const response = await fetch(API_ENDPOINTS.publication, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (response.ok || response.status === 200 || response.status === 401) {
+      backendConectado = true;
+      console.log("✅ Backend conectado (publication)");
+      return true;
+    }
+  } catch (_) {}
+
+  console.warn("⚠️ Backend no disponible");
+  backendConectado = false;
+  return false;
 }
 
 // Obtener todas las publicaciones del backend
+// Función helper para manejar errores de autenticación en peticiones
+async function fetchConAutenticacion(url, opciones = {}) {
+  try {
+    const response = await fetch(url, opciones);
+
+    // Solo redirigir a login si es 401 (sin token válido)
+    // 403 es permitido: token válido pero sin permisos
+    if (response.status === 401) {
+      console.warn("No autorizado (401). Redirigiendo a login...");
+      if (window.logout) {
+        window.logout();
+      } else {
+        window.location.replace("login.html");
+      }
+      return null;
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error en la petición:", error);
+    return null;
+  }
+}
+
 async function obtenerPublicacionesBackend() {
   try {
-    const response = await fetch(API_ENDPOINTS.publicaciones, {
+    const response = await fetchConAutenticacion(API_ENDPOINTS.publication, {
       headers: getAuthHeaders(),
     });
+
+    if (!response) return [];
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return data.success ? data.data : [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Error obteniendo publicaciones del backend:", error);
     return [];
   }
 }
 
-// Crear publicación en el backend
+async function obtenerPublicacionesPorUsuario(userId) {
+  try {
+    const response = await fetchConAutenticacion(
+      `${API_ENDPOINTS.publication}/user/${userId}`,
+      { headers: getAuthHeaders() },
+    );
+    if (!response) return [];
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Error obteniendo publicaciones del usuario:", error);
+    return [];
+  }
+}
+
+// Crear publicación en el backend (PublicationRestController)
 async function crearPublicacionBackend(
   contenido,
-  imagen = null,
-  categoria = "general",
-  etiquetas = [],
+  imagenes = [],
+  videoUrl = null,
 ) {
   try {
-    const datosUsuario = obtenerDatosUsuario();
-    const formData = new FormData();
+    const currentUser =
+      typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const userId =
+      currentUser?.id ||
+      currentUser?.userId ||
+      currentUser?.usuarioId ||
+      currentUser?.idUser ||
+      getStoredUserId();
+    const idUserNum = parseInt(userId);
 
-    formData.append("contenido", contenido);
-    formData.append("autorUsername", datosUsuario.username);
-    formData.append("autorHandle", datosUsuario.handle);
-    formData.append("autorAvatar", datosUsuario.avatar);
-    formData.append("categoria", categoria);
-    formData.append("etiquetas", JSON.stringify(etiquetas));
-
-    if (imagen) {
-      formData.append("imagen", imagen);
+    const imagesPayload = [];
+    for (let i = 0; i < imagenes.length; i++) {
+      const item = imagenes[i];
+      if (item.dataUrl) {
+        imagesPayload.push({
+          imageUrl: item.dataUrl,
+          orderImage: i + 1,
+        });
+      }
     }
 
-    const response = await fetch(API_ENDPOINTS.publicaciones, {
+    const body = {
+      idUser: !isNaN(idUserNum) && idUserNum > 0 ? idUserNum : null,
+      description: contenido,
+      videoUrl: videoUrl,
+      user:
+        currentUser?.user ||
+        currentUser?.name ||
+        obtenerDatosUsuario().username ||
+        "",
+      username:
+        currentUser?.username ||
+        obtenerDatosUsuario().handle?.replace("@", "") ||
+        "",
+      profilePhoto:
+        currentUser?.profilePhoto ||
+        currentUser?.profileImage ||
+        currentUser?.avatar ||
+        "",
+      images: imagesPayload,
+    };
+    console.log(
+      "📦 Enviando publicación al backend:",
+      JSON.stringify({
+        ...body,
+        images: `[${body.images.length} imágenes]`,
+        profilePhoto: body.profilePhoto
+          ? `${body.profilePhoto.substring(0, 50)}...`
+          : "null",
+      }),
+    );
+
+    const response = await fetch(API_ENDPOINTS.publication, {
       method: "POST",
-      headers: getAuthHeaders(),
-      body: formData,
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text().catch(() => "");
+      console.error(
+        `Error creando publicación: ${response.status} ${response.statusText}`,
+        errorText,
+      );
+      return null;
     }
 
     const data = await response.json();
-    return data.success ? data.data : null;
+    return data;
   } catch (error) {
     console.error("Error creando publicación en backend:", error);
     return null;
   }
 }
 
-// Dar like a una publicación en el backend
+// ===========================================
+// LIKES DE PUBLICACIONES
+// ===========================================
+
+// Dar like a una publicación
+// POST /publication/{publicationId}/like/{userId}
 async function darLikeBackend(publicacionId) {
   try {
-    const response = await fetch(
-      `${API_ENDPOINTS.publicaciones}/${publicacionId}/like`,
-      {
-        method: "POST",
-        headers: getAuthHeaders(),
-      },
-    );
+    const userId = getUserIdForApi();
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!userId) {
+      console.error("❌ No se pudo obtener userId para dar like");
+      return null;
     }
 
-    const data = await response.json();
-    return data.success ? data.data : null;
+    const realPublicacionId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicacionId) {
+      console.error("❌ publicationId inválido para dar like:", publicacionId);
+      return null;
+    }
+
+    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/like/${userId}`;
+
+    console.log(
+      `📤 POST Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}, UserId: ${userId}`,
+    );
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error("Error dando like:", response.status, errorText);
+      return null;
+    }
+
+    return true;
   } catch (error) {
     console.error("Error dando like en backend:", error);
     return null;
   }
 }
 
-// Quitar like a una publicación en el backend
+// Quitar like de una publicación
+// DELETE /publication/{publicationId}/like/{userId}
 async function quitarLikeBackend(publicacionId) {
   try {
-    const response = await fetch(
-      `${API_ENDPOINTS.publicaciones}/${publicacionId}/like`,
-      {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      },
-    );
+    const userId = getUserIdForApi();
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!userId) {
+      console.error("❌ No se pudo obtener userId para quitar like");
+      return null;
     }
 
-    const data = await response.json();
-    return data.success ? data.data : null;
+    const realPublicacionId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicacionId) {
+      console.error("❌ publicationId inválido para quitar like:", publicacionId);
+      return null;
+    }
+
+    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/like/${userId}`;
+
+    console.log(
+      `📥 DELETE Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}, UserId: ${userId}`,
+    );
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error("Error quitando like:", response.status, errorText);
+      return null;
+    }
+
+    return true;
   } catch (error) {
     console.error("Error quitando like en backend:", error);
     return null;
   }
 }
 
-// Agregar comentario en el backend
-async function AgregarComentarioBackend(publicacionId, contenido) {
+// Verificar si el usuario ya dio like
+// GET /publication/{publicationId}/like/{userId}
+async function verificarLikeBackend(publicacionId) {
   try {
-    const datosUsuario = obtenerDatosUsuario();
+    const userId = getUserIdForApi();
 
-    const response = await fetch(
-      `${API_ENDPOINTS.publicaciones}/${publicacionId}/comentarios`,
-      {
-        method: "POST",
-        headers: getAuthHeaders({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({
-          contenido: contenido,
-          autorUsername: datosUsuario.username,
-          autorHandle: datosUsuario.handle,
-          autorAvatar: datosUsuario.avatar,
-        }),
-      },
+    if (!userId) {
+      console.error("❌ No se pudo obtener userId para verificar like");
+      return false;
+    }
+
+    const realPublicacionId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicacionId) {
+      console.error("❌ publicationId inválido para verificar like:", publicacionId);
+      return false;
+    }
+
+    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/like/${userId}`;
+
+    console.log(
+      `🔍 GET Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}, UserId: ${userId}`,
     );
 
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return false;
     }
 
     const data = await response.json();
-    return data.success ? data.data : null;
+
+    return data === true || data === "true";
+  } catch (error) {
+    console.error("Error verificando like en backend:", error);
+    return false;
+  }
+}
+
+// Contar likes de una publicación
+// GET /publication/{publicationId}/likes/count
+async function obtenerCantidadLikesBackend(publicacionId) {
+  try {
+    const realPublicacionId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicacionId) {
+      console.error("❌ publicationId inválido para contar likes:", publicacionId);
+      return 0;
+    }
+
+    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/likes/count`;
+
+    console.log(
+      `📊 GET Count - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}`,
+    );
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      return 0;
+    }
+
+    const data = await response.json();
+
+    return typeof data === "number" ? data : parseInt(data) || 0;
+  } catch (error) {
+    console.error("Error obteniendo cantidad de likes:", error);
+    return 0;
+  }
+}
+
+// ===========================================
+// COMENTARIOS DE PUBLICACIONES
+// ===========================================
+
+// Agregar comentario
+// POST /publication/{publicationId}/comments/{userId}
+async function agregarComentarioBackend(publicacionId, textoComentario) {
+  try {
+    const userId = getUserIdForApi();
+
+    if (!userId) {
+      console.error("❌ No se pudo obtener userId para comentar");
+      return null;
+    }
+
+    const realPublicationId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicationId) {
+      console.error("❌ publicationId inválido para comentar:", publicacionId);
+      return null;
+    }
+
+    const url = `${API_ENDPOINTS.publication}/${realPublicationId}/comments/${userId}`;
+
+    console.log(
+      `💬 POST Comentario - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicationId}, UserId: ${userId}`,
+    );
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: getAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({
+        comment: textoComentario,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error("Error agregando comentario:", response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+
+    return normalizarComentarioBackend(data);
   } catch (error) {
     console.error("Error agregando comentario en backend:", error);
     return null;
   }
 }
 
-// Eliminar publicación en el backend
+// Obtener comentarios de una publicación
+// GET /publication/{publicationId}/comments
+async function obtenerComentariosBackend(publicacionId) {
+  try {
+    const realPublicationId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicationId) {
+      console.error(
+        "❌ publicationId inválido para obtener comentarios:",
+        publicacionId,
+      );
+      return [];
+    }
+
+    const url = `${API_ENDPOINTS.publication}/${realPublicationId}/comments`;
+
+    console.log(
+      `📥 GET Comentarios - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicationId}`,
+    );
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error("Error obteniendo comentarios:", response.status, errorText);
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data
+      .map(normalizarComentarioBackend)
+      .filter((comentario) => comentario !== null);
+  } catch (error) {
+    console.error("Error obteniendo comentarios del backend:", error);
+    return [];
+  }
+}
+
+// Eliminar comentario
+// DELETE /publication/comments/{commentId}/user/{userId}
+async function eliminarComentarioBackend(commentId) {
+  try {
+    const userId = getUserIdForApi();
+
+    if (!userId) {
+      console.error("❌ No se pudo obtener el ID del usuario");
+      return false;
+    }
+
+    const realCommentId = extraerIdNumerico(commentId);
+
+    if (!realCommentId) {
+      console.error("❌ commentId inválido para eliminar:", commentId);
+      return false;
+    }
+
+    const url = `${API_ENDPOINTS.publication}/comments/${realCommentId}/user/${userId}`;
+
+    console.log(
+      `🗑️ DELETE Comentario - URL: ${url}, CommentId: ${commentId}, RealId: ${realCommentId}, UserId: ${userId}`,
+    );
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error("Error eliminando comentario:", response.status, errorText);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error eliminando comentario en backend:", error);
+    return false;
+  }
+}
+
+// Eliminar publicación (DELETE /publication/{publicationId})
 async function eliminarPublicacionBackend(publicacionId) {
   try {
     const response = await fetch(
-      `${API_ENDPOINTS.publicaciones}/${publicacionId}`,
+      `${API_ENDPOINTS.publication}/${publicacionId}`,
       {
         method: "DELETE",
         headers: getAuthHeaders(),
@@ -531,8 +993,7 @@ async function eliminarPublicacionBackend(publicacionId) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.success;
+    return true;
   } catch (error) {
     console.error("Error eliminando publicación en backend:", error);
     return false;
@@ -700,10 +1161,18 @@ function normalizarAvatar(avatar) {
   const esRutaLegacy =
     avatarNormalizado.includes("/HomeNew/") ||
     avatarNormalizado.includes("/publicaciones/");
-  const esBase64 = avatarNormalizado.startsWith("data:image/");
 
-  if (esRutaLegacy || esBase64) {
+  // Base64 es VÁLIDO, dejar que se muestre
+  if (esRutaLegacy) {
     return AVATAR_POR_DEFECTO;
+  }
+
+  // Si es base64 o URL válida, retornar tal cual
+  if (
+    avatarNormalizado.startsWith("data:image/") ||
+    avatarNormalizado.startsWith("http")
+  ) {
+    return avatarNormalizado;
   }
 
   return avatarNormalizado;
@@ -717,12 +1186,12 @@ function obtenerDatosUsuario() {
   const usuario = getCurrentUser && getCurrentUser();
 
   const usernameBase = normalizarTexto(
-    perfilLocal?.username || usuario?.username || usuario?.name,
+    perfilLocal?.username || usuario?.user || usuario?.name || usuario?.username,
     "Usuario",
   );
   const handleBase = normalizarHandle(
-    perfilLocal?.handle || usuario?.handle,
-    usernameBase,
+    perfilLocal?.handle || usuario?.handle || usuario?.username,
+    usuario?.username || usernameBase,
   );
   const avatarBase = normalizarTexto(
     perfilLocal?.avatar || usuario?.profileImage,
@@ -747,10 +1216,38 @@ function obtenerDatosUsuario() {
 
   // Si hay usuario autenticado, usarlo
   if (usuario) {
+    const nombreVisible = normalizarTexto(
+      usuario.user || usuario.name || usuario.nombre || usuario.username,
+      "Usuario",
+    );
+    const usernameHandle = normalizarTexto(
+      usuario.username || usuario.handle?.replace("@", "") || nombreVisible,
+      nombreVisible,
+    );
+
     return {
-      username: usuario.username || usuario.name || "Usuario",
-      handle: `@${(usuario.username || usuario.name || "usuario").toLowerCase().replace(/\s+/g, "")}`,
-      avatar: usuario.profileImage || AVATAR_POR_DEFECTO,
+      username: nombreVisible,
+      name: nombreVisible,
+      user: nombreVisible,
+      handle: normalizarHandle(usuario.handle || usernameHandle, usernameHandle),
+      avatar:
+        usuario.profileImage ||
+        usuario.profilePhoto ||
+        usuario.avatar ||
+        AVATAR_POR_DEFECTO,
+      seguidores: extraerContadorUsuario(usuario, [
+        "seguidores",
+        "followers",
+        "followersCount",
+        "contadorSeguidores",
+      ]),
+      seguidos: extraerContadorUsuario(usuario, [
+        "seguidos",
+        "following",
+        "followingCount",
+        "contadorSeguidos",
+      ]),
+      bio: usuario.bio || usuario.description || "",
     };
   }
 
@@ -953,8 +1450,12 @@ async function cargarPublicaciones() {
 
     // Filtrar solo publicaciones que no existan ya en el DOM
     const publicacionesNuevas = publicaciones.filter((pub) => {
-      const id = pub.id || pub.data?.id;
-      return !publicacionesExistentesIds.includes(id);
+      const backendId = pub.id;
+      const frontendId = `pub_${backendId}`;
+      return (
+        !publicacionesExistentesIds.includes(frontendId) &&
+        !publicacionesExistentesIds.includes(backendId)
+      );
     });
 
     console.log(
@@ -982,8 +1483,8 @@ async function cargarPublicaciones() {
 
     // Cargar solo las publicaciones nuevas
     publicacionesNuevas.forEach((publicacionData) => {
-      // Si viene del backend, convertir a formato del frontend
-      if (publicacionData.autor && publicacionData.fechaCreacion) {
+      // Del backend (nuevo formato: tiene description o user)
+      if (publicacionData.description !== undefined || publicacionData.user) {
         crearPublicacionDesdeBackend(
           publicacionData,
           insertarDespuesDe,
@@ -1008,100 +1509,125 @@ async function cargarPublicaciones() {
   }
 }
 
-// Función para crear publicación desde datos del backend
+// Función para crear publicación desde datos del backend (nuevo formato)
 function crearPublicacionDesdeBackend(
   publicacionData,
   insertarDespuesDe,
   feedPublicaciones,
 ) {
-  const contenedor = document.createElement("div");
-  contenedor.className = "contenedor-publicacion";
+  // Normalizar datos del backend al formato del frontend
+  const pubId = `pub_${publicacionData.id}`;
+  const autor = publicacionData.user || "Usuario";
+  const username = publicacionData.username || "usuario";
+  const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
+  const handle = `@${username}`;
+  const description = publicacionData.description || "";
+  let images = publicacionData.images || [];
+  if (images.length > 0 && typeof images[0] === "string") {
+    images = images.map((url, i) => ({ imageUrl: url, orderImage: i + 1 }));
+  }
+  const likes = publicacionData.likes || 0;
+  const coments = publicacionData.coments || 0;
+  const timestamp = Date.now();
 
-  // Verificar que los datos del autor estén completos
-  if (!publicacionData.autor || !publicacionData.autor.username) {
-    console.error(
-      "Datos de autor incompletos en publicación del backend:",
-      publicacionData,
-    );
-    return;
+  // Generar HTML de imágenes si existen
+  let htmlImages = "";
+  if (images.length > 0) {
+    const slidesHtml = images
+      .map(
+        (img, index) => `
+      <div class="imagen-slide ${index === 0 ? "active" : ""}">
+        <img src="${img.imageUrl}" alt="Imagen de la publicación">
+        <button class="btn-expandir" onclick="expandirImagen('${img.imageUrl}', 'Imagen de la publicación')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+          </svg>
+        </button>
+      </div>
+    `,
+      )
+      .join("");
+
+    const indicatorsHtml = images
+      .map(
+        (_, index) => `
+      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index})"></div>
+    `,
+      )
+      .join("");
+
+    htmlImages = `
+      <div class="carrusel-imagenes">
+        <div class="carrusel-contenedor">
+          ${slidesHtml}
+        </div>
+        ${
+          images.length > 1
+            ? `
+        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+        <div class="indicadores">${indicatorsHtml}</div>
+        <div class="contador-imagenes">
+          <span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span>
+        </div>
+        `
+            : ""
+        }
+      </div>`;
   }
 
-  // Asegurar que todos los campos necesarios existan
-  const autorData = {
-    username: publicacionData.autor.username || "Usuario Anónimo",
-    handle: publicacionData.autor.handle || "@anonimo",
-    avatar: publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
-  };
-
-  // Convertir fecha ISO a timestamp para compatibilidad
-  const timestamp = new Date(publicacionData.fechaCreacion).getTime();
-
-  // Generar HTML para la publicación del backend
   const htmlPublicacion = `
-        <div class="publicacion" id="${publicacionData.id}" data-timestamp="${timestamp}">
-            <div class="usuario-info">
-                <div class="avatar">
-                    <img src="${autorData.avatar}" alt="${autorData.username}">
-                </div>
-                <div class="usuario-datos">
-                    <h4>${autorData.username}</h4>
-                    <p class="usuario-handle">${autorData.handle}</p>
-                    <p class="tiempo-publicacion">${tiempoTranscurrido(publicacionData.fechaCreacion)}</p>
-                </div>
-            </div>
-            <div class="contenido-publicacion">
-                ${publicacionData.contenido ? `<p>${publicacionData.contenido}</p>` : ""}
-                
-                ${
-                  publicacionData.imagen
-                    ? `
-                    <div class="carrusel-imagenes">
-                        <div class="carrusel-contenedor">
-                            <div class="imagen-slide active">
-                                <img src="http://localhost:3001${publicacionData.imagen}" alt="Imagen de la publicación">
-                                <button class="btn-expandir" onclick="expandirImagen('http://localhost:3001${publicacionData.imagen}', 'Imagen de la publicación')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `
-                    : ""
-                }
-            </div>
-            <div class="separador"></div>
-            <div class="acciones-publicacion">
-                <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${publicacionData.id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                    </svg>
-                    <span>${publicacionData.likes || 0}</span>
-                </button>
-                
-                <button class="accion-btn comentarios" onclick="alternarComentarios('${publicacionData.id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
-                    </svg>
-                    <span>${publicacionData.comentarios ? publicacionData.comentarios.length : 0}</span>
-                </button>
-                
-                <button class="accion-btn compartir">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314a2.25 2.25 0 1 1 .434 3.868l-9.566 5.314m0 0L6.75 21.75h10.5L12 17.25l-4.75 4.5Z" />
-                    </svg>
-                    <span>${publicacionData.compartidos || 0}</span>
-                </button>
-            </div>
-            
-            ${generarHTMLComentarios(publicacionData.id)}
+    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-pubid="${publicacionData.id}">
+      <div class="usuario-info">
+        <div class="avatar">
+          <img src="${avatar}" alt="${autor}">
         </div>
-    `;
+        <div class="usuario-datos">
+          <h4>${autor}</h4>
+          <p class="usuario-handle">${handle}</p>
+          <p class="tiempo-publicacion">ahora</p>
+        </div>
+      </div>
+      <div class="contenido-publicacion">
+        ${description ? `<p>${description}</p>` : ""}
+        ${htmlImages}
+      </div>
+      <div class="separador"></div>
+      <div class="acciones-publicacion">
+        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+          </svg>
+          <span>${likes}</span>
+        </button>
+        <button class="accion-btn comentarios" onclick="alternarComentarios('${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+          </svg>
+          <span>${coments}</span>
+        </button>
+        <button class="accion-btn compartir">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+          </svg>
+          <span>0</span>
+        </button>
+      </div>
+      ${generarHTMLComentarios(pubId)}
+    </div>`;
 
+  const contenedor = document.createElement("div");
+  contenedor.className = "contenedor-publicacion";
   contenedor.innerHTML = htmlPublicacion;
 
-  // Insertar en la posición correcta
   if (insertarDespuesDe && insertarDespuesDe.nextElementSibling) {
     feedPublicaciones.insertBefore(
       contenedor,
@@ -1116,10 +1642,13 @@ function crearPublicacionDesdeBackend(
     feedPublicaciones.appendChild(contenedor);
   }
 
-  // Cargar comentarios si existen
-  if (publicacionData.comentarios && publicacionData.comentarios.length > 0) {
-    mostrarComentariosBackend(publicacionData.id, publicacionData.comentarios);
+  // Inicializar carrusel si hay múltiples imágenes
+  if (images.length > 1) {
+    inicializarCarruselPublicacion(pubId, images.length);
   }
+
+  // Inicializar estado del like
+  inicializarLikePublicacion(pubId);
 }
 
 // Función para crear publicación desde localStorage (formato existente)
@@ -1155,40 +1684,132 @@ function crearPublicacionDesdeLocalStorage(
 
   // Reinicializar eventos y carruseles si es necesario
   reinicializarEventosPublicacion(contenedor);
+
+  // Inicializar estado del like
+  const pubElement = contenedor.querySelector(".publicacion");
+  if (pubElement && pubElement.id) {
+    inicializarLikePublicacion(pubElement.id);
+  }
 }
 
-// Función para mostrar comentarios del backend
+// ===========================================
+// RENDER DE COMENTARIOS DEL BACKEND
+// ===========================================
+
 function mostrarComentariosBackend(publicacionId, comentarios) {
   const publicacion = document.getElementById(publicacionId);
-  if (!publicacion) return;
+
+  if (!publicacion) {
+    console.warn("No se encontró la publicación para mostrar comentarios:", publicacionId);
+    return;
+  }
 
   const seccionComentarios = publicacion.querySelector(".seccion-comentarios");
-  if (!seccionComentarios) return;
 
-  const listaComentarios =
-    seccionComentarios.querySelector(".lista-comentarios");
-  if (!listaComentarios) return;
+  if (!seccionComentarios) {
+    console.warn("No se encontró la sección de comentarios:", publicacionId);
+    return;
+  }
 
-  // Limpiar comentarios existentes
+  const listaComentarios = seccionComentarios.querySelector(".lista-comentarios");
+
+  if (!listaComentarios) {
+    console.warn("No se encontró la lista de comentarios:", publicacionId);
+    return;
+  }
+
   listaComentarios.innerHTML = "";
 
-  // Agregar comentarios del backend
+  if (!Array.isArray(comentarios) || comentarios.length === 0) {
+    listaComentarios.innerHTML = `
+      <div class="comentario-vacio">
+        <p>No hay comentarios todavía.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const userIdActual = getUserIdForApi();
+
   comentarios.forEach((comentario) => {
+    const comentarioNormalizado =
+      comentario?.backendId !== undefined
+        ? comentario
+        : normalizarComentarioBackend(comentario);
+
+    if (!comentarioNormalizado) return;
+
+    const commentUserId = extraerIdNumerico(comentarioNormalizado.userId);
+    const esComentarioPropio =
+      userIdActual && commentUserId ? userIdActual === commentUserId : false;
+
     const elementoComentario = document.createElement("div");
     elementoComentario.className = "comentario";
+    elementoComentario.dataset.commentId = comentarioNormalizado.backendId;
+    elementoComentario.id = comentarioNormalizado.id;
+
     elementoComentario.innerHTML = `
-            <img src="${comentario.autor.avatar}" alt="${comentario.autor.username}" class="avatar-comentario">
-            <div class="contenido-comentario">
-                <div class="autor-comentario">
-                    <strong>${comentario.autor.username}</strong>
-                    <span class="handle-comentario">${comentario.autor.handle}</span>
-                    <span class="tiempo-comentario">${tiempoTranscurrido(comentario.fechaCreacion)}</span>
-                </div>
-                <p>${comentario.contenido}</p>
-            </div>
-        `;
+      <img 
+        src="${comentarioNormalizado.avatar}" 
+        alt="${comentarioNormalizado.username}" 
+        class="avatar-comentario"
+      >
+
+      <div class="contenido-comentario">
+        <div class="autor-comentario">
+          <strong>${comentarioNormalizado.nombre}</strong>
+          <span class="handle-comentario">${comentarioNormalizado.handle}</span>
+          <span class="tiempo-comentario">${tiempoTranscurrido(comentarioNormalizado.fechaCreacion)}</span>
+        </div>
+
+        <p>${comentarioNormalizado.contenido}</p>
+
+        ${
+          esComentarioPropio
+            ? `
+        <button
+          class="btn-eliminar-comentario"
+          onclick="manejarEliminarComentario('${comentarioNormalizado.id}', '${publicacionId}')"
+          title="Eliminar comentario"
+        >
+          Eliminar
+        </button>`
+            : ""
+        }
+      </div>
+    `;
+
     listaComentarios.appendChild(elementoComentario);
   });
+}
+
+// Manejar eliminación visual + backend
+async function manejarEliminarComentario(commentId, publicacionId) {
+  const eliminado = await eliminarComentarioBackend(commentId);
+
+  if (!eliminado) {
+    mostrarNotificacion("No se pudo eliminar el comentario", "error");
+    return;
+  }
+
+  const comentarioElement = document.getElementById(commentId);
+
+  if (comentarioElement) {
+    comentarioElement.remove();
+  }
+
+  const publicacion = document.getElementById(publicacionId);
+
+  if (publicacion) {
+    const botonComentarios = publicacion.querySelector(".accion-btn.comentarios span");
+
+    if (botonComentarios) {
+      const cantidadActual = parseInt(botonComentarios.textContent) || 0;
+      botonComentarios.textContent = Math.max(cantidadActual - 1, 0);
+    }
+  }
+
+  mostrarNotificacion("Comentario eliminado", "success");
 }
 
 // Función para reinicializar eventos en publicaciones cargadas
@@ -1506,12 +2127,18 @@ function expandirImagen(src, alt) {
   const modal = document.getElementById("modal-imagen");
   const imagenExpandida = document.getElementById("imagen-expandida");
 
+  if (!modal || !imagenExpandida) {
+    console.error("Modal de imagen no encontrado en el DOM");
+    return;
+  }
+
   // Configurar la imagen en el modal
   imagenExpandida.src = src;
   imagenExpandida.alt = alt;
 
   // Mostrar el modal
   modal.classList.add("active");
+  modal.style.display = "flex";
 
   // Prevenir scroll del body
   document.body.style.overflow = "hidden";
@@ -1521,8 +2148,11 @@ function expandirImagen(src, alt) {
 function cerrarModal() {
   const modal = document.getElementById("modal-imagen");
 
+  if (!modal) return;
+
   // Ocultar el modal
   modal.classList.remove("active");
+  modal.style.display = "none";
 
   // Restaurar scroll del body
   document.body.style.overflow = "auto";
@@ -1592,6 +2222,34 @@ function seleccionarVentana(botonSeleccionado) {
   setTimeout(() => {
     botonSeleccionado.style.transform = "translateY(0) scale(1)";
   }, 300);
+
+  // Obtener el ID del botón y cambiar la vista
+  const botonId = botonSeleccionado.id;
+
+  // Ocultar todos los títulos de sección
+  document.querySelector(".titulo-inicio").style.display = "none";
+  document.querySelector(".titulo-marketplace").style.display = "none";
+  document.querySelector(".titulo-comunidad").style.display = "none";
+  document.querySelector(".titulo-perfil").style.display = "none";
+
+  // Cambiar vista según el botón seleccionado
+  if (botonId === "inicio") {
+    document.querySelector(".titulo-inicio").style.display = "block";
+    document.querySelector(".publicaciones").style.display = "block";
+    document.querySelector(".seccion-perfil").style.display = "none";
+  } else if (botonId === "btn-marketplace") {
+    document.querySelector(".titulo-marketplace").style.display = "block";
+    document.querySelector(".publicaciones").style.display = "none";
+    document.querySelector(".seccion-perfil").style.display = "none";
+  } else if (botonId === "comunidad") {
+    document.querySelector(".titulo-comunidad").style.display = "block";
+    document.querySelector(".publicaciones").style.display = "none";
+    document.querySelector(".seccion-perfil").style.display = "none";
+  } else if (botonId === "perfil") {
+    document.querySelector(".titulo-perfil").style.display = "block";
+    document.querySelector(".publicaciones").style.display = "none";
+    document.querySelector(".seccion-perfil").style.display = "block";
+  }
 }
 
 // Botones para cambiar de seccion
@@ -2060,19 +2718,20 @@ async function publicarContenido(event) {
     }
 
     // Crear nueva publicación con todos los elementos disponibles
-    await crearNuevaPublicacion(
+    const exito = await crearNuevaPublicacion(
       textoPublicacion,
       imagenesSeleccionadas,
       encuestaActual,
     );
 
-    // Limpiar formulario solo si la publicación fue exitosa
-    document.getElementById("texto-publicacion").value = "";
-    limpiarImagenes();
-    ocultarIndicadorEncuesta();
-    encuestaActual = null;
-
-    console.log("✅ Publicación creada exitosamente");
+    if (exito) {
+      // Limpiar formulario solo si la publicación fue exitosa
+      document.getElementById("texto-publicacion").value = "";
+      limpiarImagenes();
+      ocultarIndicadorEncuesta();
+      encuestaActual = null;
+      console.log("✅ Publicación creada exitosamente");
+    }
   } catch (error) {
     console.error("❌ Error al crear publicación:", error);
   }
@@ -2088,236 +2747,187 @@ function verificarEnter(event) {
   }
 }
 
-// Función para crear una nueva publicación con el formato existente (híbrida: backend + localStorage)
+// Función para crear una nueva publicación (usa backend exclusivamente)
 async function crearNuevaPublicacion(texto, imagenes, encuesta = null) {
   try {
     console.log("📝 Creando nueva publicación...");
 
-    // Si el backend está disponible, intentar guardar ahí primero
-    if (usarBackend && backendConectado) {
-      console.log("📡 Guardando en backend...");
+    console.log("📡 Guardando en backend...");
+    const publicacionBackend = await crearPublicacionBackend(
+      texto,
+      imagenes || [],
+      null,
+    );
 
-      // Preparar imagen para el backend (solo la primera por ahora)
-      let imagenArchivo = null;
-      if (imagenes && imagenes.length > 0) {
-        imagenArchivo = imagenes[0].archivo; // Tomar el archivo original
-      }
+    if (publicacionBackend) {
+      console.log("✅ Publicación guardada en backend:", publicacionBackend.id);
 
-      // Crear publicación en el backend
-      const publicacionBackend = await crearPublicacionBackend(
-        texto,
-        imagenArchivo,
-        "general",
-        ["frontend"],
-      );
+      // Crear la publicación en el frontend usando los datos del backend
+      crearPublicacionEnFrontend(publicacionBackend, true);
 
-      if (publicacionBackend) {
-        console.log(
-          "✅ Publicación guardada en backend:",
-          publicacionBackend.id,
-        );
-
-        // Crear la publicación en el frontend usando los datos del backend
-        crearPublicacionEnFrontend(publicacionBackend, true);
-
-        // Mostrar notificación de éxito
-        mostrarNotificacion("¡Publicación creada exitosamente!", "success");
-        return;
-      } else {
-        console.warn(
-          "⚠️ Error al guardar en backend, usando localStorage como fallback",
-        );
-      }
+      mostrarNotificacion("¡Publicación creada exitosamente!", "success");
+      return true;
+    } else {
+      console.warn("⚠️ Error al guardar en backend");
+      mostrarNotificacion("Error al crear la publicación", "error");
+      return false;
     }
-
-    // Fallback: crear publicación usando el método original (localStorage)
-    console.log("💾 Guardando en localStorage...");
-    crearPublicacionOriginal(texto, imagenes, encuesta);
   } catch (error) {
     console.error("❌ Error creando publicación:", error);
-
-    // Fallback en caso de error
-    crearPublicacionOriginal(texto, imagenes, encuesta);
+    mostrarNotificacion("Error al crear la publicación", "error");
+    return false;
   }
 }
 
-// Función para crear publicación en el frontend usando datos del backend
+// Función para crear publicación en el frontend usando datos del backend (nuevo formato)
 function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
   const feedPublicaciones = document.querySelector(".feed-publicaciones");
+  const pubId = `pub_${publicacionData.id}`;
+  const timestamp = Date.now();
 
-  // Verificar que los datos del autor estén completos
-  if (!publicacionData.autor || !publicacionData.autor.username) {
-    console.error("Datos de autor incompletos:", publicacionData);
-    return;
+  const autor =
+    publicacionData.user || obtenerDatosUsuario().username || "Usuario";
+  const username =
+    publicacionData.username ||
+    obtenerDatosUsuario().handle?.replace("@", "") ||
+    "usuario";
+  const avatar =
+    publicacionData.profilePhoto ||
+    obtenerDatosUsuario().avatar ||
+    "./assets/Logo/UFGPerfil.jpg";
+  const handle = `@${username}`;
+  const description = publicacionData.description || "";
+  let images = publicacionData.images || [];
+  if (images.length > 0 && typeof images[0] === "string") {
+    images = images.map((url, i) => ({ imageUrl: url, orderImage: i + 1 }));
   }
 
-  // Asegurar que todos los campos necesarios existan
-  const autorData = {
-    username: publicacionData.autor.username || "Usuario Anónimo",
-    handle: publicacionData.autor.handle || "@anonimo",
-    avatar: publicacionData.autor.avatar || "./assets/Logo/UFGPerfil.jpg",
-  };
+  // Generar HTML de imágenes
+  let htmlImages = "";
+  if (images.length > 0) {
+    const slidesHtml = images
+      .map(
+        (img, index) => `
+      <div class="imagen-slide ${index === 0 ? "active" : ""}">
+        <img src="${img.imageUrl}" alt="Imagen de la publicación">
+        <button class="btn-expandir" onclick="expandirImagen('${img.imageUrl}', 'Imagen de la publicación')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+          </svg>
+        </button>
+      </div>
+    `,
+      )
+      .join("");
 
-  // Inicializar array de comentarios si no existe
-  if (!publicacionData.comentarios) {
-    publicacionData.comentarios = [];
+    htmlImages = `
+      <div class="carrusel-imagenes">
+        <div class="carrusel-contenedor">${slidesHtml}</div>
+        ${
+          images.length > 1
+            ? `
+        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+        <div class="indicadores">${images.map((_, i) => `<div class="indicador ${i === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${i})"></div>`).join("")}</div>
+        <div class="contador-imagenes"><span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span></div>
+        `
+            : ""
+        }
+      </div>`;
   }
 
-  // Sincronizar comentarios del storage global con la publicación
-  if (comentariosPorPublicacion[publicacionData.id]) {
-    publicacionData.comentarios = [
-      ...comentariosPorPublicacion[publicacionData.id],
-    ];
-  }
+  const htmlPublicacion = `
+    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-pubid="${publicacionData.id}">
+      <div class="usuario-info">
+        <div class="avatar"><img src="${avatar}" alt="${autor}"></div>
+        <div class="usuario-datos">
+          <h4>${autor}</h4>
+          <p class="usuario-handle">${handle}</p>
+          <p class="tiempo-publicacion">ahora</p>
+        </div>
+      </div>
+      <div class="contenido-publicacion">
+        ${description ? `<p>${description}</p>` : ""}
+        ${htmlImages}
+      </div>
+      <div class="separador"></div>
+      <div class="acciones-publicacion">
+        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+          </svg>
+          <span>${publicacionData.likes || 0}</span>
+        </button>
+        <button class="accion-btn comentarios" onclick="alternarComentarios('${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+          </svg>
+          <span>${publicacionData.coments || 0}</span>
+        </button>
+        <button class="accion-btn compartir">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907..." />
+          </svg>
+          <span>0</span>
+        </button>
+      </div>
+      ${generarHTMLComentarios(pubId)}
+    </div>`;
 
-  // Crear contenedor individual para esta publicación
   const contenedorPublicacion = document.createElement("div");
   contenedorPublicacion.className = "contenedor-publicacion";
+  contenedorPublicacion.innerHTML = htmlPublicacion;
 
-  // Crear la publicación
-  const nuevaPublicacion = document.createElement("div");
-  nuevaPublicacion.className = "publicacion";
-  nuevaPublicacion.id = publicacionData.id;
-
-  // Convertir fecha ISO a timestamp para compatibilidad
-  const timestamp = new Date(publicacionData.fechaCreacion).getTime();
-  nuevaPublicacion.dataset.timestamp = timestamp;
-
-  // Guardar datos completos de la publicación (incluyendo comentarios) como atributo
-  nuevaPublicacion.dataset.publicacionCompleta =
-    JSON.stringify(publicacionData);
-
-  // Obtener datos del usuario
-  const datosUsuario = obtenerDatosUsuario();
-
-  // Construir HTML de la publicación
-  let htmlPublicacion = `
-        <div class="usuario-info">
-            <div class="avatar">
-                <img src="${autorData.avatar}" alt="${autorData.username}">
-            </div>
-            <div class="usuario-datos">
-                <h4>${autorData.username}</h4>
-                <p class="usuario-handle">${autorData.handle}</p>
-                <p class="tiempo-publicacion">ahora</p>
-            </div>
-        </div>
-        <div class="contenido-publicacion">
-            ${publicacionData.contenido ? `<p>${publicacionData.contenido}</p>` : ""}
-    `;
-
-  // Agregar imagen si existe
-  if (publicacionData.imagen) {
-    const imagenUrl = esDelBackend
-      ? `http://localhost:3001${publicacionData.imagen}`
-      : publicacionData.imagen;
-
-    htmlPublicacion += `
-            <div class="carrusel-imagenes">
-                <div class="carrusel-contenedor">
-                    <div class="imagen-slide active">
-                        <img src="${imagenUrl}" alt="Imagen de la publicación">
-                        <button class="btn-expandir" onclick="expandirImagen('${imagenUrl}', 'Imagen de la publicación')">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-  }
-
-  // Cerrar contenido-publicacion y Agregar separador
-  htmlPublicacion += `
-        </div>
-        <div class="separador"></div>
-    `;
-
-  // Agregar acciones
-  htmlPublicacion += `
-        <div class="acciones-publicacion">
-            <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${publicacionData.id}')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                </svg>
-                <span>${publicacionData.likes || 0}</span>
-            </button>
-            
-            <button class="accion-btn comentarios" onclick="alternarComentarios('${publicacionData.id}')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
-                </svg>
-                <span>0</span>
-            </button>
-            
-            <button class="accion-btn compartir">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314a2.25 2.25 0 1 1 .434 3.868l-9.566 5.314m0 0L6.75 21.75h10.5L12 17.25l-4.75 4.5Z" />
-                </svg>
-                <span>0</span>
-            </button>
-        </div>
-        
-        ${generarHTMLComentarios(publicacionData.id)}
-    `;
-
-  nuevaPublicacion.innerHTML = htmlPublicacion;
-  contenedorPublicacion.appendChild(nuevaPublicacion);
-
-  // Agregar animación de entrada
   contenedorPublicacion.style.opacity = "0";
   contenedorPublicacion.style.transform = "translateY(-20px)";
   contenedorPublicacion.style.transition =
     "opacity 0.3s ease, transform 0.3s ease";
 
-  // Insertar al inicio del feed (después de las publicaciones de ejemplo)
   const primerElemento = feedPublicaciones.querySelector(
     ".contenedor-publicacion",
   );
   if (primerElemento) {
-    // Buscar después de las publicaciones de ejemplo
     let insertarDespues = null;
-    const ejemplos = feedPublicaciones.querySelectorAll(
+    for (const el of feedPublicaciones.querySelectorAll(
       ".contenedor-publicacion",
-    );
-
-    for (let i = 0; i < ejemplos.length; i++) {
-      const pubId = ejemplos[i].querySelector(".publicacion")?.id;
-      if (pubId === "pub_ejemplo_1" || pubId === "pub_ejemplo_2") {
-        insertarDespues = ejemplos[i];
-      } else {
-        break;
-      }
+    )) {
+      const pid = el.querySelector(".publicacion")?.id;
+      if (pid === "pub_ejemplo_1" || pid === "pub_ejemplo_2")
+        insertarDespues = el;
+      else break;
     }
-
-    if (insertarDespues && insertarDespues.nextElementSibling) {
+    if (insertarDespues && insertarDespues.nextElementSibling)
       feedPublicaciones.insertBefore(
         contenedorPublicacion,
         insertarDespues.nextElementSibling,
       );
-    } else if (insertarDespues) {
+    else if (insertarDespues)
       insertarDespues.parentNode.insertBefore(
         contenedorPublicacion,
         insertarDespues.nextElementSibling,
       );
-    } else {
-      feedPublicaciones.insertBefore(contenedorPublicacion, primerElemento);
-    }
+    else feedPublicaciones.insertBefore(contenedorPublicacion, primerElemento);
   } else {
     feedPublicaciones.appendChild(contenedorPublicacion);
   }
 
-  // Activar animación
   setTimeout(() => {
     contenedorPublicacion.style.opacity = "1";
     contenedorPublicacion.style.transform = "translateY(0)";
-
-    // Inicializar estado de likes para esta publicación
-    inicializarLikePublicacion(publicacionData.id);
   }, 10);
 
-  // Los datos se mantienen sincronizados con el backend
+  if (images.length > 1) inicializarCarruselPublicacion(pubId, images.length);
+
+  // Inicializar estado del like
+  inicializarLikePublicacion(pubId);
 }
 
 // Función original para crear publicación (localStorage)
@@ -2483,7 +3093,7 @@ function crearPublicacionOriginal(texto, imagenes, encuesta = null) {
         </div>
         <div class="separador"></div>
         <div class="acciones-publicacion">
-            <button class="accion-btn">
+            <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${publicacionId}')">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
                 </svg>
@@ -2520,6 +3130,9 @@ function crearPublicacionOriginal(texto, imagenes, encuesta = null) {
   if (imagenes.length > 1) {
     inicializarCarruselPublicacion(publicacionId, imagenes.length);
   }
+
+  // Inicializar estado del like
+  inicializarLikePublicacion(publicacionId);
 
   console.log("✅ Publicación creada localmente");
   mostrarNotificacion("¡Publicación creada!", "success");
@@ -2602,7 +3215,8 @@ function irSlidePublicacion(publicacionId, index) {
 // Función para inicializar contadores de comentarios en publicaciones existentes
 function inicializarContadoresComentarios() {
   // Actualizar contadores para todas las publicaciones que tienen comentarios
-  Object.keys(comentariosPorPublicacion).forEach((publicacionId) => {
+  const comentarios = comentariosPorPublicacion || {};
+  Object.keys(comentarios).forEach((publicacionId) => {
     actualizarContadorComentarios(publicacionId);
   });
 }
@@ -2613,7 +3227,7 @@ function inicializarContadoresComentarios() {
 const COMENTARIOS_STORAGE_KEY = "gnet_comentarios";
 
 // Función para cargar comentarios desde localStorage
-function cargarComentarios() {
+function cargarComentariosDelStorage() {
   try {
     const comentariosGuardados = localStorage.getItem(COMENTARIOS_STORAGE_KEY);
     if (comentariosGuardados) {
@@ -2785,17 +3399,14 @@ let comentariosPorPublicacion = {};
 
 // Inicializar comentarios al cargar la página
 function inicializarComentarios() {
-  comentariosPorPublicacion = cargarComentarios();
+  comentariosPorPublicacion = cargarComentariosDelStorage();
   console.log("💬 Comentarios inicializados:", comentariosPorPublicacion);
 }
 
 // Función para alternar la visibilidad de los comentarios
-function toggleComentarios(publicacionId) {
+async function toggleComentarios(publicacionId) {
   const seccionComentarios = document.getElementById(
     `comentarios-${publicacionId}`,
-  );
-  const botonComentarios = document.querySelector(
-    `[onclick*="'${publicacionId}'"]`,
   );
 
   if (!seccionComentarios) {
@@ -2809,7 +3420,6 @@ function toggleComentarios(publicacionId) {
   ) {
     seccionComentarios.style.display = "block";
 
-    // Configurar auto-resize para el textarea si no está configurado
     const textarea = seccionComentarios.querySelector(".campo-comentario");
     if (textarea && !textarea.hasAttribute("data-configured")) {
       textarea.addEventListener("input", function () {
@@ -2819,8 +3429,74 @@ function toggleComentarios(publicacionId) {
       textarea.setAttribute("data-configured", "true");
     }
 
-    // Cargar comentarios
-    cargarComentarios(publicacionId);
+    if (!comentariosPorPublicacion) {
+      console.warn(
+        "⚠️ comentariosPorPublicacion no estaba inicializada, reinicializando...",
+      );
+      comentariosPorPublicacion = cargarComentariosDelStorage();
+    }
+
+    // Si está conectado al backend, cargar comentarios desde allá
+    if (backendConectado && usarBackend && !seccionComentarios.dataset.loaded) {
+      const pubEl = document.getElementById(publicacionId);
+      const realPubId =
+        pubEl?.dataset?.pubid || publicacionId.replace("pub_", "");
+      const backendComments = await obtenerComentariosBackend(realPubId);
+      if (backendComments.length > 0) {
+        // Protección adicional: asegurar que comentariosPorPublicacion esté inicializado
+        if (
+          !comentariosPorPublicacion ||
+          typeof comentariosPorPublicacion !== "object"
+        ) {
+          console.warn(
+            "⚠️ comentariosPorPublicacion no es un objeto válido, reinicializando...",
+          );
+          comentariosPorPublicacion = {};
+        }
+        console.log(
+          "📥 Comentarios del backend recibidos:",
+          backendComments.length,
+          "para",
+          publicacionId,
+        );
+        comentariosPorPublicacion[publicacionId] = backendComments
+          .map((c) => {
+            const comentarioNormalizado =
+              c?.backendId !== undefined ? c : normalizarComentarioBackend(c);
+
+            if (!comentarioNormalizado) return null;
+
+            return {
+              id: comentarioNormalizado.id,
+              backendId: comentarioNormalizado.backendId,
+              userId: comentarioNormalizado.userId,
+              username: comentarioNormalizado.username,
+              texto: comentarioNormalizado.contenido,
+              autor:
+                comentarioNormalizado.nombre ||
+                comentarioNormalizado.username ||
+                "Usuario",
+              handle: comentarioNormalizado.handle,
+              avatar: comentarioNormalizado.avatar,
+              fecha: comentarioNormalizado.fechaCreacion
+                ? new Date(comentarioNormalizado.fechaCreacion)
+                : new Date(),
+              likes: comentarioNormalizado.likes ?? 0,
+              liked: comentarioNormalizado.liked ?? false,
+            };
+          })
+          .filter((comentario) => comentario !== null);
+        console.log(
+          "✅ Comentarios asignados a comentariosPorPublicacion[" +
+            publicacionId +
+            "]",
+        );
+        guardarComentarios();
+      }
+      seccionComentarios.dataset.loaded = "true";
+    }
+
+    renderizarComentarios(publicacionId);
   } else {
     seccionComentarios.style.display = "none";
   }
@@ -2884,11 +3560,11 @@ function crearSeccionComentarios(publicacionId) {
   });
 
   // Cargar comentarios existentes
-  cargarComentarios(publicacionId);
+  renderizarComentarios(publicacionId);
 }
 
 // Función para publicar un comentario
-function publicarComentario(publicacionId) {
+async function publicarComentario(publicacionId) {
   console.log("🎯 Iniciando publicarComentario para:", publicacionId);
 
   // Verificar que la variable esté inicializada
@@ -2917,49 +3593,61 @@ function publicarComentario(publicacionId) {
     return;
   }
 
+  let comentarioBackend = null;
+
+  // Si el backend está conectado, enviar comentario al backend
+  if (backendConectado && usarBackend) {
+    const pubEl = document.getElementById(publicacionId);
+    const realPubId = pubEl?.dataset?.pubid;
+    comentarioBackend = await agregarComentarioBackend(
+      realPubId || publicacionId,
+      textoComentario,
+    );
+    if (!comentarioBackend) {
+      console.warn("⚠️ No se pudo guardar el comentario en backend");
+    }
+  }
+
   // Obtener datos del usuario actual
   const datosUsuario = obtenerDatosUsuario();
-  console.log("👤 Datos del usuario:", datosUsuario);
 
   // Crear objeto de comentario
-  const nuevoComentario = {
-    id: "comment_" + Date.now(),
-    texto: textoComentario,
-    autor: datosUsuario.username,
-    handle: datosUsuario.handle,
-    avatar: datosUsuario.avatar,
-    fecha: new Date(),
-    likes: 0,
-    liked: false,
-  };
+  const nuevoComentario = comentarioBackend
+    ? {
+        id: comentarioBackend.id,
+        backendId: comentarioBackend.backendId,
+        userId: comentarioBackend.userId,
+        username: comentarioBackend.username,
+        texto: comentarioBackend.contenido,
+        autor:
+          comentarioBackend.nombre || comentarioBackend.username || "Usuario",
+        handle: comentarioBackend.handle,
+        avatar: comentarioBackend.avatar,
+        fecha: comentarioBackend.fechaCreacion
+          ? new Date(comentarioBackend.fechaCreacion)
+          : new Date(),
+        likes: comentarioBackend.likes ?? 0,
+        liked: comentarioBackend.liked ?? false,
+      }
+    : {
+        id: "comment_" + Date.now(),
+        texto: textoComentario,
+        autor: datosUsuario.username,
+        handle: datosUsuario.handle,
+        avatar: datosUsuario.avatar,
+        fecha: new Date(),
+        likes: 0,
+        liked: false,
+      };
 
-  console.log("💬 Nuevo comentario creado:", nuevoComentario);
-
-  // Agregar comentario al storage
+  // Agregar comentario al storage local
   if (!comentariosPorPublicacion[publicacionId]) {
     comentariosPorPublicacion[publicacionId] = [];
   }
   comentariosPorPublicacion[publicacionId].unshift(nuevoComentario);
 
-  console.log(
-    "📦 Comentarios actualizados:",
-    comentariosPorPublicacion[publicacionId],
-  );
-
-  // Verificar que el objeto se guardó correctamente
-  if (!comentariosPorPublicacion[publicacionId]) {
-    console.error(
-      "❌ Error: No se pudo crear el array de comentarios para:",
-      publicacionId,
-    );
-    return;
-  }
-
   // Guardar comentarios en localStorage
   guardarComentarios();
-
-  // Actualizar datos empaquetados de la publicación específica
-  actualizarDatosPublicacion(publicacionId, nuevoComentario);
 
   // Limpiar campo
   campoComentario.value = "";
@@ -2978,7 +3666,7 @@ function publicarComentario(publicacionId) {
   actualizarContadorComentarios(publicacionId);
 
   // Recargar comentarios en la UI
-  cargarComentarios(publicacionId);
+  renderizarComentarios(publicacionId);
 
   console.log("💬 Comentario publicado y guardado:", nuevoComentario);
 }
@@ -3062,8 +3750,16 @@ function cancelarComentario(publicacionId) {
 }
 
 // Función para cargar comentarios
-function cargarComentarios(publicacionId) {
+function renderizarComentarios(publicacionId) {
   console.log("🔄 Cargando comentarios para:", publicacionId);
+
+  // Protección: inicializar si es undefined
+  if (!comentariosPorPublicacion) {
+    console.warn(
+      "⚠️ comentariosPorPublicacion undefined en renderizarComentarios, inicializando...",
+    );
+    comentariosPorPublicacion = cargarComentariosDelStorage();
+  }
 
   const listaComentarios = document.getElementById(
     `lista-comentarios-${publicacionId}`,
@@ -3092,10 +3788,21 @@ function cargarComentarios(publicacionId) {
   }
 
   // Generar HTML de comentarios
+  const datosUsuario = obtenerDatosUsuario();
+  const userIdActual = getUserIdForApi();
+
   listaComentarios.innerHTML = comentarios
     .map((comentario) => {
-      const datosUsuario = obtenerDatosUsuario();
-      const esComentarioPropio = comentario.handle === datosUsuario.handle; // Verificar si es comentario del usuario actual
+      const commentUserId = extraerIdNumerico(
+        comentario.userId ??
+          comentario.idUser ??
+          comentario.usuarioId ??
+          comentario.idUsuario,
+      );
+      const esComentarioPropio =
+        userIdActual && commentUserId
+          ? userIdActual === commentUserId
+          : comentario.handle === datosUsuario.handle;
 
       return `
         <div class="comentario" id="${comentario.id}">
@@ -3183,7 +3890,7 @@ function toggleLikeComentario(publicacionId, comentarioId) {
   guardarComentarios();
 
   // Recargar comentarios para actualizar la UI
-  cargarComentarios(publicacionId);
+  renderizarComentarios(publicacionId);
 }
 
 // Función para responder a un comentario
@@ -3273,16 +3980,27 @@ function toggleMenuComentario(comentarioId) {
   }
 }
 
-// Función para eliminar comentario (eliminación directa y silenciosa)
-function eliminarComentario(publicacionId, comentarioId) {
+// Función para eliminar comentario
+async function eliminarComentario(publicacionId, comentarioId) {
   const comentarios = comentariosPorPublicacion[publicacionId];
   if (!comentarios) return;
-
-  // Verificar que el comentario pertenece al usuario actual
   const comentario = comentarios.find((c) => c.id === comentarioId);
-  if (!comentario || comentario.handle !== "@ufg") {
-    // Eliminación silenciosa - no mostrar mensaje de error
-    return;
+  if (!comentario) return;
+
+  // Si está conectado al backend y el comentario existe allá, eliminar allá
+  if (
+    backendConectado &&
+    usarBackend &&
+    (comentario.backendId || String(comentarioId).startsWith("comment_backend_"))
+  ) {
+    const eliminadoBackend = await eliminarComentarioBackend(
+      comentario.backendId || comentarioId,
+    );
+
+    if (!eliminadoBackend) {
+      mostrarNotificacion("No se pudo eliminar el comentario", "error");
+      return;
+    }
   }
 
   // Animar eliminación inmediatamente
@@ -3293,28 +4011,19 @@ function eliminarComentario(publicacionId, comentarioId) {
     elementoComentario.style.transform = "translateX(-20px)";
 
     setTimeout(() => {
-      // Eliminar comentario del array
       const index = comentarios.findIndex((c) => c.id === comentarioId);
       if (index !== -1) {
         comentarios.splice(index, 1);
-
-        // Guardar comentarios en localStorage
         guardarComentarios();
-
-        // Actualizar contador en el botón
         actualizarContadorComentarios(publicacionId);
-
-        // Recargar comentarios
-        cargarComentarios(publicacionId);
-
-        console.log("💬 Comentario eliminado y guardado:", comentarioId);
+        renderizarComentarios(publicacionId);
       }
     }, 300);
   }
 
-  // Cerrar menú inmediatamente
-  const menusAbiertos = document.querySelectorAll(".menu-dropdown.activo");
-  menusAbiertos.forEach((menu) => menu.classList.remove("activo"));
+  document
+    .querySelectorAll(".menu-dropdown.activo")
+    .forEach((m) => m.classList.remove("activo"));
 }
 
 // Función para formatear tiempo relativo
@@ -3740,9 +4449,16 @@ function toggleMenuPublicacion(publicacionId) {
 
 // Función para eliminar publicación
 function eliminarPublicacion(publicacionId) {
-  // Verificar que sea una publicación propia (en este caso todas son de @ufg)
   const elementoPublicacion = document.getElementById(publicacionId);
   if (!elementoPublicacion) return;
+
+  const realPubId =
+    elementoPublicacion.dataset?.pubid || publicacionId.replace("pub_", "");
+
+  // Eliminar del backend si está conectado
+  if (backendConectado && usarBackend) {
+    eliminarPublicacionBackend(realPubId);
+  }
 
   // Animar eliminación
   elementoPublicacion.style.transition = "all 0.4s ease";
@@ -3750,68 +4466,83 @@ function eliminarPublicacion(publicacionId) {
   elementoPublicacion.style.transform = "translateX(-30px) scale(0.95)";
 
   setTimeout(() => {
-    // Buscar el contenedor padre de la publicación
     const contenedorPublicacion = elementoPublicacion.closest(
       ".contenedor-publicacion",
     );
-    if (contenedorPublicacion) {
-      contenedorPublicacion.remove();
-    } else {
-      elementoPublicacion.remove();
-    }
-
-    // Los datos se sincronizarán automáticamente con el backend
-    console.log("Publicación eliminada:", publicacionId);
+    if (contenedorPublicacion) contenedorPublicacion.remove();
+    else elementoPublicacion.remove();
   }, 400);
 
-  // Cerrar menú inmediatamente
-  const menusAbiertos = document.querySelectorAll(
-    ".menu-dropdown-publicacion.activo",
-  );
-  menusAbiertos.forEach((menu) => menu.classList.remove("activo"));
+  document
+    .querySelectorAll(".menu-dropdown-publicacion.activo")
+    .forEach((m) => m.classList.remove("activo"));
 }
 
 // Función para alternar me gusta (like) en una publicación
 async function alternarMeGusta(botonElement, publicacionId) {
   try {
-    // Verificar si el botón ya tiene like
-    const tieneActiveLike = botonElement.classList.contains("liked");
     const spanContador = botonElement.querySelector("span");
     const svgElement = botonElement.querySelector("svg");
+    let conteoAnterior = parseInt(spanContador.textContent) || 0;
 
-    let nuevoConteo = parseInt(spanContador.textContent) || 0;
+    // Extraer ID real de la publicación
+    const elementoPublicacion = document.getElementById(publicacionId);
+    const realPublicacionId = extraerIdNumerico(
+      elementoPublicacion?.dataset?.pubid || publicacionId,
+    );
+    const numericPublicacionId = Number(realPublicacionId);
+
+    console.log(
+      `🔗 Toggling like - publicacionId: ${publicacionId}, realId: ${realPublicacionId}, numeric: ${numericPublicacionId}`,
+    );
+
+    if (!numericPublicacionId || numericPublicacionId === 0) {
+      console.error("❌ publicacionId inválido:", publicacionId);
+      mostrarNotificacion("Error: publicación no válida", "error");
+      return;
+    }
 
     if (backendConectado && usarBackend) {
-      // Usar backend
-      let resultado;
+      // Verificar si el usuario ya dio like
+      const yaLeDioLike = await verificarLikeBackend(realPublicacionId);
 
-      if (tieneActiveLike) {
+      if (yaLeDioLike) {
         // Quitar like
-        resultado = await quitarLikeBackend(publicacionId);
-        if (resultado) {
-          nuevoConteo = resultado.likes;
+        const exito = await quitarLikeBackend(realPublicacionId);
+        if (exito) {
           botonElement.classList.remove("liked");
           svgElement.setAttribute("fill", "none");
+          console.log(`✅ Like removed successfully from ${publicacionId}`);
         } else {
           console.warn("No se pudo quitar like en backend");
+          mostrarNotificacion("Error al quitar el like", "error");
           return;
         }
       } else {
         // Dar like
-        resultado = await darLikeBackend(publicacionId);
-        if (resultado) {
-          nuevoConteo = resultado.likes;
+        const exito = await darLikeBackend(realPublicacionId);
+        if (exito) {
           botonElement.classList.add("liked");
           svgElement.setAttribute("fill", "currentColor");
+          console.log(`✅ Like added successfully to ${publicacionId}`);
         } else {
           console.warn("No se pudo dar like en backend");
+          mostrarNotificacion("Error al dar el like", "error");
           return;
         }
       }
+
+      // Obtener el contador actualizado desde el backend
+      const nuevoConteo = await obtenerCantidadLikesBackend(realPublicacionId);
+      spanContador.textContent = nuevoConteo;
+
+      console.log(
+        `✅ Like toggled. Nueva cantidad: ${nuevoConteo}, Usuario tenía like: ${yaLeDioLike}`,
+      );
     } else {
-      // Usar localStorage (Funciónonalidad local)
+      // Usar localStorage (Funcionalidad local sin backend)
       const datosUsuario = obtenerDatosUsuario();
-      const claveUsuario = datosUsuario.handle; // Identificador único del usuario
+      const claveUsuario = datosUsuario.handle;
 
       // Cargar likes del usuario actual
       const likesLocales = JSON.parse(
@@ -3819,84 +4550,43 @@ async function alternarMeGusta(botonElement, publicacionId) {
       );
       const likesUsuario = likesLocales[claveUsuario] || {};
 
-      console.log("💾 Likes actuales del usuario antes:", likesUsuario);
-
       // Verificar si el usuario ya dio like a esta publicación
       const yaLeDioLike = likesUsuario[publicacionId] === true;
 
-      console.log(
-        `🤔 Usuario ${claveUsuario} ya dio like a ${publicacionId}: ${yaLeDioLike}`,
+      // Cargar contadores globales
+      const contadoresGlobales = JSON.parse(
+        localStorage.getItem("gnet_contadores_likes") || "{}",
       );
+      let nuevoConteo = contadoresGlobales[publicacionId] || conteoAnterior;
 
-      if (tieneActiveLike && yaLeDioLike) {
-        // No permitir quitar like si ya lo dio (como Facebook)
-        console.log(
-          "👍 El usuario ya dio like a esta publicación, no puede quitarlo",
-        );
-
-        // Efecto visual para indicar que ya dio like
-        botonElement.style.transform = "scale(1.1)";
-        botonElement.style.filter = "brightness(1.2)";
-        setTimeout(() => {
-          botonElement.style.transform = "scale(1)";
-          botonElement.style.filter = "brightness(1)";
-        }, 200);
-
-        return;
-      } else if (!tieneActiveLike && !yaLeDioLike) {
-        // Dar like (solo si no lo ha dado antes)
+      if (yaLeDioLike) {
+        // Quitar like
+        delete likesUsuario[publicacionId];
+        nuevoConteo = Math.max(0, nuevoConteo - 1);
+        botonElement.classList.remove("liked");
+        svgElement.setAttribute("fill", "none");
+        console.log(`👎 Like removed. Nuevo contador: ${nuevoConteo}`);
+      } else {
+        // Dar like
+        likesUsuario[publicacionId] = true;
         nuevoConteo++;
         botonElement.classList.add("liked");
         svgElement.setAttribute("fill", "currentColor");
-
-        // Marcar que este usuario ya dio like a esta publicación
-        likesUsuario[publicacionId] = true;
-        likesLocales[claveUsuario] = likesUsuario;
-
-        console.log("💾 Guardando like del usuario:", {
-          usuario: claveUsuario,
-          publicacion: publicacionId,
-          likesUsuario: likesUsuario,
-          likesLocales: likesLocales,
-        });
-
-        // Guardar contadores globales
-        const contadoresGlobales = JSON.parse(
-          localStorage.getItem("gnet_contadores_likes") || "{}",
-        );
-        contadoresGlobales[publicacionId] = nuevoConteo;
-        localStorage.setItem(
-          "gnet_contadores_likes",
-          JSON.stringify(contadoresGlobales),
-        );
-
-        console.log("📊 Contadores globales actualizados:", contadoresGlobales);
-      } else {
-        // El usuario ya dio like, no hacer nada
-        console.log("👍 El usuario ya interactuó con esta publicación");
-
-        // Efecto visual para indicar que ya dio like
-        botonElement.style.transform = "scale(1.1)";
-        botonElement.style.filter = "brightness(1.2)";
-        setTimeout(() => {
-          botonElement.style.transform = "scale(1)";
-          botonElement.style.filter = "brightness(1)";
-        }, 200);
-
-        return;
+        console.log(`👍 Like added. Nuevo contador: ${nuevoConteo}`);
       }
 
-      // Guardar los likes del usuario
+      // Guardar cambios
+      likesLocales[claveUsuario] = likesUsuario;
+      contadoresGlobales[publicacionId] = nuevoConteo;
       localStorage.setItem("gnet_likes", JSON.stringify(likesLocales));
-
-      console.log(
-        "✅ Likes guardados en localStorage:",
-        JSON.stringify(likesLocales, null, 2),
+      localStorage.setItem(
+        "gnet_contadores_likes",
+        JSON.stringify(contadoresGlobales),
       );
-    }
 
-    // Actualizar el contador en la UI
-    spanContador.textContent = nuevoConteo;
+      // Actualizar UI
+      spanContador.textContent = nuevoConteo;
+    }
 
     // Efecto visual de animación
     botonElement.style.transform = "scale(1.1)";
@@ -3912,7 +4602,8 @@ async function alternarMeGusta(botonElement, publicacionId) {
 // Función para inicializar contadores de comentarios en publicaciones existentes
 function inicializarContadoresComentariosExistentes() {
   // Actualizar contadores para todas las publicaciones
-  Object.keys(comentariosPorPublicacion).forEach((publicacionId) => {
+  const comentarios = comentariosPorPublicacion || {};
+  Object.keys(comentarios).forEach((publicacionId) => {
     actualizarContadorComentarios(publicacionId);
   });
 }
@@ -3922,14 +4613,37 @@ function alternarComentarios(publicacionId) {
   return toggleComentarios(publicacionId);
 }
 
-// Función para inicializar estados de likes desde localStorage
-function inicializarLikesPublicaciones() {
+// Función auxiliar para establecer el estado visual de un botón de like
+function setearEstadoLikeBoton(botonElement, tieneLike, contador) {
+  const svgElement = botonElement?.querySelector("svg");
+  const spanContador = botonElement?.querySelector("span");
+
+  if (!botonElement || !svgElement || !spanContador) {
+    console.warn("⚠️ Elementos del botón de like no encontrados");
+    return;
+  }
+
+  if (tieneLike) {
+    botonElement.classList.add("liked");
+    svgElement.setAttribute("fill", "currentColor");
+    console.log(`❤️ Like button marked as liked`);
+  } else {
+    botonElement.classList.remove("liked");
+    svgElement.setAttribute("fill", "none");
+    console.log(`🤍 Like button marked as not liked`);
+  }
+
+  spanContador.textContent = contador || 0;
+}
+
+// Función para inicializar estados de likes desde localStorage o backend
+async function inicializarLikesPublicaciones() {
   const datosUsuario = obtenerDatosUsuario();
   const claveUsuario = datosUsuario.handle;
 
   console.log("🔍 Inicializando likes para usuario:", claveUsuario);
 
-  // Cargar likes del usuario actual
+  // Cargar likes del usuario actual (para fallback offline)
   const likesLocales = JSON.parse(localStorage.getItem("gnet_likes") || "{}");
   const likesUsuario = likesLocales[claveUsuario] || {};
 
@@ -3949,37 +4663,50 @@ function inicializarLikesPublicaciones() {
 
   console.log("📝 Publicaciones encontradas:", todasLasPublicaciones.length);
 
-  todasLasPublicaciones.forEach((publicacion) => {
+  todasLasPublicaciones.forEach(async (publicacion) => {
     const publicacionId = publicacion.id;
     const botonLike = publicacion.querySelector(".me-gusta");
     const svgElement = botonLike?.querySelector("svg");
     const spanContador = botonLike?.querySelector("span");
 
     if (botonLike && svgElement && spanContador) {
-      // Verificar si este usuario ya dio like
-      const usuarioYaDioLike = likesUsuario[publicacionId] === true;
+      let usuarioYaDioLike = false;
+      let contador = parseInt(spanContador.textContent) || 0;
+
+      if (backendConectado && usarBackend) {
+        // Verificar en el backend
+        try {
+          usuarioYaDioLike = await verificarLikeBackend(publicacionId);
+          contador = await obtenerCantidadLikesBackend(publicacionId);
+          console.log(
+            `✅ Datos de backend obtenidos para ${publicacionId}: like=${usuarioYaDioLike}, contador=${contador}`,
+          );
+        } catch (error) {
+          console.warn(
+            `⚠️ Error obteniendo likes del backend para ${publicacionId}, usando localStorage`,
+            error,
+          );
+          usuarioYaDioLike = likesUsuario[publicacionId] === true;
+          contador =
+            contadoresGlobales[publicacionId] ||
+            parseInt(spanContador.textContent) ||
+            0;
+        }
+      } else {
+        // Usar localStorage (modo offline)
+        usuarioYaDioLike = likesUsuario[publicacionId] === true;
+        contador =
+          contadoresGlobales[publicacionId] ||
+          parseInt(spanContador.textContent) ||
+          0;
+      }
 
       console.log(
         `👤 Publicación ${publicacionId}: Usuario ya dio like = ${usuarioYaDioLike}`,
       );
 
-      if (usuarioYaDioLike) {
-        botonLike.classList.add("liked");
-        svgElement.setAttribute("fill", "currentColor");
-        console.log(`❤️ Like aplicado a ${publicacionId}`);
-      } else {
-        botonLike.classList.remove("liked");
-        svgElement.setAttribute("fill", "none");
-        console.log(`🤍 Sin like en ${publicacionId}`);
-      }
-
-      // Mostrar contador global
-      const contadorGlobal =
-        contadoresGlobales[publicacionId] ||
-        parseInt(spanContador.textContent) ||
-        0;
-      spanContador.textContent = contadorGlobal;
-      console.log(`🔢 Contador de ${publicacionId}: ${contadorGlobal}`);
+      // Actualizar estado visual usando función auxiliar
+      setearEstadoLikeBoton(botonLike, usuarioYaDioLike, contador);
     }
   });
 
@@ -3987,45 +4714,50 @@ function inicializarLikesPublicaciones() {
 }
 
 // Función para inicializar like de una publicación específica
-function inicializarLikePublicacion(publicacionId) {
+async function inicializarLikePublicacion(publicacionId) {
+  const publicacion = document.getElementById(publicacionId);
+  if (!publicacion) return;
+
+  const botonLike = publicacion.querySelector(".me-gusta");
+  const svgElement = botonLike?.querySelector("svg");
+  const spanContador = botonLike?.querySelector("span");
+  if (!botonLike || !svgElement || !spanContador) return;
+
+  let usuarioYaDioLike = false;
+  let contador = parseInt(spanContador.textContent) || 0;
+
+  if (backendConectado && usarBackend) {
+    try {
+      usuarioYaDioLike = await verificarLikeBackend(publicacionId);
+      contador = await obtenerCantidadLikesBackend(publicacionId);
+    } catch (error) {
+      console.warn(
+        `⚠️ Error obteniendo likes del backend para ${publicacionId}, usando localStorage`,
+        error,
+      );
+      usuarioYaDioLike = obtenerLikeLocal(publicacionId);
+      contador = obtenerContadorLocal(publicacionId) || contador;
+    }
+  } else {
+    usuarioYaDioLike = obtenerLikeLocal(publicacionId);
+    contador = obtenerContadorLocal(publicacionId) || contador;
+  }
+
+  setearEstadoLikeBoton(botonLike, usuarioYaDioLike, contador);
+}
+
+function obtenerLikeLocal(publicacionId) {
   const datosUsuario = obtenerDatosUsuario();
-  const claveUsuario = datosUsuario.handle;
-
-  // Cargar likes del usuario actual
   const likesLocales = JSON.parse(localStorage.getItem("gnet_likes") || "{}");
-  const likesUsuario = likesLocales[claveUsuario] || {};
+  const likesUsuario = likesLocales[datosUsuario.handle] || {};
+  return likesUsuario[publicacionId] === true;
+}
 
-  // Cargar contadores globales
+function obtenerContadorLocal(publicacionId) {
   const contadoresGlobales = JSON.parse(
     localStorage.getItem("gnet_contadores_likes") || "{}",
   );
-
-  const publicacion = document.getElementById(publicacionId);
-  if (publicacion) {
-    const botonLike = publicacion.querySelector(".me-gusta");
-    const svgElement = botonLike?.querySelector("svg");
-    const spanContador = botonLike?.querySelector("span");
-
-    if (botonLike && svgElement && spanContador) {
-      // Verificar si este usuario ya dio like
-      const usuarioYaDioLike = likesUsuario[publicacionId] === true;
-
-      if (usuarioYaDioLike) {
-        botonLike.classList.add("liked");
-        svgElement.setAttribute("fill", "currentColor");
-      } else {
-        botonLike.classList.remove("liked");
-        svgElement.setAttribute("fill", "none");
-      }
-
-      // Mostrar contador global
-      const contadorGlobal =
-        contadoresGlobales[publicacionId] ||
-        parseInt(spanContador.textContent) ||
-        0;
-      spanContador.textContent = contadorGlobal;
-    }
-  }
+  return contadoresGlobales[publicacionId] || 0;
 }
 
 // Función para migrar likes del formato antiguo al nuevo (por usuario)
@@ -4108,6 +4840,9 @@ function ocultarSeccionPerfil() {
 
 // Agregar event listeners para ocultar perfil cuando se cambia de sección
 document.addEventListener("DOMContentLoaded", function () {
+  // Cargar el modo guardado al iniciar
+  cargarModoGuardado();
+
   // Botón de inicio
   const btnInicio = document.getElementById("inicio");
   if (btnInicio) {
@@ -4213,7 +4948,7 @@ function debugPublicaciones() {
 function limpiarComentariosGuardados() {
   try {
     localStorage.removeItem(COMENTARIOS_STORAGE_KEY);
-    comentariosPorPublicacion = cargarComentarios();
+    comentariosPorPublicacion = renderizarComentarios();
     console.log("💬 Todos los comentarios han sido limpiados del localStorage");
     return true;
   } catch (error) {
@@ -4672,7 +5407,7 @@ function actualizarComentariosUsuario(nuevoUsername, nuevoHandle) {
   seccionesComentarios.forEach((seccion) => {
     if (seccion.style.display !== "none") {
       const publicacionId = seccion.id.replace("comentarios-", "");
-      cargarComentarios(publicacionId);
+      renderizarComentarios(publicacionId);
     }
   });
 }
@@ -4797,4 +5532,18 @@ async function inicializarBackend() {
       cargarPublicaciones();
     }, 500);
   }
+}
+
+if (typeof window !== "undefined") {
+  window.abrirSelectorImagenes = abrirSelectorImagenes;
+  window.abrirSelectorVideos = abrirSelectorVideos;
+  window.limpiarImagenes = limpiarImagenes;
+  window.verificarEnter = verificarEnter;
+  window.publicarContenido = publicarContenido;
+  window.abrirCreadorEncuesta = abrirCreadorEncuesta;
+  window.cerrarCreadorEncuesta = cerrarCreadorEncuesta;
+  window.AgregarOpcion = AgregarOpcion;
+  window.eliminarOpcion = eliminarOpcion;
+  window.eliminarEncuestaPendiente = eliminarEncuestaPendiente;
+  window.eliminarImagenPorElemento = eliminarImagenPorElemento;
 }

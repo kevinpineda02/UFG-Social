@@ -183,6 +183,20 @@ document.addEventListener("DOMContentLoaded", function () {
           try {
             const token = data.token || data.accessToken || data.jwt;
             if (token) localStorage.setItem("token", token);
+            const credentialId =
+              data.credentialId ??
+              data.user?.credentialId ??
+              data.user?.idCredential;
+            const userId =
+              data.userId ?? data.user?.id ?? data.user?.userId ?? data.id;
+
+            if (credentialId != null) {
+              localStorage.setItem("credentialId", String(credentialId));
+            }
+
+            if (userId != null) {
+              localStorage.setItem("userId", String(userId));
+            }
           } catch (e) {}
           try {
             localStorage.removeItem("requireProfile");
@@ -204,9 +218,9 @@ document.addEventListener("DOMContentLoaded", function () {
       e.preventDefault();
 
       const submitBtn = registroFormElement.querySelector(".btn-primary");
-      const correo = registroFormElement
-        .querySelector('input[name="correo"]')
-        .value.trim();
+      const correoInput = registroFormElement
+        .querySelector('input[name="correo"]');
+      const correo = correoInput.value.trim();
       const contrasena = registroFormElement.querySelector(
         'input[name="contrasena"]',
       ).value;
@@ -216,6 +230,8 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       const registerError =
         registroFormElement.querySelector(".register-error");
+      const emailError =
+        registroFormElement.querySelector(".email-error");
       const confirmPassword = confirmPasswordInput.value;
 
       function clearRegisterError() {
@@ -232,6 +248,28 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
         showMessage(message);
+      }
+
+      function showEmailError(message) {
+        if (emailError) {
+          emailError.textContent = message;
+          emailError.classList.add("is-visible");
+          return;
+        }
+        showMessage(message);
+      }
+
+      function clearEmailError() {
+        if (emailError) {
+          emailError.textContent = "";
+          emailError.classList.remove("is-visible");
+        }
+      }
+
+      if (correoInput) {
+        correoInput.addEventListener("input", clearEmailError, {
+          once: true,
+        });
       }
 
       if (confirmPasswordInput) {
@@ -260,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
-            showMessage(data.message || "Error al registrar la cuenta");
+            showEmailError(data.message || "Este correo ya está en uso");
             if (submitBtn) {
               submitBtn.textContent = originalText;
               submitBtn.style.opacity = "1";
@@ -328,6 +366,29 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  // Cargar imagen predeterminada y convertirla a base64
+  let defaultProfileImageBase64 = null;
+
+  async function loadDefaultProfileImage() {
+    try {
+      const response = await fetch(defaultProfilePreview);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.warn("No se pudo cargar la imagen predeterminada:", err);
+      return null;
+    }
+  }
+
+  loadDefaultProfileImage().then((base64Data) => {
+    defaultProfileImageBase64 = base64Data;
+  });
 
   const recuperarFormElement = recuperarForm.querySelector("form");
   if (recuperarFormElement) {
@@ -480,7 +541,7 @@ document.addEventListener("DOMContentLoaded", function () {
           name,
           username,
           credentialId: credentialId ? Number(credentialId) : null,
-          profilePhoto: profileImageData || null,
+          profilePhoto: profileImageData || defaultProfileImageBase64,
         };
 
         const token = getTokenFromStorageOrCookie();
@@ -524,6 +585,18 @@ document.addEventListener("DOMContentLoaded", function () {
           throw new Error(msg);
         }
         console.log("✓ Éxito: Perfil guardado");
+        
+        // Guardar los datos del usuario en localStorage para que auth.js pueda usarlos
+        try {
+          localStorage.setItem("username", username);
+          localStorage.setItem("avatar", profileImageData || defaultProfileImageBase64 || "");
+          if (data && data.id != null) {
+            localStorage.setItem("userId", String(data.id));
+          }
+          console.log("✓ Datos del usuario guardados en localStorage");
+        } catch (e) {
+          console.warn("No se pudieron guardar datos en localStorage:", e);
+        }
 
         window.location.replace("inicio.html");
       } catch (err) {

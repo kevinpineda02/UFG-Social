@@ -179,11 +179,20 @@ public class PublicationRestController {
         return ResponseEntity.ok(deletedImage);
     }
 
-    @DeleteMapping("{publicationId}")
-    public ResponseEntity<PublicationDtos> deletePublication(@PathVariable Long publicationId, UserEntity userAuthenticate){
+    @DeleteMapping("/{publicationId}/user/{userId}")
+    public ResponseEntity<PublicationDtos> deletePublication(
+            @PathVariable Long publicationId,
+            @PathVariable Long userId) {
 
-        PublicationDtos deletepublication = publicationService.deletePublication(publicationId,userAuthenticate);
+        UserEntity userAuthenticate = new UserEntity();
+        userAuthenticate.setId(userId);
 
-        return ResponseEntity.ok(deletepublication);
+        PublicationDtos deletedPublication =
+                publicationService.deletePublication(publicationId, userAuthenticate);
+
+        return ResponseEntity.ok(deletedPublication);
     }
+
+
+
 }

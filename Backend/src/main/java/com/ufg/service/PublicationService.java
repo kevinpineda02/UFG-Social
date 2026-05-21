@@ -108,39 +108,38 @@ public class PublicationService implements IPublication {
     }
 
     @Override
-    public PublicationDtos deletePublication(Long id, UserEntity userAuthenticate) {
-        PublicationEntity entity = publicationRepository.findById(id).orElse(null);
+    @Transactional
+    public PublicationDtos deletePublication(Long id, UserEntity authenticatedUser) {
+        PublicationEntity publication = publicationRepository.findById(id).orElse(null);
 
-        if (entity == null) {
-            throw new RuntimeException("Publicación no encontrada con id: " + id);
+        if (publication == null) {
+            throw new RuntimeException("Publication not found with id: " + id);
         }
 
-        if (!entity.getUser().getId().equals(userAuthenticate.getId())) {
-            throw new RuntimeException("No tienes permiso para eliminar esta publicación");
+        UserEntity fullUser = userRepository.findById(authenticatedUser.getId()).orElse(null);
+
+        if (fullUser == null) {
+            throw new RuntimeException("Authenticated user not found");
         }
 
-        PublicationDtos publicationDeleted = transformEntity(entity);
+        boolean isOwner = publication.getUser().getId().equals(fullUser.getId());
 
-        publicationRepository.delete(entity);
+        boolean isAdmin = fullUser.getCredential() != null
+                && fullUser.getCredential().getRol() != null
+                && fullUser.getCredential().getRol().name().equalsIgnoreCase("ADMIN");
 
-        return publicationDeleted;
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("You do not have permission to delete this publication");
+        }
+
+        PublicationDtos deletedPublication = transformEntity(publication);
+
+        publicationRepository.delete(publication);
+
+        return deletedPublication;
     }
 
-    @Override
-    public PublicationDtos editPublication(Long id, PublicationDtos dtos){
-        PublicationEntity entity = publicationRepository.findById(id).orElse(null);
 
-        if (entity != null) {
-            entity.setDescription(dtos.getDescription());
-            entity.setVideoUrl(dtos.getVideoUrl());
-
-            PublicationEntity savedEntity = publicationRepository.save(entity);
-
-            return transformEntity(savedEntity);
-        }
-
-        throw new RuntimeException("Publicación no encontrada con id: " + id);
-    }
 
     @Override
     @Transactional

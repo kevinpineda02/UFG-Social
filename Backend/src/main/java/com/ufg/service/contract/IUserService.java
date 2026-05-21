@@ -19,4 +19,6 @@ public interface IUserService {
       //Metodo para lectura de todos los usuarios
       List<UserDtos>  searchUsers();
 
+      //Editar Usuario
+      UserDtos editUser(Long id, UserDtos userDtos);
 }

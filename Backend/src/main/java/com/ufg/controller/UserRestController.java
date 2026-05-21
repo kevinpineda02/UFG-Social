@@ -32,8 +32,19 @@ public class UserRestController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserDtos>> searchUsers(@Valid UserEntity entity){
+    public ResponseEntity<List<UserDtos>> searchUsers(){
         List<UserDtos> dtos = userService.searchUsers();
         return ResponseEntity.ok(dtos);
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserDtos> editUser(
+            @PathVariable Long id,
+            @RequestBody UserDtos userDtos) {
+
+        UserDtos userEdited = userService.editUser(id, userDtos);
+
+        return ResponseEntity.ok(userEdited);
+    }
+
 }

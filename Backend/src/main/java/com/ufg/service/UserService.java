@@ -58,8 +58,6 @@ public class UserService implements IUserService {
         return entity;
     }
 
-
-
     //Crear Usuario
     @Override
     public UserDtos createUser(UserDtos userDtos) {
@@ -97,6 +95,33 @@ public class UserService implements IUserService {
         }
 
         return usersDtos;
+    }
+
+    //Editar información del usuario
+    @Override
+    public UserDtos editUser(Long id, UserDtos userDtos) {
+
+        UserEntity entity = userRepository.findById(id).orElse(null);
+
+        if (entity == null) {
+            throw new RuntimeException("Usuario no encontrado con id: " + id);
+        }
+
+        if (userDtos.getName() != null && !userDtos.getName().isBlank()) {
+            entity.setName(userDtos.getName());
+        }
+
+        if (userDtos.getUsername() != null && !userDtos.getUsername().isBlank()) {
+            entity.setUsername(userDtos.getUsername());
+        }
+
+        if (userDtos.getProfilePhoto() != null && !userDtos.getProfilePhoto().isBlank()) {
+            entity.setProfilePhoto(userDtos.getProfilePhoto());
+        }
+
+        UserEntity savedEntity = userRepository.save(entity);
+
+        return transformEntity(savedEntity);
     }
 
 

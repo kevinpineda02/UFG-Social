@@ -20,12 +20,12 @@ public interface IPublication {
     //Buscar publicaciones de un usuario
     List<PublicationDtos> searchPublicationUser(Long idUser);
 
-    //Leer publicacion de un usuario
-    PublicationDtos editPublication(Long id, PublicationDtos dtos);
 
     //Eliminar Publicacion
     PublicationDtos deletePublication(Long id, UserEntity userAuthenticate);
 
     //Crear Publicacion
     PublicationDtos createPublication(PublicationDtos dtos);
+
+
 }

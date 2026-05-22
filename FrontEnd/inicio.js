@@ -196,6 +196,47 @@ function guardarPerfilLocal(perfil) {
   }
 }
 
+async function actualizarPerfilBackend(nombre, username, profilePhoto) {
+  const userId = getUserIdForApi();
+
+  if (!userId) {
+    console.error("❌ No se pudo obtener userId para actualizar perfil");
+    return null;
+  }
+
+  const body = {
+    name: normalizarTexto(nombre, "Usuario"),
+    username: normalizarTexto(username, "usuario")
+      .replace(/^@/, "")
+      .replace(/\s+/g, ""),
+    profilePhoto: normalizarAvatar(profilePhoto),
+  };
+
+  const response = await fetchConAutenticacion(
+    `${API_ENDPOINTS.usuario}/${userId}`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!response) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    console.error(`Error actualizando perfil: ${response.status}`, errorText);
+    return null;
+  }
+
+  const perfilServidor = await response.json().catch(() => null);
+  return perfilServidor && typeof perfilServidor === "object"
+    ? perfilServidor
+    : body;
+}
+
 function marcarPerfilInicialCompletado() {
   try {
     localStorage.setItem(PERFIL_SETUP_KEY, "1");
@@ -369,12 +410,8 @@ function prepararModalPerfilInicial(datosUsuario) {
     previewAvatar.src = normalizarAvatar(inputAvatar.value);
   };
 
-  inputUsername.oninput = function () {
-    inputHandle.value = normalizarHandle(null, inputUsername.value);
-  };
-
   if (btnGuardar) {
-    btnGuardar.onclick = function () {
+    btnGuardar.onclick = async function () {
       const nombre = inputUsername.value.trim();
       const handle = inputHandle.value.trim();
       const avatar = inputAvatar.value.trim();
@@ -394,10 +431,30 @@ function prepararModalPerfilInicial(datosUsuario) {
 
       const seguidores = normalizarContador(textoSeguidores?.textContent);
       const seguidos = normalizarContador(textoSeguidos?.textContent);
+
+      const perfilServidor = await actualizarPerfilBackend(
+        nombre,
+        handle,
+        avatar,
+      );
+
+      if (!perfilServidor) {
+        mostrarAlertaError(
+          "Error",
+          "No se pudo actualizar el perfil en el servidor",
+        );
+        return;
+      }
+
+      const nombreGuardado = normalizarTexto(perfilServidor.name, nombre);
+      const usernameGuardado = normalizarTexto(perfilServidor.username, handle);
+      const avatarGuardado = normalizarAvatar(
+        perfilServidor.profilePhoto || perfilServidor.avatar || avatar,
+      );
       const perfilGuardado = {
-        username: nombre,
-        handle: normalizarHandle(handle, nombre),
-        avatar: normalizarAvatar(avatar),
+        username: nombreGuardado,
+        handle: normalizarHandle(usernameGuardado, nombreGuardado),
+        avatar: avatarGuardado,
         seguidores,
         seguidos,
         bio: localStorage.getItem("usuario_bio") || "",
@@ -421,6 +478,7 @@ function prepararModalPerfilInicial(datosUsuario) {
           user: perfilGuardado.username,
           username: perfilGuardado.username,
           name: perfilGuardado.username,
+          handle: perfilGuardado.handle,
           profileImage: perfilGuardado.avatar,
           profilePhoto: perfilGuardado.avatar,
           seguidores: perfilGuardado.seguidores,
@@ -732,7 +790,10 @@ async function quitarLikeBackend(publicacionId) {
     const realPublicacionId = extraerIdNumerico(publicacionId);
 
     if (!realPublicacionId) {
-      console.error("❌ publicationId inválido para quitar like:", publicacionId);
+      console.error(
+        "❌ publicationId inválido para quitar like:",
+        publicacionId,
+      );
       return null;
     }
 
@@ -774,7 +835,10 @@ async function verificarLikeBackend(publicacionId) {
     const realPublicacionId = extraerIdNumerico(publicacionId);
 
     if (!realPublicacionId) {
-      console.error("❌ publicationId inválido para verificar like:", publicacionId);
+      console.error(
+        "❌ publicationId inválido para verificar like:",
+        publicacionId,
+      );
       return false;
     }
 
@@ -809,7 +873,10 @@ async function obtenerCantidadLikesBackend(publicacionId) {
     const realPublicacionId = extraerIdNumerico(publicacionId);
 
     if (!realPublicacionId) {
-      console.error("❌ publicationId inválido para contar likes:", publicacionId);
+      console.error(
+        "❌ publicationId inválido para contar likes:",
+        publicacionId,
+      );
       return 0;
     }
 
@@ -917,7 +984,11 @@ async function obtenerComentariosBackend(publicacionId) {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      console.error("Error obteniendo comentarios:", response.status, errorText);
+      console.error(
+        "Error obteniendo comentarios:",
+        response.status,
+        errorText,
+      );
       return [];
     }
 
@@ -978,11 +1049,25 @@ async function eliminarComentarioBackend(commentId) {
   }
 }
 
-// Eliminar publicación (DELETE /publication/{publicationId})
+// Eliminar publicación (DELETE /publication/{publicacionId}/user/{userId})
 async function eliminarPublicacionBackend(publicacionId) {
   try {
+    const userId = getUserIdForApi();
+
+    if (!userId) {
+      console.error("❌ No se pudo obtener userId para eliminar publicación");
+      return false;
+    }
+
+    const realPublicationId = extraerIdNumerico(publicacionId);
+
+    if (!realPublicationId) {
+      console.error("❌ publicationId inválido:", publicacionId);
+      return false;
+    }
+
     const response = await fetch(
-      `${API_ENDPOINTS.publication}/${publicacionId}`,
+      `${API_ENDPOINTS.publication}/${realPublicationId}/user/${userId}`,
       {
         method: "DELETE",
         headers: getAuthHeaders(),
@@ -990,7 +1075,12 @@ async function eliminarPublicacionBackend(publicacionId) {
     );
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text().catch(() => "");
+      console.error(
+        `Error eliminando publicación: ${response.status}`,
+        errorText,
+      );
+      return false;
     }
 
     return true;
@@ -1186,7 +1276,10 @@ function obtenerDatosUsuario() {
   const usuario = getCurrentUser && getCurrentUser();
 
   const usernameBase = normalizarTexto(
-    perfilLocal?.username || usuario?.user || usuario?.name || usuario?.username,
+    perfilLocal?.username ||
+      usuario?.user ||
+      usuario?.name ||
+      usuario?.username,
     "Usuario",
   );
   const handleBase = normalizarHandle(
@@ -1229,7 +1322,10 @@ function obtenerDatosUsuario() {
       username: nombreVisible,
       name: nombreVisible,
       user: nombreVisible,
-      handle: normalizarHandle(usuario.handle || usernameHandle, usernameHandle),
+      handle: normalizarHandle(
+        usuario.handle || usernameHandle,
+        usernameHandle,
+      ),
       avatar:
         usuario.profileImage ||
         usuario.profilePhoto ||
@@ -1584,6 +1680,31 @@ function crearPublicacionDesdeBackend(
       </div>`;
   }
 
+  // Verificar si la publicación es del usuario actual para mostrar menú de opciones
+  const datosUsuario = obtenerDatosUsuario();
+  const esDelUsuarioActual =
+    autor === datosUsuario.username || handle === datosUsuario.handle;
+
+  const menuOpciones = esDelUsuarioActual
+    ? `
+    <div class="menu-opciones">
+      <button class="btn-menu-publicacion" onclick="toggleMenuPublicacion('${pubId}')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+        </svg>
+      </button>
+      <div class="menu-dropdown-publicacion" id="menu-pub-${pubId}">
+        <button class="menu-opcion eliminar" onclick="eliminarPublicacion('${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+          Eliminar publicación
+        </button>
+      </div>
+    </div>
+  `
+    : "";
+
   const htmlPublicacion = `
     <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-pubid="${publicacionData.id}">
       <div class="usuario-info">
@@ -1595,6 +1716,7 @@ function crearPublicacionDesdeBackend(
           <p class="usuario-handle">${handle}</p>
           <p class="tiempo-publicacion">ahora</p>
         </div>
+        ${menuOpciones}
       </div>
       <div class="contenido-publicacion">
         ${description ? `<p>${description}</p>` : ""}
@@ -1613,12 +1735,6 @@ function crearPublicacionDesdeBackend(
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
           </svg>
           <span>${coments}</span>
-        </button>
-        <button class="accion-btn compartir">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-          </svg>
-          <span>0</span>
         </button>
       </div>
       ${generarHTMLComentarios(pubId)}
@@ -1700,7 +1816,10 @@ function mostrarComentariosBackend(publicacionId, comentarios) {
   const publicacion = document.getElementById(publicacionId);
 
   if (!publicacion) {
-    console.warn("No se encontró la publicación para mostrar comentarios:", publicacionId);
+    console.warn(
+      "No se encontró la publicación para mostrar comentarios:",
+      publicacionId,
+    );
     return;
   }
 
@@ -1711,7 +1830,8 @@ function mostrarComentariosBackend(publicacionId, comentarios) {
     return;
   }
 
-  const listaComentarios = seccionComentarios.querySelector(".lista-comentarios");
+  const listaComentarios =
+    seccionComentarios.querySelector(".lista-comentarios");
 
   if (!listaComentarios) {
     console.warn("No se encontró la lista de comentarios:", publicacionId);
@@ -1801,7 +1921,9 @@ async function manejarEliminarComentario(commentId, publicacionId) {
   const publicacion = document.getElementById(publicacionId);
 
   if (publicacion) {
-    const botonComentarios = publicacion.querySelector(".accion-btn.comentarios span");
+    const botonComentarios = publicacion.querySelector(
+      ".accion-btn.comentarios span",
+    );
 
     if (botonComentarios) {
       const cantidadActual = parseInt(botonComentarios.textContent) || 0;
@@ -1922,6 +2044,46 @@ document.addEventListener("DOMContentLoaded", function () {
       accept: selectorImagenes.accept,
       type: selectorImagenes.type,
     });
+  }
+
+  // Configurar auto-resize para el textarea de publicación principal
+  const textareaPublicacion = document.getElementById("texto-publicacion");
+  if (
+    textareaPublicacion &&
+    !textareaPublicacion.hasAttribute("data-autoresize")
+  ) {
+    const ajustarAltura = function () {
+      this.style.height = "60";
+      this.style.height = this.scrollHeight + "px";
+    };
+
+    const actualizarContador = function () {
+      const contador = document.getElementById("contador-texto");
+      if (!contador) return;
+      const texto = this.value || "";
+      const caracteres = texto.length;
+      const lineas = texto === "" ? 1 : texto.split("\n").length;
+      contador.textContent = `${caracteres} caracteres · ${lineas} línea${lineas !== 1 ? "s" : ""}`;
+    };
+
+    const handleInput = function () {
+      ajustarAltura.call(this);
+      actualizarContador.call(this);
+    };
+
+    textareaPublicacion.addEventListener("input", handleInput);
+    textareaPublicacion.addEventListener("change", handleInput);
+    textareaPublicacion.addEventListener("paste", function () {
+      const self = this;
+      setTimeout(function () {
+        handleInput.call(self);
+      }, 0);
+    });
+
+    // Ajustar al cargar si ya tiene contenido
+    ajustarAltura.call(textareaPublicacion);
+    actualizarContador.call(textareaPublicacion);
+    textareaPublicacion.setAttribute("data-autoresize", "true");
   }
 
   //Evento para volver a inicio
@@ -2237,18 +2399,25 @@ function seleccionarVentana(botonSeleccionado) {
     document.querySelector(".titulo-inicio").style.display = "block";
     document.querySelector(".publicaciones").style.display = "block";
     document.querySelector(".seccion-perfil").style.display = "none";
+    document.querySelector(".feed-publicaciones").style.display = "flex";
   } else if (botonId === "btn-marketplace") {
     document.querySelector(".titulo-marketplace").style.display = "block";
     document.querySelector(".publicaciones").style.display = "none";
     document.querySelector(".seccion-perfil").style.display = "none";
+    document.querySelector(".feed-publicaciones").style.display = "none";
+    document.querySelector(".sugerencias").style.display = "none";
   } else if (botonId === "comunidad") {
     document.querySelector(".titulo-comunidad").style.display = "block";
     document.querySelector(".publicaciones").style.display = "none";
     document.querySelector(".seccion-perfil").style.display = "none";
+    document.querySelector(".feed-publicaciones").style.display = "none";
+    document.querySelector(".sugerencias").style.display = "none";
   } else if (botonId === "perfil") {
     document.querySelector(".titulo-perfil").style.display = "block";
     document.querySelector(".publicaciones").style.display = "none";
     document.querySelector(".seccion-perfil").style.display = "block";
+    document.querySelector(".feed-publicaciones").style.display = "none";
+    document.querySelector(".sugerencias").style.display = "none";
   }
 }
 
@@ -2595,8 +2764,8 @@ function showCustomAlert(message, title = "¡Atención!", type = "warning") {
         break;
       default: // warning
         iconSvg.innerHTML = `
-                    <circle cx="12" cy="12" r="12" fill="#FFDE21"/>
-                    <path d="M11 7h2v6h-2V7zm0 8h2v2h-2v-2z" fill="#000"/>
+                    <circle cx="12" cy="12" r="12" fill="#02a2ff"/>
+                    <path d="M11 7h2v6h-2V7zm0 8h2v2h-2v-2z" fill="white"/>
                 `;
         btn.textContent = "Entendido";
         btn.className = "modal-alert-btn";
@@ -2726,7 +2895,13 @@ async function publicarContenido(event) {
 
     if (exito) {
       // Limpiar formulario solo si la publicación fue exitosa
-      document.getElementById("texto-publicacion").value = "";
+      const ta = document.getElementById("texto-publicacion");
+      if (ta) {
+        ta.value = "";
+        ta.style.height = ""; // restablecer a la altura mínima definida en CSS
+        const contador = document.getElementById("contador-texto");
+        if (contador) contador.textContent = "0 caracteres · 1 línea";
+      }
       limpiarImagenes();
       ocultarIndicadorEncuesta();
       encuestaActual = null;
@@ -2844,6 +3019,31 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
       </div>`;
   }
 
+  // Verificar si la publicación es del usuario actual para mostrar menú de opciones
+  const datosUsuarioFront = obtenerDatosUsuario();
+  const esDelUsuarioActualFront =
+    autor === datosUsuarioFront.username || handle === datosUsuarioFront.handle;
+
+  const menuOpcionesFront = esDelUsuarioActualFront
+    ? `
+    <div class="menu-opciones">
+      <button class="btn-menu-publicacion" onclick="toggleMenuPublicacion('${pubId}')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+        </svg>
+      </button>
+      <div class="menu-dropdown-publicacion" id="menu-pub-${pubId}">
+        <button class="menu-opcion eliminar" onclick="eliminarPublicacion('${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+          Eliminar publicación
+        </button>
+      </div>
+    </div>
+  `
+    : "";
+
   const htmlPublicacion = `
     <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-pubid="${publicacionData.id}">
       <div class="usuario-info">
@@ -2853,6 +3053,7 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
           <p class="usuario-handle">${handle}</p>
           <p class="tiempo-publicacion">ahora</p>
         </div>
+        ${menuOpcionesFront}
       </div>
       <div class="contenido-publicacion">
         ${description ? `<p>${description}</p>` : ""}
@@ -2871,12 +3072,6 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
           </svg>
           <span>${publicacionData.coments || 0}</span>
-        </button>
-        <button class="accion-btn compartir">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907..." />
-          </svg>
-          <span>0</span>
         </button>
       </div>
       ${generarHTMLComentarios(pubId)}
@@ -3838,19 +4033,12 @@ function renderizarComentarios(publicacionId) {
                 </div>
                 <div class="comentario-texto">${comentario.texto}</div>
                 <div class="comentario-acciones">
-                    <button class="accion-comentario ${comentario.liked ? "liked" : ""}" 
-                            onclick="toggleLikeComentario('${publicacionId}', '${comentario.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="${comentario.liked ? "currentColor" : "none"}" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-                        </svg>
-                        <span>${comentario.likes}</span>
-                    </button>
-                    <button class="accion-comentario" onclick="responderComentario('${publicacionId}', '${comentario.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
-                        </svg>
-                        Responder
-                    </button>
+                  <button class="accion-comentario" onclick="responderComentario('${publicacionId}', '${comentario.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+                    </svg>
+                    Responder
+                  </button>
                 </div>
             </div>
         </div>
@@ -3991,7 +4179,8 @@ async function eliminarComentario(publicacionId, comentarioId) {
   if (
     backendConectado &&
     usarBackend &&
-    (comentario.backendId || String(comentarioId).startsWith("comment_backend_"))
+    (comentario.backendId ||
+      String(comentarioId).startsWith("comment_backend_"))
   ) {
     const eliminadoBackend = await eliminarComentarioBackend(
       comentario.backendId || comentarioId,
@@ -5100,6 +5289,12 @@ function actualizarFotosPerfilEnPagina(nuevaImagenUrl) {
     avatarSidebar.src = nuevaImagenUrl;
   }
 
+  // Actualizar foto en el compositor de publicaciones
+  const avatarPublicar = document.querySelector(".usuario-header .avatar img");
+  if (avatarPublicar) {
+    avatarPublicar.src = nuevaImagenUrl;
+  }
+
   // Actualizar foto en todas las publicaciones del usuario actual
   const datosUsuario = obtenerDatosUsuario();
   const publicacionesUsuario = document.querySelectorAll(".publicacion");
@@ -5261,15 +5456,14 @@ function cargarDatosPerfilEnInputs() {
 }
 
 // Función para guardar cambios del perfil
-function guardarCambiosPerfil() {
+async function guardarCambiosPerfil() {
   const inputUsername = document.getElementById("input-username");
   const inputHandle = document.getElementById("input-handle");
-  const inputBio = document.getElementById("input-bio");
+  const fotoPerfilPreview = document.getElementById("foto-perfil-preview");
 
   // Validar datos
   const nuevoUsername = inputUsername.value.trim();
   const nuevoHandle = inputHandle.value.trim();
-  const nuevaBio = inputBio.value.trim();
 
   if (!nuevoUsername) {
     mostrarAlertaError("Error", "El nombre de usuario no puede estar vacío");
@@ -5281,46 +5475,64 @@ function guardarCambiosPerfil() {
     return;
   }
 
-  // Formatear handle
-  const handleFormateado = nuevoHandle.startsWith("@")
-    ? nuevoHandle
-    : "@" + nuevoHandle;
-
   // Obtener avatar actual
   const datosActuales = obtenerDatosUsuario();
+  const avatarActual = normalizarAvatar(
+    fotoPerfilPreview?.src || datosActuales.avatar,
+  );
+
+  const perfilServidor = await actualizarPerfilBackend(
+    nuevoUsername,
+    nuevoHandle,
+    avatarActual,
+  );
+
+  if (!perfilServidor) {
+    mostrarAlertaError("Error", "No se pudieron guardar los cambios");
+    return;
+  }
+
+  const nombreGuardado = normalizarTexto(perfilServidor.name, nuevoUsername);
+  const handleGuardado = normalizarHandle(
+    perfilServidor.username || nuevoHandle,
+    nuevoUsername,
+  );
+  const avatarGuardado = normalizarAvatar(
+    perfilServidor.profilePhoto || perfilServidor.avatar || avatarActual,
+  );
 
   // Guardar nuevos datos
   const exito = guardarDatosUsuarioLocales(
-    nuevoUsername,
-    handleFormateado,
-    datosActuales.avatar,
+    nombreGuardado,
+    handleGuardado,
+    avatarGuardado,
     datosActuales.seguidores,
     datosActuales.seguidos,
-    nuevaBio,
+    datosActuales.bio,
   );
 
   if (exito) {
-    // Guardar bio por separado
-    try {
-      localStorage.setItem("usuario_bio", nuevaBio);
-    } catch (error) {
-      console.error("Error al guardar bio:", error);
-    }
-
     // Actualizar toda la interfaz
     actualizarInterfazConNuevosDatos(
-      nuevoUsername,
-      handleFormateado,
-      datosActuales.avatar,
+      nombreGuardado,
+      handleGuardado,
+      avatarGuardado,
       datosActuales.seguidores,
       datosActuales.seguidos,
     );
 
     // Actualizar handle en el input
-    inputHandle.value = handleFormateado.replace("@", "");
+    inputUsername.value = nombreGuardado;
+    inputHandle.value = handleGuardado.replace("@", "");
+    if (fotoPerfilPreview) {
+      fotoPerfilPreview.src = avatarGuardado;
+    }
 
-    // Los datos se sincronizarán automáticamente con el backend
     mostrarAlertaExito("¡éxito!", "Perfil actualizado correctamente");
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 900);
   } else {
     mostrarAlertaError("Error", "No se pudieron guardar los cambios");
   }

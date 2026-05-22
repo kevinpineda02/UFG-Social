@@ -80,7 +80,7 @@
                         </div>
                         <div class="campo-edicion">
                             <label>Handle (@):</label>
-                            <input type="text" id="input-handle" placeholder="tu_handle" readonly>
+                            <input type="text" id="input-handle" placeholder="tu_handle">
                         </div>
                     </div>
                     
@@ -96,8 +96,8 @@
                 <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
             </div>
             <div class="nombre-usuario-perfil">
-                <h3></h3>
-                <p></p>
+                <h3 class="nombre-usuario"></h3>
+                <p class="nombre"></p>
                 <div class="seguidores"><span>Seguidores: <span class="contador-seguidores">0</span></span></div>
             </div>
             <div class="siguiendo"><span>Siguiendo: <span class="contador-seguidos">0</span></span></div>
@@ -136,8 +136,24 @@ Comunidad</button></li>
 
         </div>
 
-        <div class="publicaciones">
-            <!--Avatar de Usuario en la publicacion-->
+        
+        <!-- Contenedor de sugerencias -->
+         <div class="sugerencias">
+            <li style="list-style: none;">
+                <ul>     
+            <div class="usuarios-perfil">
+                <div class="perfil-usuarios">
+                    <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
+                    <span>Nombre de Usuario</span>
+                    <button class="seguir">Seguir</button>
+                </div>
+            </div>
+         </div>
+                </ul>
+            </li>
+
+         <!--Avatar de Usuario en la publicacion-->
+         <div class="publicaciones">
             <div class="usuario-header">
                 <div class="avatar">
                     <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
@@ -145,7 +161,8 @@ Comunidad</button></li>
                 <span class="nombre-usuario"></span>
             </div>
 
-            <input type="text" id="texto-publicacion" placeholder="Que estas pensando?" onkeydown="verificarEnter(event)">
+            <textarea id="texto-publicacion"  placeholder="Que estas pensando?" onkeydown="verificarEnter(event)"></textarea>
+            <div id="contador-texto" class="contador-texto">0 caracteres · 1 línea</div>
             <input type="file" id="selector-imagenes" multiple="multiple" accept="image/*,image/jpeg,image/png,image/gif,image/webp,video/*,video/mp4,video/webm,video/ogg" style="display: none;">
             
             <!-- Contenedor de previsualización de archivos multimedia -->
@@ -460,8 +477,8 @@ Comunidad</button></li>
         <div class="modal-content modal-alert" role="document" onclick="event.stopPropagation()">
             <div id="modal-alert-icon" class="modal-alert-icon" aria-hidden="true">
                 <!-- Icono dinámico que cambia según el tipo -->
-                <svg id="modal-icon-svg" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="12" fill="#1e75d6"/>
+                <svg id="modal-icon-svg" width="68" height="68" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="22" cy="22" r="22" fill="#1e75d6"/>
                     <path d="M11 7h2v6h-2V7zm0 8h2v2h-2v-2z" fill="#000"/>
                 </svg>
             </div>
@@ -486,7 +503,6 @@ Comunidad</button></li>
     </div>
 
         <!-- Script de autenticación (debe cargarse primero) -->
-         <script src="auth.js" defer></script>
         <script src="inicio.js" defer></script>
         </body>
     </html>

@@ -495,16 +495,12 @@ Comunidad</button></li>
     <!-- Modal para imagen expandida -->
     <div id="modal-imagen" class="modal-imagen" style="display: none;" onclick="cerrarModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="btn-cerrar-modal" onclick="cerrarModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
             <img id="imagen-expandida" src="" alt="Imagen expandida" class="imagen-modal">
         </div>
     </div>
 
         <!-- Script de autenticación (debe cargarse primero) -->
+         <script src="auth.js" defer></script>
          <!-- Script principal de la página -->
         <script src="inicio.js" defer></script>
         </body>

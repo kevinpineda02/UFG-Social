@@ -97,21 +97,21 @@ body {
 
 .titulo-seccion {
   position: absolute;
-  left: 50%;
-  top: 45%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  padding-top: 15px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid var(--color-terciario);
+  inset: 0; /* ocupar todo el header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* dejar clics a los botones del header */
 }
 
 .titulo-seccion h2 {
   margin: 0;
   text-align: center;
-  pointer-events: auto; /* permitir selección del texto */
+  pointer-events: auto; /* permitir selección y accesibilidad del título */
   color: var(--color-objetos);
   font-weight: 650;
+  background: transparent;
+  padding: 6px 12px;
   animation: slideInTop 0.6s ease-out 0.3s both;
   transition:
     background-color 0.4s ease,
@@ -154,11 +154,12 @@ body {
   padding: 8px;
   border-radius: 8px;
   display: flex;
-  align-items: center;
-}
-
-.modo:hover {
-  background: var(--color-hoover);
+  position: sticky;
+  top: 92px;
+  align-self: start;
+  left: auto;
+  right: 40px;
+  z-index: 60;
 }
 
 .modo svg {
@@ -199,32 +200,39 @@ body {
 }
 
 .contenido {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px 20px 20px;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(
+      280px,
+      360px
+    );
+  grid-template-areas:
+    "perfil publicaciones sugerencias"
+    "secciones feed sugerencias";
+  gap: 16px;
+  align-items: start;
+  width: min(100%, 1600px);
+  margin: 0 auto;
+  overflow: visible; /* asegurar que sticky funcione en hijos */
+  padding: 92px clamp(16px, 2vw, 24px) 24px;
   animation: fadeInContenido 0.6s ease-out 0.4s both;
 }
 
 .secciones {
   background-color: var(--color-secundario);
-  max-width: 480px;
   width: 100%;
-  padding: 10px;
+  max-width: 300px;
+  padding: 15px 10px;
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   display: flex;
   flex-direction: row;
   gap: 10px;
   position: fixed;
-  left: 30px;
   top: 400px;
-  z-index: 100;
-  padding-top: 15px;
-  padding-bottom: 15px;
-  margin-top: 30px;
+  left: 50px;
+  z-index: 1000;
+  grid-area: secciones;
+  margin-top: 0;
   animation: slideInTop 0.6s ease-out 0.4s both;
   transition:
     background-color 0.4s ease,
@@ -284,16 +292,17 @@ body {
   background-color: var(--color-secundario);
   display: flex;
   position: fixed;
-  right: 30px;
-  top: 100px;
+  top: 92px;
+  right: 20px;
+  align-self: start;
   flex-direction: column;
-  max-width: 480px;
+  max-width: 420px;
   width: 100%;
-  max-height: 83vh;
-  height: 90%;
+  max-height: calc(100vh - 140px);
   padding: 12px;
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
+  grid-area: sugerencias;
   animation: slideInTop 0.6s ease-out 0.3s both;
 }
 
@@ -316,8 +325,8 @@ body {
   border: none;
   color: #fff;
   padding: 8px 35px;
-  position: fixed;
-  right: 35px;
+  position: static;
+  margin-left: auto;
   border-radius: 8px;
   font-size: 0.9rem;
   cursor: pointer;
@@ -340,11 +349,13 @@ body {
 }
 
 .publicaciones {
+  grid-area: publicaciones;
   display: flex;
   flex-direction: column;
-  max-width: 800px;
-  width: 60%;
-  padding: 20px 20px 20px 30px;
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+  padding: 20px;
   background-color: var(--color-secundario);
   border-radius: 10px;
   color: var(--color-objetos);
@@ -354,7 +365,7 @@ body {
     background-color 0.4s ease,
     box-shadow 0.4s ease,
     transform 0.3s ease;
-  margin-top: 15px;
+  margin-top: 0;
 }
 
 .publicaciones .usuario-header {
@@ -373,7 +384,7 @@ body {
 .separador {
   margin: 15px 0;
   height: 1px;
-  max-width: 800px;
+  max-width: none;
   width: 100%;
   background-color: var(--color-objetos);
 }
@@ -408,18 +419,20 @@ body {
 
 /** Feed de Publicaciones - Contenedores separados */
 .feed-publicaciones {
+  grid-area: feed;
   display: flex;
   flex-direction: column;
   gap: 30px;
-  max-width: 800px;
-  width: 60%;
-  margin-top: 20px;
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
 }
 
 .contenedor-publicacion {
   background-color: var(--color-secundario);
   border-radius: 12px;
-  box-shadow: var(--color-sombra) 0px 2px 12px 2px;
+  box-shadow: var(--color-sombra) 0px 2px 8px 2px;
   animation: slideInTop 0.6s ease-out 0.3s both;
   transition:
     background-color 0.4s ease,
@@ -459,8 +472,8 @@ body {
 /** Publicaciones de Usuario - Estilo anterior para compatibilidad */
 .publicaciones-usuario {
   background-color: var(--color-secundario);
-  max-width: 500px;
-  width: 500px;
+  max-width: none;
+  width: 100%;
   padding: 20px;
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
@@ -1149,7 +1162,7 @@ body.modal-open {
 .publicacion .separador {
   margin: 15px 0;
   height: 1px;
-  max-width: 800px;
+  max-width: none;
   width: 100%;
   background-color: var(--color-bordes);
 }
@@ -1157,16 +1170,18 @@ body.modal-open {
 .mi-perfil {
   background-color: var(--color-secundario);
   width: 100%;
-  max-width: 480px;
+  max-width: 300px;
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   position: fixed;
-  left: 30px;
-  top: 100px;
-  z-index: 100;
+  top: 92px;
+  align-self: start;
+  left: 50px;
+  z-index: 60;
+  grid-area: perfil;
   font-size: 1.2rem;
   align-items: center;
   padding-bottom: 70px;
@@ -1212,12 +1227,12 @@ body.modal-open {
 }
 
 .notificaciones {
-  right: 60px;
-  top: 80px;
-  position: fixed;
-  z-index: 100;
-  max-width: 500px;
-  width: 20%;
+  right: auto;
+  top: auto;
+  position: relative;
+  z-index: 1;
+  max-width: none;
+  width: 100%;
   padding: 15px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   border-radius: 10px;
@@ -1554,6 +1569,7 @@ body.modal-open {
   position: relative;
   left: 50px;
   width: 100%;
+  gap: 16px;
 }
 
 /* Estilos para la funcionalidad de subida de imágenes */
@@ -1564,6 +1580,8 @@ body.modal-open {
   padding: 20px;
   margin: 15px 0;
   transition: all 0.3s ease;
+  width: 100%;
+  min-width: 0;
 }
 
 .preview-imagenes:hover {
@@ -1733,6 +1751,7 @@ body.modal-open {
   font-size: 0.85rem;
   color: var(--color-datos);
   text-align: right;
+  width: 100%;
 }
 
 #texto-publicacion:focus {
@@ -2256,6 +2275,7 @@ body.modal-open {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .encuesta-preview-header {
@@ -2313,6 +2333,8 @@ body.modal-open {
   opacity: 0;
   transform: translateY(-10px);
   transition: all 0.3s ease;
+  width: 100%;
+  min-width: 0;
 }
 
 .creador-encuesta.visible {
@@ -2359,6 +2381,7 @@ body.modal-open {
 }
 
 #pregunta-encuesta {
+  grid-row: 1 / span 2;
   background: var(--color-fondo-secundario);
   border: 1px solid var(--color-bordes);
   border-radius: 8px;
@@ -2377,6 +2400,7 @@ body.modal-open {
 .opciones-encuesta {
   display: flex;
   flex-direction: column;
+  grid-row: 1 / span 2;
   gap: 10px;
 }
 
@@ -3218,6 +3242,155 @@ body.modal-open {
       max-width: 100%;
       width: 100%;
     }
+  }
+}
+
+@media (max-width: 1200px) {
+  .contenido {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    grid-template-areas:
+      "perfil publicaciones"
+      "secciones publicaciones"
+      ". feed"
+      "sugerencias sugerencias";
+  }
+
+  .publicaciones,
+  .feed-publicaciones,
+  .contenedor-publicacion,
+  .publicaciones-usuario,
+  .sugerencias,
+  .mi-perfil,
+  .secciones,
+  .notificaciones {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mi-perfil {
+    display: flex;
+  }
+
+  .secciones {
+    left: auto;
+  }
+
+  .notificaciones {
+    right: auto;
+  }
+
+  .publicaciones {
+    padding: 20px;
+  }
+
+  .feed-publicaciones {
+    margin-top: 0;
+  }
+
+  .iconos-container {
+    gap: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contenido {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "perfil"
+      "secciones"
+      "publicaciones"
+      "feed"
+      "sugerencias";
+    padding: 80px 16px 20px;
+    gap: 16px;
+  }
+
+  .mi-perfil,
+  .secciones,
+  .publicaciones,
+  .feed-publicaciones,
+  .sugerencias,
+  .notificaciones,
+  .publicaciones-usuario,
+  .contenedor-publicacion {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mi-perfil,
+  .secciones,
+  .sugerencias,
+  .notificaciones {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+  }
+
+  .secciones {
+    padding: 12px;
+  }
+
+  .publicaciones {
+    padding: 16px;
+  }
+
+  .iconos-container {
+    left: 0;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .creador-encuesta {
+    padding: 15px;
+  }
+
+  .encuesta-header h4 {
+    font-size: 1rem;
+  }
+
+  .opcion-input {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 15px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-grow: 1 !important;
+  }
+
+  .btn-eliminar-opcion {
+    display: flex-end !important;
+    align-self: flex-end;
+  }
+
+  .encuesta-configuracion {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lista-preview-imagenes {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+
+  .preview-imagen img {
+    height: 70px;
+  }
+
+  .preview-imagenes {
+    padding: 15px;
+  }
+
+  .preview-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .preview-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
   }
 }
 

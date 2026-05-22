@@ -227,8 +227,8 @@ body {
   display: flex;
   flex-direction: row;
   gap: 10px;
-  position: relative;
-  right: 10px;  
+  top: 370px;
+  position: absolute; 
   z-index: 1000;
   grid-area: secciones;
   margin-top: 0;
@@ -236,8 +236,7 @@ body {
   transition:
     background-color 0.4s ease,
     box-shadow 0.4s ease,
-    transform 0.3s ease;
-}
+    transform 0.3s ease;}
 
 .secciones svg {
   width: 24px;
@@ -293,9 +292,8 @@ body {
   position: relative;
   align-self: start;
   flex-direction: column;
-  max-width: 420px;
+  max-width: 400px;
   margin-left: 10px;
-  width: 100%;
   max-height: calc(100vh - 140px);
   padding: 12px;
   border-radius: 10px;
@@ -1176,7 +1174,6 @@ body.modal-open {
   gap: 6px;
   position: relative;
   align-self: start;
-  right: 10px;
   z-index: 60;
   grid-area: perfil;
   font-size: 1.2rem;
@@ -3544,18 +3541,18 @@ body.modal-open {
 /* ==================== ESTILOS DE SECCIÓN DE PERFIL ==================== */
 
 /* Contenedor principal de la sección de perfil */
-.seccion-perfil {
-  max-width: 900px;
+  .seccion-perfil {
+  max-width: 700px;
   width: 100%;
   padding: 30px;
-  position: relative;
-  margin: 10px auto;
-  left: 50px;
+  position: absolute !important;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   background: var(--color-secundario);
   border-radius: 12px;
-  margin-top: 20px;
+  grid-column: 2 / -1;
+  grid-row: 1 / span 2;
 }
+
 
 /* Header del perfil con foto e información */
 .perfil-header {

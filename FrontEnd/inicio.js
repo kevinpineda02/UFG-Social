@@ -2088,21 +2088,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
   //Evento para volver a inicio
   document.getElementById("inicio").addEventListener("click", function () {
-    document.querySelector(".mi-perfil").style.display = "flex";
-    document.querySelector(".notificaciones").style.display = "flex";
-    document.querySelector(".publicaciones").style.display = "flex";
-    document.querySelector(".publicacion").style.display = "block";
-    document.querySelectorAll(".feed-publicaciones").forEach((element) => {
-      element.style.display = "block";
+    const miPerfil = document.querySelector(".mi-perfil");
+    const sugerencias = document.querySelector(".sugerencias");
+    const publicaciones = document.querySelector(".publicaciones");
+    const publicacionesIndividuales = document.querySelectorAll(".publicacion");
+    const feedPublicaciones = document.querySelectorAll(".feed-publicaciones");
+
+    if (miPerfil) miPerfil.style.display = "flex";
+    if (sugerencias) sugerencias.style.display = "flex";
+    if (publicaciones) publicaciones.style.display = "flex";
+    publicacionesIndividuales.forEach((element) => {
+      element.style.display = "flex";
+    });
+    feedPublicaciones.forEach((element) => {
+      element.style.display = "flex";
     });
     document.querySelectorAll(".contenedor-publicacion").forEach((element) => {
-      element.style.display = "block";
+      element.style.display = "flex";
     });
-    document.querySelector(".marketplace").style.display = "none";
-    document.querySelector(".titulo-comunidad").style.display = "none";
-    document.querySelector(".titulo-marketplace").style.display = "none";
-    document.querySelector(".titulo-perfil").style.display = "none";
-    document.querySelector(".titulo-inicio").style.display = "block";
+    const marketplace = document.querySelector(".marketplace");
+    const tituloComunidad = document.querySelector(".titulo-comunidad");
+    const tituloMarketplace = document.querySelector(".titulo-marketplace");
+    const tituloPerfil = document.querySelector(".titulo-perfil");
+    const tituloInicio = document.querySelector(".titulo-inicio");
+
+    if (marketplace) marketplace.style.display = "none";
+    if (tituloComunidad) tituloComunidad.style.display = "none";
+    if (tituloMarketplace) tituloMarketplace.style.display = "none";
+    if (tituloPerfil) tituloPerfil.style.display = "none";
+    if (tituloInicio) tituloInicio.style.display = "flex";
   });
 
   // Evitar que el modal se cierre al hacer click en la imagen
@@ -2372,7 +2386,6 @@ function seleccionarVentana(botonSeleccionado) {
   botonesSidebar.forEach((boton) => {
     boton.classList.remove("active");
     // Pequeña animación de salida
-    boton.style.transform = "translateY(-5px)";
     setTimeout(() => {
       boton.style.transform = "translateY(0)";
     }, 150);
@@ -2394,30 +2407,38 @@ function seleccionarVentana(botonSeleccionado) {
   document.querySelector(".titulo-comunidad").style.display = "none";
   document.querySelector(".titulo-perfil").style.display = "none";
 
+  const seccionPerfil =
+    document.querySelector(".seccion-perfil") ||
+    document.querySelector(".mi-perfil");
+  const publicaciones = document.querySelector(".publicaciones");
+  const feedPublicaciones = document.querySelector(".feed-publicaciones");
+  const sugerencias = document.querySelector(".sugerencias");
+
   // Cambiar vista según el botón seleccionado
   if (botonId === "inicio") {
     document.querySelector(".titulo-inicio").style.display = "block";
-    document.querySelector(".publicaciones").style.display = "block";
-    document.querySelector(".seccion-perfil").style.display = "none";
-    document.querySelector(".feed-publicaciones").style.display = "flex";
+    if (publicaciones) publicaciones.style.display = "flex";
+    if (seccionPerfil) seccionPerfil.style.display = "none";
+    if (feedPublicaciones) feedPublicaciones.style.display = "flex";
+    if (sugerencias) sugerencias.style.display = "flex";
   } else if (botonId === "btn-marketplace") {
-    document.querySelector(".titulo-marketplace").style.display = "block";
-    document.querySelector(".publicaciones").style.display = "none";
-    document.querySelector(".seccion-perfil").style.display = "none";
-    document.querySelector(".feed-publicaciones").style.display = "none";
-    document.querySelector(".sugerencias").style.display = "none";
+    document.querySelector(".titulo-marketplace").style.display = "flex";
+    if (publicaciones) publicaciones.style.display = "none";
+    if (seccionPerfil) seccionPerfil.style.display = "none";
+    if (feedPublicaciones) feedPublicaciones.style.display = "none";
+    if (sugerencias) sugerencias.style.display = "none";
   } else if (botonId === "comunidad") {
-    document.querySelector(".titulo-comunidad").style.display = "block";
-    document.querySelector(".publicaciones").style.display = "none";
-    document.querySelector(".seccion-perfil").style.display = "none";
-    document.querySelector(".feed-publicaciones").style.display = "none";
-    document.querySelector(".sugerencias").style.display = "none";
+    document.querySelector(".titulo-comunidad").style.display = "flex";
+    if (publicaciones) publicaciones.style.display = "none";
+    if (seccionPerfil) seccionPerfil.style.display = "none";
+    if (feedPublicaciones) feedPublicaciones.style.display = "none";
+    if (sugerencias) sugerencias.style.display = "none";
   } else if (botonId === "perfil") {
-    document.querySelector(".titulo-perfil").style.display = "block";
-    document.querySelector(".publicaciones").style.display = "none";
-    document.querySelector(".seccion-perfil").style.display = "block";
-    document.querySelector(".feed-publicaciones").style.display = "none";
-    document.querySelector(".sugerencias").style.display = "none";
+    document.querySelector(".titulo-perfil").style.display = "flex";
+    if (publicaciones) publicaciones.style.display = "none";
+    if (seccionPerfil) seccionPerfil.style.display = "block";
+    if (feedPublicaciones) feedPublicaciones.style.display = "none";
+    if (sugerencias) sugerencias.style.display = "none";
   }
 }
 

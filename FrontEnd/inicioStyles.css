@@ -1170,6 +1170,7 @@ body.modal-open {
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   display: flex;
+  margin-right: 8px;
   flex-direction: column;
   gap: 6px;
   position: relative;
@@ -3545,7 +3546,8 @@ body.modal-open {
   max-width: 700px;
   width: 100%;
   padding: 30px;
-  position: absolute !important;
+  margin-left: 50px;
+  position: relative !important;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   background: var(--color-secundario);
   border-radius: 12px;

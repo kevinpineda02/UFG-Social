@@ -2094,17 +2094,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const publicacionesIndividuales = document.querySelectorAll(".publicacion");
     const feedPublicaciones = document.querySelectorAll(".feed-publicaciones");
 
-    if (miPerfil) miPerfil.style.display = "flex";
-    if (sugerencias) sugerencias.style.display = "flex";
-    if (publicaciones) publicaciones.style.display = "flex";
+    if (miPerfil) miPerfil.style.display = "";
+    if (sugerencias) sugerencias.style.display = "";
+    if (publicaciones) publicaciones.style.display = "";
     publicacionesIndividuales.forEach((element) => {
-      element.style.display = "flex";
+      element.style.display = "";
     });
     feedPublicaciones.forEach((element) => {
-      element.style.display = "flex";
+      element.style.display = "";
     });
     document.querySelectorAll(".contenedor-publicacion").forEach((element) => {
-      element.style.display = "flex";
+      element.style.display = "";
     });
     const marketplace = document.querySelector(".marketplace");
     const tituloComunidad = document.querySelector(".titulo-comunidad");
@@ -2116,7 +2116,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (tituloComunidad) tituloComunidad.style.display = "none";
     if (tituloMarketplace) tituloMarketplace.style.display = "none";
     if (tituloPerfil) tituloPerfil.style.display = "none";
-    if (tituloInicio) tituloInicio.style.display = "flex";
+    if (tituloInicio) tituloInicio.style.display = "";
   });
 
   // Evitar que el modal se cierre al hacer click en la imagen
@@ -2416,25 +2416,29 @@ function seleccionarVentana(botonSeleccionado) {
 
   // Cambiar vista según el botón seleccionado
   if (botonId === "inicio") {
-    document.querySelector(".titulo-inicio").style.display = "block";
-    if (publicaciones) publicaciones.style.display = "flex";
+    const tituloInicio = document.querySelector(".titulo-inicio");
+    if (tituloInicio) tituloInicio.style.display = ""; // permitir que CSS determine display
+    if (publicaciones) publicaciones.style.display = "";
     if (seccionPerfil) seccionPerfil.style.display = "none";
-    if (feedPublicaciones) feedPublicaciones.style.display = "flex";
-    if (sugerencias) sugerencias.style.display = "flex";
+    if (feedPublicaciones) feedPublicaciones.style.display = "";
+    if (sugerencias) sugerencias.style.display = "";
   } else if (botonId === "btn-marketplace") {
-    document.querySelector(".titulo-marketplace").style.display = "flex";
+    const tituloMarketplace = document.querySelector(".titulo-marketplace");
+    if (tituloMarketplace) tituloMarketplace.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
   } else if (botonId === "comunidad") {
-    document.querySelector(".titulo-comunidad").style.display = "flex";
+    const tituloComunidad = document.querySelector(".titulo-comunidad");
+    if (tituloComunidad) tituloComunidad.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
   } else if (botonId === "perfil") {
-    document.querySelector(".titulo-perfil").style.display = "flex";
+    const tituloPerfil = document.querySelector(".titulo-perfil");
+    if (tituloPerfil) tituloPerfil.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "block";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";

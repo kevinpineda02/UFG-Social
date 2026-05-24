@@ -62,6 +62,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.DELETE, "/publication/**").authenticated()
                                 .requestMatchers(HttpMethod.PATCH, "/publication/**").authenticated()
                                 .requestMatchers(HttpMethod.PATCH, "/user/**").authenticated()
+                                .requestMatchers("/follow/**").authenticated()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManager ->

@@ -124,5 +124,19 @@ public class UserService implements IUserService {
         return transformEntity(savedEntity);
     }
 
+    @Override
+    public List<UserDtos> getSuggestions(Long userId) {
+
+        List<UserEntity> entities = userRepository.findSuggestions(userId);
+
+        List<UserDtos> usersDtos = new ArrayList<>();
+
+        for (UserEntity user : entities) {
+            usersDtos.add(transformEntity(user));
+        }
+
+        return usersDtos;
+    }
+
 
 }

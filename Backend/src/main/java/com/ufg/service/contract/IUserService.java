@@ -21,4 +21,7 @@ public interface IUserService {
 
       //Editar Usuario
       UserDtos editUser(Long id, UserDtos userDtos);
+
+//Sugerencias
+    List<UserDtos> getSuggestions(Long userId);
 }

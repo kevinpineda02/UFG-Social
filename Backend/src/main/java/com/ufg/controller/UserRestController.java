@@ -1,7 +1,5 @@
 package com.ufg.controller;
 
-
-import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.UserDtos;
 import com.ufg.service.UserService;
 import jakarta.validation.Valid;
@@ -26,7 +24,7 @@ public class UserRestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDtos> UserById(@Valid @PathVariable Long id){
+    public ResponseEntity<UserDtos> UserById(@PathVariable Long id){
         UserDtos userDtos = userService.searchUserId(id);
         return ResponseEntity.ok(userDtos);
     }
@@ -47,4 +45,9 @@ public class UserRestController {
         return ResponseEntity.ok(userEdited);
     }
 
+    @GetMapping("/suggestions/{userId}")
+    public ResponseEntity<List<UserDtos>> getSuggestions(@PathVariable Long userId) {
+        List<UserDtos> suggestions = userService.getSuggestions(userId);
+        return ResponseEntity.ok(suggestions);
+    }
 }

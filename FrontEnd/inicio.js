@@ -156,13 +156,57 @@ function obtenerIdPublicacionReal(desde) {
 }
 
 function obtenerClaveComentariosPublicacion(publicacionId) {
-  const publicacion = document.getElementById(publicacionId);
+  const publicacion = obtenerPublicacionElemento(publicacionId);
   return String(
     publicacion?.dataset?.publicationId ||
       publicacion?.dataset?.pubid ||
       obtenerIdPublicacionReal(publicacionId) ||
       publicacionId,
   );
+}
+
+function esElementoVisible(elemento) {
+  if (!elemento) return false;
+  const estilos = window.getComputedStyle(elemento);
+  if (estilos.display === "none" || estilos.visibility === "hidden") {
+    return false;
+  }
+  return elemento.getClientRects().length > 0;
+}
+
+function obtenerPublicacionElemento(publicacionId, referencia = null) {
+  if (referencia && referencia.classList?.contains("publicacion")) {
+    return referencia;
+  }
+
+  const idTexto = String(publicacionId || "");
+  const candidatasId = Array.from(
+    document.querySelectorAll(`.publicacion[id="${idTexto}"]`),
+  );
+  const realId = extraerIdNumerico(idTexto);
+  const candidatasData = realId
+    ? Array.from(
+        document.querySelectorAll(
+          `.publicacion[data-publication-id="${realId}"], .publicacion[data-pubid="${realId}"]`,
+        ),
+      )
+    : [];
+
+  const candidatas = [...new Set([...candidatasId, ...candidatasData])];
+  if (candidatas.length === 0) {
+    return null;
+  }
+
+  const visiblePerfil = candidatas.find((pub) => {
+    const contenedorPerfil = pub.closest(".feed-mis-publicaciones");
+    return contenedorPerfil && esElementoVisible(pub) && esElementoVisible(contenedorPerfil);
+  });
+  if (visiblePerfil) {
+    return visiblePerfil;
+  }
+
+  const visible = candidatas.find((pub) => esElementoVisible(pub));
+  return visible || candidatas[0];
 }
 
 function normalizarComentarioBackend(comentario) {
@@ -1832,88 +1876,106 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
     </div>`;
 }
 
-function renderizarComentariosPublicacion(contenedor, comentarios) {
-  if (!contenedor) return;
-
-  contenedor.innerHTML = "";
-
-  if (!comentarios || comentarios.length === 0) {
-    contenedor.innerHTML = `
-      <p class="sin-comentarios">No hay comentarios todavía.</p>
-    `;
-    return;
-  }
-
-  comentarios.forEach((comment) => {
-    const item = document.createElement("div");
-    item.className = "comentario-item";
-
-    item.innerHTML = `
-      <img
-        src="${comment.profilePhoto || comment.avatar || "./assets/Logo/UFGPerfil.jpg"}"
-        class="avatar-comentario"
-        alt="Avatar de ${comment.user || comment.autor || "Usuario"}"
-      >
-
-      <div class="contenido-comentario">
-        <div class="header-comentario">
-          <strong>${comment.user || comment.autor || "Usuario"}</strong>
-          <span>@${comment.username || (comment.handle ? String(comment.handle).replace("@", "") : "usuario")}</span>
-          <small>${tiempoTranscurrido(comment.creationDate || comment.fecha || new Date())}</small>
-        </div>
-
-        <p>${comment.comment || comment.texto || ""}</p>
-      </div>
-    `;
-
-    contenedor.appendChild(item);
-  });
-}
-
 function renderizarPublicacionMiPerfil(publication) {
-  return `<div class="contenedor-publicacion">${construirHTMLPublicacionBackend(
-    publication,
-    {
+  return `<div class="contenedor-publicacion">
+    ${construirHTMLPublicacionBackend(publication, {
       forzarMenuEdicion: true,
       modoPerfil: true,
-    },
-  )}</div>`;
+    })}
+  </div>`;
 }
 
 async function cargarPublicacionesMiPerfil() {
-  const contenedor = obtenerContenedorMisPublicaciones();
+  const userId = getUserIdForApi();
 
-  if (!contenedor) {
-    console.error("No existe el contenedor .feed-mis-publicaciones");
+  if (!userId) {
+    console.error("No se pudo obtener userId");
     return;
   }
 
-  if (typeof inicializarComentarios === "function") {
-    inicializarComentarios();
+  const contenedor = obtenerContenedorMisPublicaciones();
+
+  if (!contenedor) {
+    console.error("No existe el contenedor de publicaciones de perfil");
+    return;
   }
 
   contenedor.innerHTML = "";
 
-  const publicaciones = await obtenerMisPublicaciones();
-  publicaciones.sort(
-    (a, b) => obtenerTimestampPublicacion(b) - obtenerTimestampPublicacion(a),
+  const response = await fetchConAutenticacion(
+    `${API_ENDPOINTS.publication}/user/${userId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
   );
 
-  if (publicaciones.length === 0) {
+  if (!response || !response.ok) {
+    const errorText = response ? await response.text().catch(() => "") : "";
+    console.error(
+      "Error cargando publicaciones de Mi Perfil:",
+      response ? response.status : "sin respuesta",
+      errorText,
+    );
+    contenedor.innerHTML = "<p>No se pudieron cargar tus publicaciones.</p>";
+    return;
+  }
+
+  const publicaciones = await response.json();
+
+  if (!Array.isArray(publicaciones) || publicaciones.length === 0) {
     contenedor.innerHTML = "<p>No has publicado nada todavía.</p>";
     return;
   }
+
+  publicaciones.sort((a, b) => {
+    const fechaA = new Date(a.creationDate || 0).getTime();
+    const fechaB = new Date(b.creationDate || 0).getTime();
+    return fechaB - fechaA;
+  });
 
   contenedor.innerHTML = publicaciones
     .map((publication) => renderizarPublicacionMiPerfil(publication))
     .join("");
 
   contenedor.querySelectorAll(".contenedor-publicacion").forEach((nodo) => {
-    reinicializarEventosPublicacion(nodo);
+    if (typeof reinicializarEventosPublicacion === "function") {
+      reinicializarEventosPublicacion(nodo);
+    }
+
     const pubElement = nodo.querySelector(".publicacion");
-    if (pubElement?.id) {
-      inicializarLikePublicacion(pubElement.id);
-      actualizarContadorComentarios(pubElement.id);
+
+    if (pubElement && pubElement.id) {
+      const botonComentarios = pubElement.querySelector(".accion-btn.comentarios");
+      if (botonComentarios) {
+        botonComentarios.onclick = () =>
+          alternarComentarios(pubElement.id, pubElement);
+      }
+
+      const botonMenu = pubElement.querySelector(".btn-menu-publicacion");
+      if (botonMenu) {
+        botonMenu.onclick = () => toggleMenuPublicacion(pubElement.id, pubElement);
+      }
+
+      const botonEliminar = pubElement.querySelector(
+        ".menu-dropdown-publicacion .menu-opcion.eliminar",
+      );
+      if (botonEliminar) {
+        botonEliminar.onclick = () =>
+          eliminarPublicacionPerfil(
+            pubElement.dataset.publicationId || pubElement.dataset.pubid,
+            pubElement.id,
+            pubElement,
+          );
+      }
+
+      if (typeof inicializarLikePublicacion === "function") {
+        inicializarLikePublicacion(pubElement.id);
+      }
+
+      if (typeof actualizarContadorComentarios === "function") {
+        actualizarContadorComentarios(pubElement.id, pubElement);
+      }
     }
   });
 }
@@ -5164,9 +5226,16 @@ function inicializarComentarios() {
 }
 
 // Función para alternar la visibilidad de los comentarios
-async function toggleComentarios(publicacionId) {
-  const seccionComentarios = document.getElementById(
-    `comentarios-${publicacionId}`,
+async function toggleComentarios(publicacionId, publicacionRef = null) {
+  const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
+  if (!publicacion) {
+    console.warn("Publicación no encontrada para comentarios:", publicacionId);
+    return;
+  }
+
+  const domPublicacionId = publicacion.id || String(publicacionId);
+  const seccionComentarios = publicacion.querySelector(
+    `#comentarios-${domPublicacionId}`,
   );
 
   if (!seccionComentarios) {
@@ -5197,11 +5266,12 @@ async function toggleComentarios(publicacionId) {
     }
 
     // Si está conectado al backend, cargar comentarios desde allá
-    const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
+    const realPublicationId = obtenerIdPublicacionReal(publicacion);
+    const claveComentarios =
+      obtenerClaveComentariosPublicacion(domPublicacionId);
 
-    if (backendConectado && usarBackend && !seccionComentarios.dataset.loaded) {
-      const backendComments =
-        await obtenerComentariosPublicacion(claveComentarios);
+    if (backendConectado && usarBackend) {
+      const backendComments = await obtenerComentariosBackend(realPublicationId);
       if (backendComments.length > 0) {
         // Protección adicional: asegurar que comentariosPorPublicacion esté inicializado
         if (
@@ -5253,10 +5323,10 @@ async function toggleComentarios(publicacionId) {
         );
         guardarComentarios();
       }
-      seccionComentarios.dataset.loaded = "true";
     }
 
-    renderizarComentarios(publicacionId);
+    renderizarComentarios(domPublicacionId, publicacion);
+    actualizarContadorComentarios(domPublicacionId, publicacion);
   } else {
     seccionComentarios.style.display = "none";
   }
@@ -5333,13 +5403,20 @@ async function publicarComentario(publicacionId) {
     comentariosPorPublicacion = {};
   }
 
-  const campoComentario = document.getElementById(
-    `campo-comentario-${publicacionId}`,
+  const publicacion = obtenerPublicacionElemento(publicacionId);
+  if (!publicacion) {
+    console.error("❌ Publicación no encontrada para comentar:", publicacionId);
+    return;
+  }
+
+  const domPublicacionId = publicacion.id || String(publicacionId);
+  const campoComentario = publicacion.querySelector(
+    `#campo-comentario-${domPublicacionId}`,
   );
   if (!campoComentario) {
     console.error(
       "❌ Campo de comentario no encontrado:",
-      `campo-comentario-${publicacionId}`,
+      `campo-comentario-${domPublicacionId}`,
     );
     return;
   }
@@ -5354,11 +5431,11 @@ async function publicarComentario(publicacionId) {
   }
 
   let comentarioBackend = null;
-  const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
+  const claveComentarios = obtenerClaveComentariosPublicacion(domPublicacionId);
 
   // Si el backend está conectado, enviar comentario al backend
   if (backendConectado && usarBackend) {
-    const realPubId = obtenerIdPublicacionReal(publicacionId);
+    const realPubId = obtenerIdPublicacionReal(publicacion);
     comentarioBackend = await agregarComentarioBackend(
       realPubId || publicacionId,
       textoComentario,
@@ -5414,8 +5491,8 @@ async function publicarComentario(publicacionId) {
   campoComentario.style.height = "auto";
 
   // Asegurar que la sección de comentarios esté visible
-  const seccionComentarios = document.getElementById(
-    `comentarios-${publicacionId}`,
+  const seccionComentarios = publicacion.querySelector(
+    `#comentarios-${domPublicacionId}`,
   );
   if (seccionComentarios && seccionComentarios.style.display === "none") {
     seccionComentarios.style.display = "block";
@@ -5423,10 +5500,10 @@ async function publicarComentario(publicacionId) {
   }
 
   // Actualizar contador en el botón
-  actualizarContadorComentarios(publicacionId);
+  actualizarContadorComentarios(domPublicacionId, publicacion);
 
   // Recargar comentarios en la UI
-  renderizarComentarios(publicacionId);
+  renderizarComentarios(domPublicacionId, publicacion);
 
   console.log("💬 Comentario publicado y guardado:", nuevoComentario);
 }
@@ -5511,7 +5588,7 @@ function cancelarComentario(publicacionId) {
 }
 
 // Función para cargar comentarios
-function renderizarComentarios(publicacionId) {
+function renderizarComentarios(publicacionId, publicacionRef = null) {
   console.log("🔄 Cargando comentarios para:", publicacionId);
 
   // Protección: inicializar si es undefined
@@ -5522,10 +5599,19 @@ function renderizarComentarios(publicacionId) {
     comentariosPorPublicacion = cargarComentariosDelStorage();
   }
 
-  const listaComentarios = document.getElementById(
-    `lista-comentarios-${publicacionId}`,
+  const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
+  if (!publicacion) {
+    console.error("❌ Publicación no encontrada para:", publicacionId);
+    return;
+  }
+
+  const domPublicacionId = publicacion.id || String(publicacionId);
+  const listaComentarios = publicacion.querySelector(
+    `#lista-comentarios-${domPublicacionId}`,
   );
-  const contadorComentarios = document.getElementById(`count-${publicacionId}`);
+  const contadorComentarios = publicacion.querySelector(
+    `#count-${domPublicacionId}`,
+  );
 
   console.log("🎯 Elementos encontrados:", {
     listaComentarios: listaComentarios ? "Sí" : "NO",
@@ -5537,7 +5623,7 @@ function renderizarComentarios(publicacionId) {
     return;
   }
 
-  const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
+  const claveComentarios = obtenerClaveComentariosPublicacion(domPublicacionId);
   const comentarios = comentariosPorPublicacion[claveComentarios] || [];
   console.log("📊 Comentarios a mostrar:", comentarios.length);
 
@@ -5586,7 +5672,7 @@ function renderizarComentarios(publicacionId) {
                                 </svg>
                             </button>
                             <div class="menu-dropdown" id="menu-${comentario.id}">
-                                <button class="menu-opcion eliminar" onclick="eliminarComentario('${publicacionId}', '${comentario.id}')">
+                                <button class="menu-opcion eliminar" onclick="eliminarComentario('${domPublicacionId}', '${comentario.id}')">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                     </svg>
@@ -5600,7 +5686,7 @@ function renderizarComentarios(publicacionId) {
                 </div>
                 <div class="comentario-texto">${comentario.texto}</div>
                 <div class="comentario-acciones">
-                  <button class="accion-comentario" onclick="responderComentario('${publicacionId}', '${comentario.id}')">
+                  <button class="accion-comentario" onclick="responderComentario('${domPublicacionId}', '${comentario.id}')">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
                     </svg>
@@ -5678,33 +5764,19 @@ function responderComentario(publicacionId, comentarioId) {
 }
 
 // Función para actualizar contador de comentarios en el botón
-function actualizarContadorComentarios(publicacionId) {
-  // Buscar el botón de comentarios por diferentes métodos
-  let botonComentarios = document.querySelector(
-    `[data-publicacion="${publicacionId}"][data-accion="comentar"]`,
-  );
+function actualizarContadorComentarios(publicacionId, publicacionRef = null) {
+  const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
+  if (!publicacion) return;
 
-  if (!botonComentarios) {
-    // Buscar por onclick que contenga alternarComentarios
-    botonComentarios = document.querySelector(
-      `[onclick*="alternarComentarios('${publicacionId}')"]`,
-    );
-  }
-
-  if (!botonComentarios) {
-    // Buscar en la publicación específica
-    const publicacion = document.getElementById(publicacionId);
-    if (publicacion) {
-      botonComentarios = publicacion.querySelector(".comentarios");
-    }
-  }
+  const domPublicacionId = publicacion.id || String(publicacionId);
+  const botonComentarios = publicacion.querySelector(".comentarios");
 
   if (!botonComentarios) return;
 
   const contador = botonComentarios.querySelector("span");
   const numeroComentarios = (
     comentariosPorPublicacion[
-      obtenerClaveComentariosPublicacion(publicacionId)
+      obtenerClaveComentariosPublicacion(domPublicacionId)
     ] || []
   ).length;
 
@@ -5746,9 +5818,21 @@ function toggleMenuComentario(comentarioId) {
 
 // Función para eliminar comentario
 async function eliminarComentario(publicacionId, comentarioId) {
-  const comentarios = comentariosPorPublicacion[publicacionId];
+  const publicacion = obtenerPublicacionElemento(publicacionId);
+  const domPublicacionId = publicacion?.id || String(publicacionId);
+  const claveComentarios = obtenerClaveComentariosPublicacion(domPublicacionId);
+  const comentarios = comentariosPorPublicacion[claveComentarios];
   if (!comentarios) return;
-  const comentario = comentarios.find((c) => c.id === comentarioId);
+
+  const comentario = comentarios.find((c) => {
+    const idComentario = extraerIdNumerico(c.backendId || c.id || c.commentId);
+    const idClick = extraerIdNumerico(comentarioId);
+    return (
+      c.id === comentarioId ||
+      String(c.backendId) === String(comentarioId) ||
+      (idClick && idComentario === idClick)
+    );
+  });
   if (!comentario) return;
 
   // Si está conectado al backend y el comentario existe allá, eliminar allá
@@ -5769,19 +5853,22 @@ async function eliminarComentario(publicacionId, comentarioId) {
   }
 
   // Animar eliminación inmediatamente
-  const elementoComentario = document.getElementById(comentarioId);
+  const elementoComentario = (publicacion || document).querySelector(
+    `#${comentarioId}`,
+  );
   if (elementoComentario) {
     elementoComentario.style.transition = "all 0.3s ease";
     elementoComentario.style.opacity = "0";
     elementoComentario.style.transform = "translateX(-20px)";
 
     setTimeout(() => {
-      const index = comentarios.findIndex((c) => c.id === comentarioId);
+      const index = comentarios.findIndex((c) => c.id === comentario.id);
       if (index !== -1) {
         comentarios.splice(index, 1);
+        comentariosPorPublicacion[claveComentarios] = comentarios;
         guardarComentarios();
-        actualizarContadorComentarios(publicacionId);
-        renderizarComentarios(publicacionId);
+        actualizarContadorComentarios(domPublicacionId, publicacion);
+        renderizarComentarios(domPublicacionId, publicacion);
       }
     }, 300);
   }
@@ -6194,56 +6281,68 @@ document.addEventListener("DOMContentLoaded", function () {
 // ==================== FunciónONES DE MENú DE PUBLICACIONES ====================
 
 // Función para alternar menú de publicación
-function toggleMenuPublicacion(publicacionId) {
+function toggleMenuPublicacion(publicacionId, publicacionRef = null) {
+  const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
+  if (!publicacion) return;
+
+  const domPublicacionId = publicacion.id || String(publicacionId);
+
   // Cerrar otros menús abiertos
   const otrosMenus = document.querySelectorAll(
     ".menu-dropdown-publicacion.activo",
   );
   otrosMenus.forEach((menu) => {
-    if (menu.id !== `menu-pub-${publicacionId}`) {
+    if (menu.id !== `menu-pub-${domPublicacionId}`) {
       menu.classList.remove("activo");
     }
   });
 
   // Alternar el menú actual
-  const menu = document.getElementById(`menu-pub-${publicacionId}`);
+  const menu = publicacion.querySelector(`#menu-pub-${domPublicacionId}`);
   if (menu) {
     menu.classList.toggle("activo");
   }
 }
 
-async function eliminarPublicacionPerfil(
-  publicationId,
-  publicacionDomId = null,
-) {
-  const realPublicationId = obtenerIdPublicacionReal(
-    publicationId || publicacionDomId,
+async function eliminarPublicacionPerfil(publicationId, domId, publicacionRef = null) {
+  const userId = getUserIdForApi();
+  const realPublicationId =
+    obtenerIdPublicacionReal(publicationId) ||
+    obtenerIdPublicacionReal(domId) ||
+    Number(publicationId);
+
+  if (!userId || !realPublicationId) {
+    console.error("IDs inválidos para eliminar publicación:", {
+      userId,
+      realPublicationId,
+    });
+    return false;
+  }
+
+  const response = await fetchConAutenticacion(
+    `${API_ENDPOINTS.publication}/${realPublicationId}/user/${userId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
   );
 
-  if (!realPublicationId) {
+  if (!response || !response.ok) {
+    const errorText = response ? await response.text().catch(() => "") : "";
     console.error(
-      "❌ publicationId inválido para eliminar en perfil:",
-      publicationId,
+      "Error eliminando publicación:",
+      response ? response.status : "sin respuesta",
+      errorText,
     );
     return false;
   }
 
-  const eliminada = await eliminarPublicacionBackend(realPublicationId);
-  if (!eliminada) return false;
-
-  const elementoPublicacion =
-    (publicacionDomId && document.getElementById(publicacionDomId)) ||
-    document.querySelector(`[data-publication-id="${realPublicationId}"]`);
-
-  if (elementoPublicacion) {
-    const contenedorPublicacion = elementoPublicacion.closest(
-      ".contenedor-publicacion",
-    );
-    if (contenedorPublicacion) {
-      contenedorPublicacion.remove();
-    } else {
-      elementoPublicacion.remove();
-    }
+  const card =
+    obtenerPublicacionElemento(domId || `pub_${realPublicationId}`, publicacionRef) ||
+    document.querySelector(`.publicacion[data-publication-id="${realPublicationId}"]`);
+  if (card) {
+    const wrapper = card.closest(".contenedor-publicacion") || card;
+    wrapper.remove();
   }
 
   return true;
@@ -6410,8 +6509,8 @@ function inicializarContadoresComentariosExistentes() {
 }
 
 // Alias para compatibilidad con las publicaciones dinámicas
-function alternarComentarios(publicacionId) {
-  return toggleComentarios(publicacionId);
+function alternarComentarios(publicacionId, publicacionRef = null) {
+  return toggleComentarios(publicacionId, publicacionRef);
 }
 
 // Función auxiliar para establecer el estado visual de un botón de like
@@ -7370,6 +7469,18 @@ async function inicializarBackend() {
 }
 
 if (typeof window !== "undefined") {
+  window.cargarPublicacionesMiPerfil = cargarPublicacionesMiPerfil;
+  window.eliminarPublicacionPerfil = eliminarPublicacionPerfil;
+  window.toggleMenuPublicacion = toggleMenuPublicacion;
+  window.eliminarPublicacion = eliminarPublicacion;
+  window.alternarComentarios = alternarComentarios;
+  window.toggleComentarios = toggleComentarios;
+  window.publicarComentario = publicarComentario;
+  window.renderizarComentarios = renderizarComentarios;
+  window.actualizarContadorComentarios = actualizarContadorComentarios;
+  window.eliminarComentario = eliminarComentario;
+  window.toggleMenuComentario = toggleMenuComentario;
+  window.alternarMeGusta = alternarMeGusta;
   window.abrirSelectorImagenes = abrirSelectorImagenes;
   window.abrirSelectorVideos = abrirSelectorVideos;
   window.limpiarImagenes = limpiarImagenes;

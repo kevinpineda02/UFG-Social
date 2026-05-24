@@ -1970,7 +1970,7 @@ async function cargarPublicacionesMiPerfil() {
       }
 
       if (typeof inicializarLikePublicacion === "function") {
-        inicializarLikePublicacion(pubElement.id);
+        inicializarLikePublicacion(pubElement.id, pubElement);
       }
 
       if (typeof actualizarContadorComentarios === "function") {
@@ -6614,8 +6614,8 @@ async function inicializarLikesPublicaciones() {
 }
 
 // Función para inicializar like de una publicación específica
-async function inicializarLikePublicacion(publicacionId) {
-  const publicacion = document.getElementById(publicacionId);
+async function inicializarLikePublicacion(publicacionId, publicacionRef = null) {
+  const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
   if (!publicacion) return;
 
   const botonLike = publicacion.querySelector(".me-gusta");

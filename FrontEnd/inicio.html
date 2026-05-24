@@ -140,7 +140,8 @@ Comunidad</button></li>
 
         
         <!-- Contenedor de sugerencias -->
-         <div class="sugerencias">
+        <div class="sugerencias contenedor-sugerencias">
+                <h3 class="sugerencia-titulo">Sugerencias para ti</h3>
             <li style="list-style: none;">
                 <ul>     
             <div class="usuarios-perfil">
@@ -153,6 +154,50 @@ Comunidad</button></li>
          </div>
                 </ul>
             </li>
+
+            <!-- Contenedor de solicitudes de amistad -->
+        <div class="solicitudes">
+            <h3 class="sugerencia-titulo">Solicitudes de amistad</h3>
+            <li style="list-style: none;">
+                <ul>     
+            <div class="usuarios-perfil">
+                <div class="perfil-usuarios">
+                    <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
+                    <span>Nombre de Usuario</span>
+                    <button class="aceptar">Aceptar</button>
+                    <button class="rechazar">Rechazar</button>
+                </div>
+            </div>
+        </div>
+
+        <!--Contenedor de seguidos-->
+        <div class="seguidos" style="display: none;">
+            <h3>Seguidos</h3>
+            <li style="list-style: none;">
+                <ul>     
+            <div class="usuarios-perfil">
+                <div class="perfil-usuarios">
+                    <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
+                    <span>Nombre de Usuario</span>
+                    <button class="dejar-de-seguir">Dejar de seguir</button>
+                </div>
+            </div>
+        </div>
+
+        <!--Contendor de seguidores-->
+        <div class="seguidores-contenedor" style="display: none;">
+            <h3>Seguidores</h3>
+            <li style="list-style: none;">
+                <ul>     
+            <div class="usuarios-perfil">
+                <div class="perfil-usuarios">
+                    <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
+                    <span>Nombre de Usuario</span>
+                    <button class="seguir" id="seguir-btn">Seguir</button>
+                    <button class="dejar-de-seguir">Dejar de seguir</button>
+                </div>
+            </div>
+        </div>
 
          <!--Avatar de Usuario en la publicacion-->
          <div class="publicaciones">
@@ -466,6 +511,17 @@ Comunidad</button></li>
                         </div>
                     </div>
                 </div>
+
+                <!-- Contenedor de solicitudes de amistad enviadas (solo para mostrar, no funcional) -->
+                <div class="solicitudes-enviadas">
+                    <h3>Solicitudes de amistad enviadas</h3>
+                    <div id="perfil-inicial-solicitudes" class="perfil-inicial-solicitudes">
+                        <img id="perfil-inicial-preview" src="./assets/perfil/perfil1.png" alt="Vista previa de perfil">
+                    <label for="perfil-inicial-avatar-url">URL de tu foto de perfil</label>
+                    <input id="perfil-inicial-avatar-url" type="url" placeholder="https://..." required>
+                    </div>
+                </div>
+
             </div>
 
             <div class="perfil-inicial-acciones">

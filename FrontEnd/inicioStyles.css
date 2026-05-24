@@ -202,12 +202,12 @@ body {
 .contenido {
   display: grid;
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(
-      280px,
-      360px
+      320px,
+      480px
     );
   grid-template-areas:
     "perfil publicaciones sugerencias"
-    "secciones feed sugerencias";
+    "secciones feed solicitudes";
   gap: 16px;
   align-items: start;
   width: min(100%, 1600px);
@@ -228,7 +228,7 @@ body {
   flex-direction: row;
   gap: 10px;
   top: 370px;
-  position: absolute; 
+  position: absolute;
   z-index: 1000;
   grid-area: secciones;
   margin-top: 0;
@@ -236,7 +236,8 @@ body {
   transition:
     background-color 0.4s ease,
     box-shadow 0.4s ease,
-    transform 0.3s ease;}
+    transform 0.3s ease;
+}
 
 .secciones svg {
   width: 24px;
@@ -294,7 +295,10 @@ body {
   flex-direction: column;
   max-width: 400px;
   margin-left: 10px;
-  max-height: calc(100vh - 140px);
+  height: 340px;
+  max-height: 340px;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 12px;
   border-radius: 10px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
@@ -302,10 +306,85 @@ body {
   animation: slideInTop 0.6s ease-out 0.3s both;
 }
 
+.sugerencias::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sugerencias::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sugerencias::-webkit-scrollbar-thumb {
+  background: var(--color-bordes);
+  border-radius: 999px;
+}
+
 .usuarios-perfil {
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+.sugerencia-usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: background-color 0.25s ease;
+}
+
+.sugerencia-usuario:hover {
+  background-color: var(--color-hoover);
+}
+
+.avatar-sugerencia {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--color-bordes) 2px solid;
+  flex: 0 0 auto;
+}
+
+.datos-sugerencia {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.datos-sugerencia strong {
+  color: var(--color-objetos);
+  font-weight: 700;
+}
+
+.datos-sugerencia span {
+  color: var(--color-datos);
+  font-size: 0.78rem;
+}
+
+.btn-seguir {
+  background: var(--color-terciario);
+  border: none;
+  color: #fff;
+  padding: 6px 14px;
+  min-width: 96px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.btn-seguir:hover {
+  background: var(--color-terciario-hover);
+}
+
+.btn-seguir:disabled,
+.solicitud-enviada {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .perfil-usuarios {
@@ -316,11 +395,23 @@ body {
   transition: background-color 0.3s ease;
 }
 
+.follow-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.follow-datos small {
+  color: var(--color-datos);
+  font-size: 0.75rem;
+}
+
 .seguir {
   background: var(--color-terciario);
   border: none;
   color: #fff;
-  padding: 8px 35px;
+  padding: 6px 14px;
   position: static;
   margin-left: auto;
   border-radius: 8px;
@@ -352,6 +443,7 @@ body {
   width: 100%;
   min-width: 0;
   padding: 20px;
+
   background-color: var(--color-secundario);
   border-radius: 10px;
   color: var(--color-objetos);
@@ -361,7 +453,7 @@ body {
     background-color 0.4s ease,
     box-shadow 0.4s ease,
     transform 0.3s ease;
-  margin-top: 0;
+  margin: 0;
 }
 
 .publicaciones .usuario-header {
@@ -422,10 +514,22 @@ body {
   max-width: none;
   width: 100%;
   min-width: 0;
-  margin-top: 10px;
+  bottom: 90px;
 }
 
 .contenedor-publicacion {
+  background-color: var(--color-secundario);
+  border-radius: 12px;
+  box-shadow: var(--color-sombra) 0px 2px 8px 2px;
+  animation: slideInTop 0.6s ease-out 0.3s both;
+  transition:
+    background-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.3s ease;
+  overflow: hidden;
+}
+
+.solicitudes-enviadas {
   background-color: var(--color-secundario);
   border-radius: 12px;
   box-shadow: var(--color-sombra) 0px 2px 8px 2px;
@@ -447,6 +551,8 @@ body {
     background-color 0.4s ease,
     transform 0.3s ease;
   overflow: hidden;
+  position: relative;
+  bottom: 90px;
 }
 
 @media (max-width: 520px) {
@@ -1217,9 +1323,56 @@ body.modal-open {
   color: var(--color-terciario);
 }
 
-.seguidores {
+.seguidores-contenedor {
   margin-top: 10px;
+  background-color: var(--color-secundario);
+  border-radius: 10px;
+  padding: 12px;
 }
+
+.contenido > .seguidos,
+.contenido > .seguidores-contenedor {
+  grid-column: 3;
+  justify-self: end;
+  align-self: start;
+  width: 100%;
+  max-width: 400px;
+  max-width: 480px;
+  position: relative;
+  top: -360px; /* reducir para subir los paneles */
+  z-index: 40;
+}
+
+/* Botones más pequeños específicamente dentro del panel Seguidores */
+.contenido > .seguidores-contenedor .perfil-usuarios button,
+.contenido > .seguidores-contenedor .perfil-usuarios .seguir {
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  min-width: 72px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.contenido > .seguidores-contenedor .perfil-usuarios button + button {
+  margin-left: 8px;
+}
+
+/* Botones con tamaño idéntico para mantener consistencia */
+.contenido > .seguidores-contenedor .perfil-usuarios .seguir,
+.contenido > .seguidores-contenedor .perfil-usuarios .dejar-de-seguir,
+.contenido > .seguidos .perfil-usuarios .seguir,
+.contenido > .seguidos .perfil-usuarios .dejar-de-seguir {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  height: 28px;
+  min-width: 92px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+/* regla vacía eliminada */
 
 .notificaciones {
   right: auto;
@@ -1237,7 +1390,7 @@ body.modal-open {
   gap: 10px;
   padding-bottom: 60px;
   border: var(--color-bordes) 1px solid;
-  animation: slideInTop 0.8s ease-out both;
+  right: auto;
   transition:
     background-color 0.4s ease,
     box-shadow 0.4s ease,
@@ -3302,7 +3455,8 @@ body.modal-open {
       "perfil publicaciones"
       "secciones publicaciones"
       ". feed"
-      "sugerencias sugerencias";
+      "sugerencias sugerencias"
+      "solicitudes solicitudes";
   }
 
   .publicaciones,
@@ -3310,6 +3464,9 @@ body.modal-open {
   .contenedor-publicacion,
   .publicaciones-usuario,
   .sugerencias,
+  .solicitudes,
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor,
   .mi-perfil,
   .secciones,
   .notificaciones {
@@ -3318,11 +3475,33 @@ body.modal-open {
   }
 
   .mi-perfil {
+    /* Desactivar sticky para paneles laterales en móviles */
+    .contenido > .seguidos,
+    .contenido > .seguidores-contenedor,
+    .contenido > .solicitudes {
+      position: static;
+      top: auto;
+      grid-column: 1 / -1;
+      justify-self: stretch;
+      max-width: 100%;
+      margin-top: 12px;
+    }
     display: flex;
   }
 
   .secciones {
     left: auto;
+  }
+
+  .solicitudes {
+    right: auto;
+  }
+
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    max-width: 100%;
   }
 
   .notificaciones {
@@ -3350,7 +3529,8 @@ body.modal-open {
       "secciones"
       "publicaciones"
       "feed"
-      "sugerencias";
+      "sugerencias"
+      "solicitudes";
     padding: 80px 16px 20px;
     gap: 16px;
   }
@@ -3360,6 +3540,9 @@ body.modal-open {
   .publicaciones,
   .feed-publicaciones,
   .sugerencias,
+  .solicitudes,
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor,
   .notificaciones,
   .publicaciones-usuario,
   .contenedor-publicacion {
@@ -3370,6 +3553,9 @@ body.modal-open {
   .mi-perfil,
   .secciones,
   .sugerencias,
+  .solicitudes,
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor,
   .notificaciones {
     position: static;
     left: auto;
@@ -3539,14 +3725,20 @@ body.modal-open {
   transition: all 0.2s ease;
 }
 
+.sugerencia-titulo {
+  text-align: center;
+  padding: 15px 0;
+}
+
 /* ==================== ESTILOS DE SECCIÓN DE PERFIL ==================== */
 
 /* Contenedor principal de la sección de perfil */
-  .seccion-perfil {
+
+.seccion-perfil {
   max-width: 700px;
   width: 100%;
   padding: 30px;
-  margin-left: 50px;
+  margin-left: 20px;
   position: relative !important;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   background: var(--color-secundario);
@@ -3555,6 +3747,132 @@ body.modal-open {
   grid-row: 1 / span 2;
 }
 
+.solicitudes {
+  grid-area: solicitudes;
+  max-width: 400px;
+  width: 100%;
+  justify-self: end;
+  align-self: start;
+  max-height: 260px;
+  height: 260px;
+  position: relative !important;
+  background: var(--color-secundario);
+  box-shadow: var(--color-sombra) 0px 2px 12px 2px;
+  border-radius: 12px;
+  padding: 10px;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  animation: slideInTop 0.6s ease-out 0.3s both;
+  margin-right: 70px;
+}
+
+.aceptar {
+  background: var(--color-terciario);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.aceptar:hover {
+  background: var(--color-terciario-hover);
+}
+
+.rechazar {
+  background: #f70000;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.seguidos {
+  background: var(--color-secundario);
+  color: var(--color-texto-principal);
+  border-radius: 8px;
+  padding: 10px;
+  position: relative !important;
+  right: auto;
+}
+
+/* Diseño tipo tarjeta coherente con el resto de la página */
+.contenido > .seguidos,
+.contenido > .seguidores-contenedor {
+  background: var(--color-secundario);
+  border-radius: 12px;
+  box-shadow: var(--color-sombra) 0px 2px 12px 2px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contenido > .seguidos h3,
+.contenido > .seguidores-contenedor h3 {
+  margin: 0;
+  color: var(--color-objetos);
+  font-weight: 700;
+  text-align: center;
+}
+
+.contenido > .seguidos .perfil-usuarios,
+.contenido > .seguidores-contenedor .perfil-usuarios {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+}
+
+/* Empujar el botón al borde derecho y mantener nombre en línea */
+.contenido > .seguidos .perfil-usuarios button,
+.contenido > .seguidores-contenedor .perfil-usuarios button {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.contenido > .seguidos .perfil-usuarios img,
+.contenido > .seguidores-contenedor .perfil-usuarios img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.contenido > .seguidos .perfil-usuarios span,
+.contenido > .seguidores-contenedor .perfil-usuarios span {
+  color: var(--color-objetos);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Ajustes verticales para columna derecha */
+.contenido > .seguidos {
+  margin-top: 0px;
+  max-height: 280px;
+  height: 260px;
+}
+
+.contenido > .seguidores-contenedor {
+  margin-top: 20px;
+  max-height: 280px;
+  height: 260px;
+}
+
+.dejar-de-seguir {
+  background: #f70000;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#seguir-btn {
+  max-width: 100px;
+  width: 60%;
+}
 
 /* Header del perfil con foto e información */
 .perfil-header {

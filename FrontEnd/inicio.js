@@ -614,6 +614,934 @@ async function fetchConAutenticacion(url, opciones = {}) {
   }
 }
 
+function obtenerIdUsuarioActualParaFollow() {
+  return getUserIdForApi();
+}
+
+function normalizarDatosUsuarioFollow(item = {}) {
+  const id =
+    item.id ??
+    item.userId ??
+    item.usuarioId ??
+    item.requesterId ??
+    item.receiverId ??
+    item.followerId ??
+    item.followedId ??
+    null;
+
+  const nombre = normalizarTexto(
+    item.name ??
+      item.fullName ??
+      item.nombre ??
+      item.requesterName ??
+      item.receiverName ??
+      item.username ??
+      item.requesterUsername ??
+      item.followedUsername ??
+      item.followerUsername,
+    "Usuario",
+  );
+
+  const handleBase = normalizarTexto(
+    item.username ??
+      item.handle ??
+      item.requesterUsername ??
+      item.receiverUsername ??
+      item.followerUsername ??
+      item.followedUsername,
+    nombre,
+  );
+
+  return {
+    id: id != null ? Number(id) : null,
+    nombre,
+    handle: normalizarHandle(handleBase, nombre),
+    avatar: normalizarAvatar(
+      item.profilePhoto ??
+        item.avatar ??
+        item.photo ??
+        item.profileImage ??
+        item.requesterProfilePhoto ??
+        item.receiverProfilePhoto ??
+        AVATAR_POR_DEFECTO,
+    ),
+    fecha: item.creationDate ?? item.createdAt ?? item.fechaCreacion ?? null,
+    estado: item.status ?? item.estado ?? null,
+    raw: item,
+  };
+}
+
+function obtenerTextoEstadoFollow(estado) {
+  if (!estado) return "";
+  const texto = String(estado).toUpperCase();
+  if (texto === "PENDIENTE") return "Pendiente";
+  if (texto === "ACEPTADA" || texto === "ACEPTADO") return "Aceptada";
+  if (texto === "RECHAZADA" || texto === "RECHAZADO") return "Rechazada";
+  return texto.charAt(0) + texto.slice(1).toLowerCase();
+}
+
+function formatearFechaFollow(valorFecha) {
+  if (!valorFecha) return "";
+
+  const fecha = new Date(valorFecha);
+  if (Number.isNaN(fecha.getTime())) return "";
+
+  return fecha.toLocaleString("es-ES", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function obtenerContenedorFollow(selector) {
+  return document.querySelector(selector);
+}
+
+function renderizarEstadoFollow(contenedor, mensaje) {
+  if (!contenedor) return;
+
+  contenedor.innerHTML = `
+    <h3>${contenedor.dataset?.titulo || "Seguimiento"}</h3>
+    <div class="usuarios-perfil">
+      <div class="perfil-usuarios">
+        <span>${mensaje}</span>
+      </div>
+    </div>
+  `;
+}
+
+function crearTarjetaFollow({
+  nombre,
+  handle,
+  avatar,
+  meta = "",
+  botones = "",
+  requestId = null,
+  userId = null,
+}) {
+  const dataRequestId =
+    requestId != null ? ` data-request-id="${requestId}"` : "";
+  const dataUserId = userId != null ? ` data-user-id="${userId}"` : "";
+
+  return `
+    <div class="usuarios-perfil">
+      <div class="perfil-usuarios"${dataRequestId}${dataUserId}>
+        <img src="${avatar}" alt="Avatar de ${nombre}">
+        <div class="follow-datos">
+          <span>${nombre}</span>
+          <small>${handle}${meta ? ` · ${meta}` : ""}</small>
+        </div>
+        ${botones}
+      </div>
+    </div>
+  `;
+}
+
+function normalizarRelacionFollow(item = {}) {
+  return {
+    id: item.id ?? null,
+    followerId: item.followerId ?? null,
+    followerName: item.followerName ?? item.name ?? item.username ?? "Usuario",
+    followerUsername: item.followerUsername ?? item.username ?? "usuario",
+    followerProfilePhoto:
+      item.followerProfilePhoto ??
+      item.profilePhoto ??
+      item.avatar ??
+      AVATAR_POR_DEFECTO,
+    followedId: item.followedId ?? null,
+    followedName: item.followedName ?? item.name ?? item.username ?? "Usuario",
+    followedUsername: item.followedUsername ?? item.username ?? "usuario",
+    followedProfilePhoto:
+      item.followedProfilePhoto ??
+      item.profilePhoto ??
+      item.avatar ??
+      AVATAR_POR_DEFECTO,
+    raw: item,
+  };
+}
+
+async function enviarSolicitudSeguimiento(requesterId, receiverId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/request/${requesterId}/${receiverId}`,
+    {
+      method: "POST",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    throw new Error(
+      `Error enviando solicitud: ${response ? response.status : "sin respuesta"}`,
+    );
+  }
+
+  return response.json();
+}
+
+async function obtenerSolicitudesPendientes(userId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/requests/pending/${userId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    return [];
+  }
+
+  const data = await response.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
+async function aceptarSolicitudSeguimiento(requestId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/request/${requestId}/accept`,
+    {
+      method: "POST",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    throw new Error(
+      `Error aceptando solicitud: ${response ? response.status : "sin respuesta"}`,
+    );
+  }
+
+  return response.json();
+}
+
+async function rechazarSolicitudSeguimiento(requestId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/request/${requestId}/reject`,
+    {
+      method: "POST",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    throw new Error(
+      `Error rechazando solicitud: ${response ? response.status : "sin respuesta"}`,
+    );
+  }
+
+  return response.json();
+}
+
+async function obtenerSeguidores(userId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/followers/${userId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    return [];
+  }
+
+  const data = await response.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
+async function obtenerSeguidos(userId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/following/${userId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    return [];
+  }
+
+  const data = await response.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
+async function obtenerSolicitudesEnviadas(userId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/requests/sent/${userId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    return [];
+  }
+
+  const data = await response.json().catch(() => []);
+  return Array.isArray(data) ? data : [];
+}
+
+async function solicitudYaEnviada(requesterId, receiverId) {
+  const solicitudes = await obtenerSolicitudesEnviadas(requesterId);
+
+  return solicitudes.some(
+    (solicitud) =>
+      Number(solicitud.receiverId) === Number(receiverId) &&
+      String(solicitud.status).toUpperCase() === "PENDIENTE",
+  );
+}
+
+async function cancelarSolicitudSeguimiento(requesterId, receiverId) {
+  requesterId = Number(requesterId);
+  receiverId = Number(receiverId);
+
+  if (!requesterId || !receiverId) {
+    console.error("IDs inválidos para cancelar solicitud:", {
+      requesterId,
+      receiverId,
+    });
+    return false;
+  }
+
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/request/${requesterId}/${receiverId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!response || !response.ok) {
+    const errorText = response ? await response.text().catch(() => "") : "";
+    console.error(
+      "Error cancelando solicitud:",
+      response ? response.status : "sin respuesta",
+      errorText,
+    );
+    return false;
+  }
+
+  return true;
+}
+
+function obtenerEstadoRelacion(targetUserId, seguidos, solicitudesEnviadas) {
+  targetUserId = Number(targetUserId);
+
+  const yaLoSigo = seguidos.some(
+    (follow) => Number(follow.followedId) === targetUserId,
+  );
+
+  const solicitudPendiente = solicitudesEnviadas.some(
+    (request) =>
+      Number(request.receiverId) === targetUserId &&
+      String(request.status).toUpperCase() === "PENDIENTE",
+  );
+
+  if (yaLoSigo) {
+    return {
+      texto: "Dejar de seguir",
+      disabled: false,
+      accion: "unfollow",
+      clase: "dejar-de-seguir",
+    };
+  }
+
+  if (solicitudPendiente) {
+    return {
+      texto: "Cancelar solicitud",
+      disabled: false,
+      accion: "cancel_request",
+      clase: "seguir",
+    };
+  }
+
+  return {
+    texto: "Seguir",
+    disabled: false,
+    accion: "send_request",
+    clase: "btn-seguir",
+  };
+}
+
+function obtenerEstadoSugerencia(usuario, seguidos, solicitudesEnviadas) {
+  return obtenerEstadoRelacion(usuario.id, seguidos, solicitudesEnviadas);
+}
+
+async function obtenerIdsUsuariosSeguidos(userId) {
+  const seguidos = await obtenerSeguidos(userId);
+  return seguidos
+    .map((follow) => follow.followedId)
+    .filter((id) => id != null)
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+}
+
+function obtenerEstadoBotonSeguidor(follow, seguidos, solicitudesEnviadas) {
+  const followerId = Number(follow.followerId);
+
+  const yaLoSigo = seguidos.some(
+    (item) => Number(item.followedId) === followerId,
+  );
+
+  const solicitudEnviada = solicitudesEnviadas.some(
+    (item) =>
+      Number(item.receiverId) === followerId && item.status === "PENDIENTE",
+  );
+
+  if (yaLoSigo) {
+    return {
+      texto: "Dejar de seguir",
+      accion: "unfollow-followed",
+      disabled: false,
+      clase: "dejar-de-seguir",
+    };
+  }
+
+  if (solicitudEnviada) {
+    return {
+      texto: "Solicitud enviada",
+      accion: "pending",
+      disabled: true,
+      clase: "seguir",
+    };
+  }
+
+  return {
+    texto: "Seguir",
+    accion: "follow-follower",
+    disabled: false,
+    clase: "seguir",
+  };
+}
+
+async function dejarDeSeguir(followerId, followedId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/${followerId}/${followedId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    throw new Error(
+      `Error dejando de seguir: ${response ? response.status : "sin respuesta"}`,
+    );
+  }
+
+  return true;
+}
+
+async function contarSeguidores(userId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/followers/${userId}/count`,
+    {
+      method: "GET",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    return 0;
+  }
+
+  return obtenerNumeroDesdeRespuestaFollow(response);
+}
+
+async function contarSeguidos(userId) {
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/follow/following/${userId}/count`,
+    {
+      method: "GET",
+      headers: getAuthHeaders({ Accept: "application/json" }),
+    },
+  );
+
+  if (!response || !response.ok) {
+    return 0;
+  }
+
+  return obtenerNumeroDesdeRespuestaFollow(response);
+}
+
+async function obtenerNumeroDesdeRespuestaFollow(response) {
+  const texto = await response.text().catch(() => "0");
+  if (!texto) return 0;
+
+  try {
+    const posibleJson = JSON.parse(texto);
+    if (typeof posibleJson === "number") return posibleJson;
+    if (typeof posibleJson === "string") return normalizarContador(posibleJson);
+    if (posibleJson && typeof posibleJson === "object") {
+      return normalizarContador(
+        posibleJson.count ??
+          posibleJson.total ??
+          posibleJson.value ??
+          posibleJson.numero ??
+          0,
+      );
+    }
+  } catch (_) {
+    return normalizarContador(texto);
+  }
+
+  return 0;
+}
+
+async function obtenerSugerenciasUsuarios(userId) {
+  try {
+    const response = await fetchConAutenticacion(
+      `${API_BASE_URL_HOME}/user/suggestions/${userId}`,
+      {
+        method: "GET",
+        headers: getAuthHeaders({ Accept: "application/json" }),
+      },
+    );
+
+    if (!response || !response.ok) {
+      console.error(
+        "Error obteniendo sugerencias:",
+        response ? response.status : "sin respuesta",
+      );
+      return [];
+    }
+
+    const data = await response.json().catch(() => []);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Error obteniendo sugerencias de usuarios:", error);
+    return [];
+  }
+}
+
+async function enviarSolicitudDesdeSugerencia(receiverId, boton) {
+  try {
+    const requesterId = Number(getUserIdForApi());
+    const suggestedId = Number(receiverId);
+
+    if (!requesterId || !suggestedId) {
+      console.error("IDs inválidos:", { requesterId, suggestedId });
+      return;
+    }
+
+    if (requesterId === suggestedId) {
+      console.warn("No puedes seguirte a ti mismo");
+      return;
+    }
+
+    const idsSeguidos = await obtenerIdsUsuariosSeguidos(requesterId);
+    if (idsSeguidos.includes(suggestedId)) {
+      if (boton) {
+        boton.textContent = "Siguiendo";
+        boton.disabled = true;
+        boton.classList.remove("btn-seguir");
+        boton.classList.add("dejar-de-seguir");
+      }
+      console.warn("Ya sigues a este usuario");
+      return;
+    }
+
+    const solicitudPendiente = await solicitudYaEnviada(
+      requesterId,
+      suggestedId,
+    );
+
+    if (solicitudPendiente) {
+      if (boton) {
+        boton.textContent = "Cancelar solicitud";
+        boton.disabled = false;
+        boton.classList.remove("btn-seguir");
+        boton.classList.add("seguir");
+        boton.dataset.accion = "cancel_request";
+      }
+      console.warn("Ya existe una solicitud pendiente");
+      return;
+    }
+
+    const response = await fetchConAutenticacion(
+      `${API_BASE_URL_HOME}/follow/request/${requesterId}/${suggestedId}`,
+      {
+        method: "POST",
+        headers: getAuthHeaders({ Accept: "application/json" }),
+      },
+    );
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text().catch(() => "") : "";
+      console.error(
+        "Error enviando solicitud:",
+        response ? response.status : "sin respuesta",
+        errorText,
+      );
+      return;
+    }
+
+    await response.json().catch(() => ({}));
+
+    if (boton) {
+      boton.textContent = "Cancelar solicitud";
+      boton.disabled = false;
+      boton.classList.remove("btn-seguir");
+      boton.classList.add("seguir");
+      boton.dataset.accion = "cancel_request";
+    }
+  } catch (error) {
+    console.error("Error enviando solicitud de seguimiento:", error);
+  }
+}
+
+async function cancelarSolicitudDesdeSugerencia(receiverId, boton) {
+  try {
+    const requesterId = Number(getUserIdForApi());
+    const suggestedId = Number(receiverId);
+
+    if (!requesterId || !suggestedId) {
+      console.error("IDs inválidos:", { requesterId, suggestedId });
+      return;
+    }
+
+    const ok = await cancelarSolicitudSeguimiento(requesterId, suggestedId);
+
+    if (!ok) return;
+
+    if (boton) {
+      boton.textContent = "Seguir";
+      boton.disabled = false;
+      boton.classList.remove("solicitud-enviada");
+      boton.classList.remove("seguir");
+      boton.classList.add("btn-seguir");
+      boton.dataset.accion = "send_request";
+    }
+
+    await recargarSistemaFollow();
+  } catch (error) {
+    console.error("Error cancelando solicitud de seguimiento:", error);
+  }
+}
+
+async function cargarSugerenciasUsuarios() {
+  const userId = getUserIdForApi();
+
+  if (!userId) {
+    console.error("No se pudo obtener el id del usuario logueado");
+    return;
+  }
+  const [sugerencias, seguidos, solicitudesEnviadas] = await Promise.all([
+    obtenerSugerenciasUsuarios(userId),
+    obtenerSeguidos(userId),
+    obtenerSolicitudesEnviadas(userId),
+  ]);
+
+  const contenedor = document.querySelector(".contenedor-sugerencias");
+
+  if (!contenedor) {
+    console.error("No se encontró el contenedor de sugerencias");
+    return;
+  }
+
+  contenedor.innerHTML = "";
+
+  const titulo = document.createElement("h3");
+  titulo.className = "sugerencia-titulo";
+  titulo.textContent = "Sugerencias para ti";
+  contenedor.appendChild(titulo);
+
+  // Construir mapa combinado: sugerencias (estado NONE) + solicitudes enviadas (estado PENDING_SENT)
+  const mapa = new Map();
+
+  (sugerencias || []).forEach((u) => {
+    const id = Number(u.id);
+    if (!id) return;
+    mapa.set(id, {
+      id,
+      name: u.name || u.user || u.username || "Usuario",
+      username: u.username || u.handle || "usuario",
+      profilePhoto: u.profilePhoto || u.avatar || "./assets/Logo/UFGPerfil.jpg",
+      estado: "NONE",
+    });
+  });
+
+  (solicitudesEnviadas || []).forEach((s) => {
+    const id = Number(s.receiverId ?? s.id ?? null);
+    if (!id) return;
+    // Las solicitudes enviadas tienen prioridad: si existe, marcamos como PENDING_SENT
+    mapa.set(id, {
+      id,
+      name: s.receiverName || s.receiverUsername || s.name || "Usuario",
+      username: s.receiverUsername || s.receiverName || s.username || "usuario",
+      profilePhoto:
+        s.receiverProfilePhoto ||
+        s.receiverProfilePhoto ||
+        "./assets/Logo/UFGPerfil.jpg",
+      estado: "PENDING_SENT",
+    });
+  });
+
+  const usuariosFinales = Array.from(mapa.values());
+
+  if (usuariosFinales.length === 0) {
+    const vacio = document.createElement("p");
+    vacio.textContent = "No hay sugerencias disponibles.";
+    contenedor.appendChild(vacio);
+    return;
+  }
+
+  usuariosFinales.forEach((usuario) => {
+    const idUsuario = Number(usuario.id);
+
+    // Si ya lo sigues, mostramos la opción Dejar de seguir
+    const yaLoSigo = (seguidos || []).some(
+      (f) => Number(f.followedId) === idUsuario,
+    );
+
+    const item = document.createElement("div");
+    item.className = "sugerencia-usuario";
+
+    const avatar = normalizarAvatar(
+      usuario.profilePhoto || "./assets/Logo/UFGPerfil.jpg",
+    );
+    const nombre = normalizarTexto(usuario.name, "Usuario");
+    const username = normalizarTexto(usuario.username, "usuario");
+
+    let textoBoton = "Seguir";
+    let accion = "send_request";
+    let clase = "btn-seguir";
+    let disabled = false;
+
+    if (yaLoSigo) {
+      textoBoton = "Dejar de seguir";
+      accion = "unfollow";
+      clase = "dejar-de-seguir";
+    } else if (usuario.estado === "PENDING_SENT") {
+      textoBoton = "Cancelar solicitud";
+      accion = "cancel_request";
+      clase = "seguir";
+    }
+
+    item.innerHTML = `
+      <img
+        src="${avatar}"
+        alt="${username || "usuario"}"
+        class="avatar-sugerencia"
+      >
+
+      <div class="datos-sugerencia">
+        <strong>${nombre}</strong>
+        <span>@${username}</span>
+      </div>
+
+      <button
+        class="${clase}"
+        ${disabled ? "disabled" : ""}
+        data-accion="${accion}"
+        data-user-id="${idUsuario}"
+      >
+        ${textoBoton}
+      </button>
+    `;
+
+    const boton = item.querySelector("button[data-accion]");
+    if (boton) {
+      boton.addEventListener("click", async () => {
+        const accionActual = boton.dataset.accion;
+        const targetId = Number(boton.dataset.userId || usuario.id);
+
+        if (accionActual === "send_request") {
+          await enviarSolicitudDesdeSugerencia(targetId, boton);
+          return;
+        }
+
+        if (accionActual === "cancel_request") {
+          await cancelarSolicitudDesdeSugerencia(targetId, boton);
+          return;
+        }
+
+        if (accionActual === "unfollow") {
+          const userIdActual = getUserIdForApi();
+          if (!userIdActual) return;
+          try {
+            await dejarDeSeguir(userIdActual, targetId);
+            await recargarSistemaFollow();
+          } catch (e) {
+            console.error("Error al dejar de seguir:", e);
+          }
+        }
+      });
+    }
+
+    contenedor.appendChild(item);
+  });
+}
+
+function actualizarBotonSolicitudEnviada(boton) {
+  if (!boton) return;
+
+  boton.textContent = "Solicitud enviada";
+  boton.disabled = true;
+  boton.style.opacity = "0.7";
+  boton.style.cursor = "not-allowed";
+}
+
+async function renderizarPanelSolicitudesPendientes() {
+  const contenedor = obtenerContenedorFollow(".solicitudes");
+  if (!contenedor) return;
+
+  const userId = obtenerIdUsuarioActualParaFollow();
+  if (!userId) {
+    renderizarEstadoFollow(
+      contenedor,
+      "Inicia sesión para ver tus solicitudes.",
+    );
+    return;
+  }
+
+  contenedor.dataset.titulo = "Solicitudes de amistad";
+  const solicitudes = await obtenerSolicitudesPendientes(userId);
+
+  if (!solicitudes.length) {
+    renderizarEstadoFollow(contenedor, "No tienes solicitudes pendientes.");
+    return;
+  }
+
+  contenedor.innerHTML = `
+    <h3 class="sugerencia-titulo">Solicitudes de amistad</h3>
+    ${solicitudes
+      .map((solicitud) => {
+        const usuario = normalizarDatosUsuarioFollow(solicitud);
+        const fecha = formatearFechaFollow(usuario.fecha);
+        return crearTarjetaFollow({
+          nombre: usuario.nombre,
+          handle: usuario.handle,
+          avatar: usuario.avatar,
+          meta: `${obtenerTextoEstadoFollow(usuario.estado)}${fecha ? ` · ${fecha}` : ""}`,
+          requestId: solicitud.id,
+          userId: usuario.id ?? solicitud.requesterId ?? null,
+          botones: `
+            <button class="aceptar" data-follow-action="accept-request" data-request-id="${solicitud.id}">Aceptar</button>
+            <button class="rechazar" data-follow-action="reject-request" data-request-id="${solicitud.id}">Rechazar</button>
+          `,
+        });
+      })
+      .join("")}
+  `;
+}
+
+async function renderizarPanelSeguidores() {
+  const contenedor = obtenerContenedorFollow(".seguidores-contenedor");
+  if (!contenedor) return;
+
+  const userId = obtenerIdUsuarioActualParaFollow();
+  if (!userId) {
+    renderizarEstadoFollow(
+      contenedor,
+      "Inicia sesión para ver tus seguidores.",
+    );
+    return;
+  }
+
+  contenedor.dataset.titulo = "Seguidores";
+  const [seguidores, seguidos, solicitudesEnviadas] = await Promise.all([
+    obtenerSeguidores(userId),
+    obtenerSeguidos(userId),
+    obtenerSolicitudesEnviadas(userId),
+  ]);
+
+  if (!seguidores.length) {
+    renderizarEstadoFollow(contenedor, "Aún no tienes seguidores.");
+    return;
+  }
+
+  contenedor.innerHTML = `
+    <h3>Seguidores</h3>
+    ${seguidores
+      .map((item) => {
+        const follow = normalizarRelacionFollow(item);
+        const estadoBoton = obtenerEstadoBotonSeguidor(
+          follow,
+          seguidos,
+          solicitudesEnviadas,
+        );
+        return crearTarjetaFollow({
+          nombre: follow.followerName,
+          handle: normalizarHandle(
+            follow.followerUsername,
+            follow.followerName,
+          ),
+          avatar: follow.followerProfilePhoto,
+          userId: follow.followerId,
+          botones: `
+            <button class="${estadoBoton.clase}" data-follow-action="${estadoBoton.accion}" data-user-id="${follow.followerId ?? ""}" data-followed-id="${follow.followerId ?? ""}" data-follower-id="${follow.followerId ?? ""}" ${estadoBoton.disabled ? "disabled" : ""}>${estadoBoton.texto}</button>
+          `,
+        });
+      })
+      .join("")}
+  `;
+}
+
+async function renderizarPanelSeguidos() {
+  const contenedor = obtenerContenedorFollow(".seguidos");
+  if (!contenedor) return;
+
+  const userId = obtenerIdUsuarioActualParaFollow();
+  if (!userId) {
+    renderizarEstadoFollow(
+      contenedor,
+      "Inicia sesión para ver a quién sigues.",
+    );
+    return;
+  }
+
+  contenedor.dataset.titulo = "Seguidos";
+  const seguidos = await obtenerSeguidos(userId);
+
+  if (!seguidos.length) {
+    renderizarEstadoFollow(contenedor, "Todavía no sigues a nadie.");
+    return;
+  }
+
+  contenedor.innerHTML = `
+    <h3>Seguidos</h3>
+    ${seguidos
+      .map((item) => {
+        const follow = normalizarRelacionFollow(item);
+        return crearTarjetaFollow({
+          nombre: follow.followedName,
+          handle: normalizarHandle(
+            follow.followedUsername,
+            follow.followedName,
+          ),
+          avatar: follow.followedProfilePhoto,
+          userId: follow.followedId,
+          botones: `
+            <button class="dejar-de-seguir" data-follow-action="unfollow-followed" data-followed-id="${follow.followedId ?? ""}" data-follower-id="${follow.followerId ?? ""}">Dejar de seguir</button>
+          `,
+        });
+      })
+      .join("")}
+  `;
+}
+
+async function actualizarContadoresFollowPanel() {
+  const userId = obtenerIdUsuarioActualParaFollow();
+  if (!userId) return;
+
+  const [seguidores, seguidos] = await Promise.all([
+    contarSeguidores(userId),
+    contarSeguidos(userId),
+  ]);
+
+  actualizarContadoresPerfil(seguidores, seguidos);
+}
+
+async function recargarSistemaFollow() {
+  await Promise.all([
+    renderizarPanelSolicitudesPendientes(),
+    renderizarPanelSeguidores(),
+    renderizarPanelSeguidos(),
+    actualizarContadoresFollowPanel(),
+  ]);
+}
+
 async function obtenerPublicacionesBackend() {
   try {
     const response = await fetchConAutenticacion(API_ENDPOINTS.publication, {
@@ -2011,6 +2939,7 @@ function limpiarPublicacionesAntiguas() {
 document.addEventListener("DOMContentLoaded", function () {
   // Inicializar backend y cargar publicaciones
   inicializarBackend();
+  cargarSugerenciasUsuarios();
 
   // Inicializar comentarios
   inicializarComentarios();
@@ -2413,6 +3342,9 @@ function seleccionarVentana(botonSeleccionado) {
   const publicaciones = document.querySelector(".publicaciones");
   const feedPublicaciones = document.querySelector(".feed-publicaciones");
   const sugerencias = document.querySelector(".sugerencias");
+  const solicitudes = document.querySelector(".solicitudes");
+  const seguidos = document.querySelector(".seguidos");
+  const seguidoresContenedor = document.querySelector(".seguidores-contenedor");
 
   // Cambiar vista según el botón seleccionado
   if (botonId === "inicio") {
@@ -2422,6 +3354,9 @@ function seleccionarVentana(botonSeleccionado) {
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "";
     if (sugerencias) sugerencias.style.display = "";
+    if (solicitudes) solicitudes.style.display = "";
+    if (seguidos) seguidos.style.display = "none";
+    if (seguidoresContenedor) seguidoresContenedor.style.display = "none";
   } else if (botonId === "btn-marketplace") {
     const tituloMarketplace = document.querySelector(".titulo-marketplace");
     if (tituloMarketplace) tituloMarketplace.style.display = "";
@@ -2429,6 +3364,7 @@ function seleccionarVentana(botonSeleccionado) {
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
+    if (solicitudes) solicitudes.style.display = "none";
   } else if (botonId === "comunidad") {
     const tituloComunidad = document.querySelector(".titulo-comunidad");
     if (tituloComunidad) tituloComunidad.style.display = "";
@@ -2436,15 +3372,149 @@ function seleccionarVentana(botonSeleccionado) {
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
+    if (solicitudes) solicitudes.style.display = "none";
   } else if (botonId === "perfil") {
     const tituloPerfil = document.querySelector(".titulo-perfil");
     if (tituloPerfil) tituloPerfil.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "block";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
+    if (solicitudes) solicitudes.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
+    if (seguidos) seguidos.style.display = "";
+    if (seguidoresContenedor) seguidoresContenedor.style.display = "";
+    recargarSistemaFollow().catch((error) => {
+      console.error("Error recargando follows:", error);
+    });
   }
 }
+
+document.addEventListener("click", async function (event) {
+  const boton = event.target.closest("button[data-follow-action]");
+  if (!boton) return;
+
+  const accion = boton.dataset.followAction;
+  const requesterId = obtenerIdUsuarioActualParaFollow();
+  const requestId =
+    boton.dataset.requestId ||
+    boton.closest(".perfil-usuarios")?.dataset.requestId;
+  const userId =
+    boton.dataset.userId || boton.closest(".perfil-usuarios")?.dataset.userId;
+  const followedId =
+    boton.dataset.followedId ||
+    boton.closest(".perfil-usuarios")?.dataset.followedId;
+
+  if (!requesterId) {
+    mostrarNotificacion("Debes iniciar sesión para usar follows", "error");
+    return;
+  }
+
+  try {
+    if (
+      accion === "send-request" ||
+      accion === "follow-back" ||
+      accion === "follow-follower"
+    ) {
+      if (!userId) {
+        mostrarNotificacion(
+          "No se pudo identificar el usuario a seguir",
+          "error",
+        );
+        return;
+      }
+
+      const idsSeguidos = await obtenerIdsUsuariosSeguidos(requesterId);
+      const solicitudesEnviadas = await obtenerSolicitudesEnviadas(requesterId);
+      const receiverNumericId = Number(userId);
+
+      if (
+        Number.isFinite(receiverNumericId) &&
+        solicitudesEnviadas.some(
+          (item) =>
+            Number(item.receiverId) === receiverNumericId &&
+            String(item.status).toUpperCase() === "PENDIENTE",
+        )
+      ) {
+        if (boton) {
+          boton.textContent = "Solicitud enviada";
+          boton.disabled = true;
+          boton.classList.remove("seguir");
+          boton.classList.add("solicitud-enviada");
+          boton.dataset.followAction = "pending";
+        }
+        mostrarNotificacion("Ya existe una solicitud pendiente", "info");
+        return;
+      }
+
+      if (
+        Number.isFinite(receiverNumericId) &&
+        idsSeguidos.includes(receiverNumericId)
+      ) {
+        if (boton) {
+          boton.textContent = "Dejar de seguir";
+          boton.disabled = false;
+          boton.classList.remove("btn-seguir");
+          boton.classList.add("dejar-de-seguir");
+          boton.dataset.followAction = "unfollow-followed";
+          boton.dataset.followedId = String(receiverNumericId);
+        }
+        mostrarNotificacion("Ya sigues a este usuario", "info");
+        return;
+      }
+
+      await enviarSolicitudSeguimiento(requesterId, userId);
+      actualizarBotonSolicitudEnviada(boton);
+      mostrarNotificacion("Solicitud enviada", "success");
+      return;
+    }
+
+    if (accion === "accept-request") {
+      if (!requestId) {
+        mostrarNotificacion("No se pudo identificar la solicitud", "error");
+        return;
+      }
+
+      await aceptarSolicitudSeguimiento(requestId);
+      await recargarSistemaFollow();
+      mostrarNotificacion("Solicitud aceptada", "success");
+      return;
+    }
+
+    if (accion === "reject-request") {
+      if (!requestId) {
+        mostrarNotificacion("No se pudo identificar la solicitud", "error");
+        return;
+      }
+
+      await rechazarSolicitudSeguimiento(requestId);
+      await recargarSistemaFollow();
+      mostrarNotificacion("Solicitud rechazada", "info");
+      return;
+    }
+
+    if (accion === "unfollow" || accion === "unfollow-followed") {
+      const followedUserId = followedId || userId;
+
+      if (!followedUserId) {
+        mostrarNotificacion(
+          "No se pudo identificar el usuario seguido",
+          "error",
+        );
+        return;
+      }
+
+      await dejarDeSeguir(requesterId, followedUserId);
+      await recargarSistemaFollow();
+      mostrarNotificacion("Dejaste de seguir a este usuario", "info");
+    }
+  } catch (error) {
+    console.error("Error ejecutando follow:", error);
+    mostrarNotificacion(
+      error.message || "No se pudo completar la acción",
+      "error",
+    );
+  }
+});
 
 // Botones para cambiar de seccion
 
@@ -5443,12 +6513,21 @@ window.addEventListener("gnet:user-loaded", function () {
   cargarFotoPerfilInicial();
   cargarDatosPerfilEnInputs();
   inicializarPerfilDesdeBackend();
+  cargarSugerenciasUsuarios().catch((error) => {
+    console.error("Error cargando sugerencias:", error);
+  });
+  recargarSistemaFollow().catch((error) => {
+    console.error("Error cargando follows:", error);
+  });
 });
 
 window.addEventListener("gnet:user-updated", function (event) {
   if (event.detail) {
     actualizarPerfilEnPantalla(event.detail);
     cargarDatosPerfilEnInputs();
+    recargarSistemaFollow().catch((error) => {
+      console.error("Error actualizando follows:", error);
+    });
   }
 });
 

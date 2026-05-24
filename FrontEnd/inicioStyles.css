@@ -304,10 +304,13 @@ body {
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   grid-area: sugerencias;
   animation: slideInTop 0.6s ease-out 0.3s both;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .sugerencias::-webkit-scrollbar {
-  width: 8px;
+  width: 0;
+  height: 0;
 }
 
 .sugerencias::-webkit-scrollbar-track {
@@ -515,6 +518,18 @@ body {
   width: 100%;
   min-width: 0;
   bottom: 90px;
+}
+
+.feed-mis-publicaciones {
+  grid-area: feed;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 700px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 200px;
+  margin-left: 20px;
 }
 
 .contenedor-publicacion {
@@ -1328,6 +1343,10 @@ body.modal-open {
   background-color: var(--color-secundario);
   border-radius: 10px;
   padding: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .contenido > .seguidos,
@@ -1338,9 +1357,38 @@ body.modal-open {
   width: 100%;
   max-width: 400px;
   max-width: 480px;
-  position: relative;
-  top: -360px; /* reducir para subir los paneles */
   z-index: 40;
+  height: 260px;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.contenido > .seguidos {
+  grid-area: sugerencias;
+}
+
+.contenido > .seguidores-contenedor {
+  grid-area: solicitudes;
+}
+
+.contenido > .seguidos::-webkit-scrollbar,
+.contenido > .seguidores-contenedor::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.contenido > .seguidos::-webkit-scrollbar-track,
+.contenido > .seguidores-contenedor::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.contenido > .seguidos::-webkit-scrollbar-thumb,
+.contenido > .seguidores-contenedor::-webkit-scrollbar-thumb {
+  background: var(--color-bordes);
+  border-radius: 999px;
 }
 
 /* Botones más pequeños específicamente dentro del panel Seguidores */
@@ -1604,7 +1652,8 @@ body.modal-open {
 }
 
 /* Estilos para publicaciones dinámicas */
-.feed-publicaciones .publicacion {
+.feed-publicaciones .publicacion,
+.feed-mis-publicaciones .publicacion {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -1612,7 +1661,8 @@ body.modal-open {
   padding: 25px;
 }
 
-.feed-publicaciones .publicacion:hover {
+.feed-publicaciones .publicacion:hover,
+.feed-mis-publicaciones .publicacion:hover {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -1634,11 +1684,13 @@ body.modal-open {
 }
 
 .feed-publicaciones .carrusel-imagenes,
+.feed-mis-publicaciones .carrusel-imagenes,
 .publicaciones-usuario .carrusel-imagenes {
   margin: 15px 0;
 }
 
 .feed-publicaciones .usuario-info,
+.feed-mis-publicaciones .usuario-info,
 .publicaciones-usuario .usuario-info {
   display: flex;
   align-items: center;
@@ -1647,6 +1699,7 @@ body.modal-open {
 }
 
 .feed-publicaciones .usuario-datos h4,
+.feed-mis-publicaciones .usuario-datos h4,
 .publicaciones-usuario .usuario-datos h4 {
   margin: 0;
   font-size: 1rem;
@@ -1655,6 +1708,7 @@ body.modal-open {
 }
 
 .feed-publicaciones .tiempo-publicacion,
+.feed-mis-publicaciones .tiempo-publicacion,
 .publicaciones-usuario .tiempo-publicacion {
   font-size: 0.875rem;
   color: var(--color-datos);
@@ -1662,11 +1716,13 @@ body.modal-open {
 }
 
 .feed-publicaciones .contenido-publicacion,
+.feed-mis-publicaciones .contenido-publicacion,
 .publicaciones-usuario .contenido-publicacion {
   margin-bottom: 15px;
 }
 
 .feed-publicaciones .contenido-publicacion p,
+.feed-mis-publicaciones .contenido-publicacion p,
 .publicaciones-usuario .contenido-publicacion p {
   line-height: 1.5;
   font-size: 0.95rem;
@@ -3328,7 +3384,8 @@ body.modal-open {
     margin-bottom: 30px;
   }
 
-  .feed-publicaciones {
+  .feed-publicaciones,
+  .feed-mis-publicaciones {
     width: 400px;
     margin-top: 30px;
   }
@@ -3745,6 +3802,104 @@ body.modal-open {
   border-radius: 12px;
   grid-column: 2 / -1;
   grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mis-publicaciones-titulo {
+  margin: 0;
+  color: var(--color-objetos);
+  text-align: center;
+  font-weight: 700;
+  padding: 0 18px;
+}
+
+.lista-mis-publicaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.lista-mis-publicaciones > .contenedor-publicacion {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  position: static;
+  bottom: auto;
+}
+
+.lista-mis-publicaciones > .contenedor-publicacion .publicacion {
+  width: 100%;
+}
+
+.publicacion-perfil {
+  background: var(--color-fondo-elemento);
+  border: 1px solid var(--color-bordes);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.publicacion-perfil .header-publicacion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.publicacion-perfil .avatar-publicacion {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-bordes);
+}
+
+.publicacion-perfil .meta-publicacion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.publicacion-perfil .meta-publicacion strong {
+  color: var(--color-objetos);
+}
+
+.publicacion-perfil .meta-publicacion span,
+.publicacion-perfil .meta-publicacion small {
+  color: var(--color-datos);
+}
+
+.publicacion-perfil .contenido-publicacion {
+  color: var(--color-objetos);
+  line-height: 1.45;
+}
+
+.imagenes-publicacion-perfil {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.imagenes-publicacion-perfil img,
+.imagenes-publicacion-perfil video {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.acciones-publicacion-perfil {
+  display: flex;
+  gap: 16px;
+  color: var(--color-datos);
+  font-size: 0.9rem;
 }
 
 .solicitudes {
@@ -3753,17 +3908,26 @@ body.modal-open {
   width: 100%;
   justify-self: end;
   align-self: start;
-  max-height: 260px;
-  height: 260px;
+  max-height: 300px;
+  height: 300px;
   position: relative !important;
   background: var(--color-secundario);
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   border-radius: 12px;
   padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
   margin-top: 20px;
   transition: all 0.3s ease;
   animation: slideInTop 0.6s ease-out 0.3s both;
   margin-right: 70px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.solicitudes::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .aceptar {
@@ -3780,7 +3944,7 @@ body.modal-open {
 }
 
 .rechazar {
-  background: #f70000;
+  background: #ff0d0d;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -4253,6 +4417,7 @@ body.modal-open {
 }
 
 .modal-imagen .imagen-modal {
+  margin-top: 40px;
   width: 100%;
   height: auto;
   max-width: 90vw;

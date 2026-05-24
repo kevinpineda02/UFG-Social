@@ -52,6 +52,37 @@ function getUserIdForApi() {
   return null;
 }
 
+async function esperarUsuarioAutenticado() {
+  const usuarioActual =
+    typeof getCurrentUser === "function" ? getCurrentUser() : null;
+  if (usuarioActual || getStoredUserId()) {
+    return usuarioActual;
+  }
+
+  return new Promise((resolve) => {
+    const resolver = () => {
+      const usuario =
+        typeof getCurrentUser === "function" ? getCurrentUser() : null;
+      if (usuario || getStoredUserId()) {
+        window.removeEventListener("gnet:user-loaded", resolver);
+        window.removeEventListener("gnet:user-updated", resolver);
+        clearTimeout(timer);
+        resolve(usuario);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      window.removeEventListener("gnet:user-loaded", resolver);
+      window.removeEventListener("gnet:user-updated", resolver);
+      resolve(typeof getCurrentUser === "function" ? getCurrentUser() : null);
+    }, 1500);
+
+    window.addEventListener("gnet:user-loaded", resolver);
+    window.addEventListener("gnet:user-updated", resolver);
+    resolver();
+  });
+}
+
 // Estado de conexión con el backend
 let backendConectado = false;
 let usarBackend = true; // Cambiar a false para usar solo localStorage
@@ -99,6 +130,39 @@ function extraerIdNumerico(valor) {
   const numero = Number(limpio);
 
   return Number.isFinite(numero) && numero > 0 ? numero : null;
+}
+
+function obtenerIdPublicacionReal(desde) {
+  if (!desde) return null;
+
+  if (typeof desde === "string") {
+    const candidato = document.getElementById(desde);
+    if (candidato) {
+      return (
+        extraerIdNumerico(candidato.dataset.publicationId) ||
+        extraerIdNumerico(candidato.dataset.pubid) ||
+        extraerIdNumerico(desde)
+      );
+    }
+
+    return extraerIdNumerico(desde);
+  }
+
+  return (
+    extraerIdNumerico(desde.dataset?.publicationId) ||
+    extraerIdNumerico(desde.dataset?.pubid) ||
+    extraerIdNumerico(desde.id)
+  );
+}
+
+function obtenerClaveComentariosPublicacion(publicacionId) {
+  const publicacion = document.getElementById(publicacionId);
+  return String(
+    publicacion?.dataset?.publicationId ||
+      publicacion?.dataset?.pubid ||
+      obtenerIdPublicacionReal(publicacionId) ||
+      publicacionId,
+  );
 }
 
 function normalizarComentarioBackend(comentario) {
@@ -1576,6 +1640,284 @@ async function obtenerPublicacionesPorUsuario(userId) {
   }
 }
 
+async function obtenerMisPublicaciones() {
+  try {
+    const userId = getUserIdForApi();
+
+    if (!userId) {
+      console.error("No se pudo obtener el ID del usuario logueado");
+      return [];
+    }
+
+    const response = await fetchConAutenticacion(
+      `${API_ENDPOINTS.publication}/user/${userId}`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+      },
+    );
+
+    if (!response) return [];
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error(
+        "Error obteniendo publicaciones del perfil:",
+        response.status,
+        errorText,
+      );
+      return [];
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Error obteniendo mis publicaciones:", error);
+    return [];
+  }
+}
+
+function obtenerContenedorMisPublicaciones() {
+  let contenedor = document.querySelector(".contenido .feed-mis-publicaciones");
+  const contenido = document.querySelector(".contenido");
+  const feedPublicaciones = document.querySelector(".feed-publicaciones");
+
+  if (!contenedor && contenido) {
+    contenedor = document.createElement("div");
+    contenedor.className = "feed-mis-publicaciones";
+    contenedor.style.display = "none";
+
+    if (feedPublicaciones && feedPublicaciones.parentNode === contenido) {
+      feedPublicaciones.insertAdjacentElement("afterend", contenedor);
+    } else {
+      contenido.appendChild(contenedor);
+    }
+  }
+
+  return contenedor;
+}
+
+function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
+  const pubId = `pub_${publicacionData.id}`;
+  const autor = publicacionData.user || "Usuario";
+  const username = publicacionData.username || "usuario";
+  const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
+  const handle = `@${username}`;
+  const description = publicacionData.description || "";
+  let images = publicacionData.images || [];
+
+  if (images.length > 0 && typeof images[0] === "string") {
+    images = images.map((url, i) => ({ imageUrl: url, orderImage: i + 1 }));
+  }
+
+  const likes = publicacionData.likes || 0;
+  const coments = publicacionData.coments || 0;
+  const timestamp = publicacionData.creationDate
+    ? new Date(publicacionData.creationDate).getTime()
+    : Date.now();
+
+  let htmlImages = "";
+  if (images.length > 0) {
+    const slidesHtml = images
+      .sort((a, b) => (a.orderImage || 0) - (b.orderImage || 0))
+      .map(
+        (img, index) => `
+      <div class="imagen-slide ${index === 0 ? "active" : ""}">
+        <img src="${img.imageUrl}" alt="Imagen de la publicación">
+        <button class="btn-expandir" onclick="expandirImagen('${img.imageUrl}', 'Imagen de la publicación')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+          </svg>
+        </button>
+      </div>
+    `,
+      )
+      .join("");
+
+    const indicatorsHtml = images
+      .map(
+        (_, index) => `
+      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index})"></div>
+    `,
+      )
+      .join("");
+
+    htmlImages = `
+      <div class="carrusel-imagenes">
+        <div class="carrusel-contenedor">
+          ${slidesHtml}
+        </div>
+        ${
+          images.length > 1
+            ? `
+        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+        <div class="indicadores">${indicatorsHtml}</div>
+        <div class="contador-imagenes">
+          <span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span>
+        </div>
+        `
+            : ""
+        }
+      </div>`;
+  }
+
+  const datosUsuario = obtenerDatosUsuario();
+  const esDelUsuarioActual =
+    opciones.forzarMenuEdicion ||
+    autor === datosUsuario.username ||
+    handle === datosUsuario.handle;
+
+  const menuOpciones = esDelUsuarioActual
+    ? `
+    <div class="menu-opciones">
+      <button class="btn-menu-publicacion" onclick="toggleMenuPublicacion('${pubId}')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+        </svg>
+      </button>
+      <div class="menu-dropdown-publicacion" id="menu-pub-${pubId}">
+        <button class="menu-opcion eliminar" onclick="${opciones.modoPerfil ? `eliminarPublicacionPerfil('${publicacionData.id}', '${pubId}')` : `eliminarPublicacion('${pubId}')`}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+          Eliminar publicación
+        </button>
+      </div>
+    </div>
+  `
+    : "";
+
+  return `
+    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-publication-id="${publicacionData.id}" data-pubid="${publicacionData.id}">
+      <div class="usuario-info">
+        <div class="avatar">
+          <img src="${avatar}" alt="${autor}">
+        </div>
+        <div class="usuario-datos">
+          <h4>${autor}</h4>
+          <p class="usuario-handle">${handle}</p>
+          <p class="tiempo-publicacion">${tiempoTranscurrido(publicacionData.creationDate)}</p>
+        </div>
+        ${menuOpciones}
+      </div>
+      <div class="contenido-publicacion">
+        ${description ? `<p>${description}</p>` : ""}
+        ${htmlImages}
+      </div>
+      <div class="separador"></div>
+      <div class="acciones-publicacion">
+        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+          </svg>
+          <span>${likes}</span>
+        </button>
+        <button class="accion-btn comentarios" onclick="alternarComentarios('${pubId}')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+          </svg>
+          <span>${coments}</span>
+        </button>
+      </div>
+      ${generarHTMLComentarios(pubId)}
+    </div>`;
+}
+
+function renderizarComentariosPublicacion(contenedor, comentarios) {
+  if (!contenedor) return;
+
+  contenedor.innerHTML = "";
+
+  if (!comentarios || comentarios.length === 0) {
+    contenedor.innerHTML = `
+      <p class="sin-comentarios">No hay comentarios todavía.</p>
+    `;
+    return;
+  }
+
+  comentarios.forEach((comment) => {
+    const item = document.createElement("div");
+    item.className = "comentario-item";
+
+    item.innerHTML = `
+      <img
+        src="${comment.profilePhoto || comment.avatar || "./assets/Logo/UFGPerfil.jpg"}"
+        class="avatar-comentario"
+        alt="Avatar de ${comment.user || comment.autor || "Usuario"}"
+      >
+
+      <div class="contenido-comentario">
+        <div class="header-comentario">
+          <strong>${comment.user || comment.autor || "Usuario"}</strong>
+          <span>@${comment.username || (comment.handle ? String(comment.handle).replace("@", "") : "usuario")}</span>
+          <small>${tiempoTranscurrido(comment.creationDate || comment.fecha || new Date())}</small>
+        </div>
+
+        <p>${comment.comment || comment.texto || ""}</p>
+      </div>
+    `;
+
+    contenedor.appendChild(item);
+  });
+}
+
+function renderizarPublicacionMiPerfil(publication) {
+  return `<div class="contenedor-publicacion">${construirHTMLPublicacionBackend(
+    publication,
+    {
+      forzarMenuEdicion: true,
+      modoPerfil: true,
+    },
+  )}</div>`;
+}
+
+async function cargarPublicacionesMiPerfil() {
+  const contenedor = obtenerContenedorMisPublicaciones();
+
+  if (!contenedor) {
+    console.error("No existe el contenedor .feed-mis-publicaciones");
+    return;
+  }
+
+  if (typeof inicializarComentarios === "function") {
+    inicializarComentarios();
+  }
+
+  contenedor.innerHTML = "";
+
+  const publicaciones = await obtenerMisPublicaciones();
+  publicaciones.sort(
+    (a, b) => obtenerTimestampPublicacion(b) - obtenerTimestampPublicacion(a),
+  );
+
+  if (publicaciones.length === 0) {
+    contenedor.innerHTML = "<p>No has publicado nada todavía.</p>";
+    return;
+  }
+
+  contenedor.innerHTML = publicaciones
+    .map((publication) => renderizarPublicacionMiPerfil(publication))
+    .join("");
+
+  contenedor.querySelectorAll(".contenedor-publicacion").forEach((nodo) => {
+    reinicializarEventosPublicacion(nodo);
+    const pubElement = nodo.querySelector(".publicacion");
+    if (pubElement?.id) {
+      inicializarLikePublicacion(pubElement.id);
+      actualizarContadorComentarios(pubElement.id);
+    }
+  });
+}
+
 // Crear publicación en el backend (PublicationRestController)
 async function crearPublicacionBackend(
   contenido,
@@ -1889,7 +2231,7 @@ async function agregarComentarioBackend(publicacionId, textoComentario) {
 // GET /publication/{publicationId}/comments
 async function obtenerComentariosBackend(publicacionId) {
   try {
-    const realPublicationId = extraerIdNumerico(publicacionId);
+    const realPublicationId = obtenerIdPublicacionReal(publicacionId);
 
     if (!realPublicationId) {
       console.error(
@@ -1931,6 +2273,48 @@ async function obtenerComentariosBackend(publicacionId) {
       .filter((comentario) => comentario !== null);
   } catch (error) {
     console.error("Error obteniendo comentarios del backend:", error);
+    return [];
+  }
+}
+
+async function obtenerComentariosPublicacion(publicationId) {
+  try {
+    const realPublicationId = obtenerIdPublicacionReal(publicationId);
+
+    if (!realPublicationId) {
+      console.error(
+        "❌ publicationId inválido para obtener comentarios:",
+        publicationId,
+      );
+      return [];
+    }
+
+    const response = await fetch(
+      `${API_ENDPOINTS.publication}/${realPublicationId}/comments`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error(
+        "Error obteniendo comentarios:",
+        response.status,
+        errorText,
+      );
+      return [];
+    }
+
+    const data = await response.json();
+    return Array.isArray(data)
+      ? data
+          .map(normalizarComentarioBackend)
+          .filter((comentario) => comentario !== null)
+      : [];
+  } catch (error) {
+    console.error("Error obteniendo comentarios:", error);
     return [];
   }
 }
@@ -2148,22 +2532,27 @@ function mostrarNotificacion(mensaje, tipo = "info") {
 
 // Función para calcular tiempo transcurrido
 function tiempoTranscurrido(fecha) {
-  const ahora = new Date();
-  const fechaPublicacion = new Date(fecha);
-  const diferencia = Math.floor((ahora - fechaPublicacion) / 1000);
+  if (!fecha) return "ahora";
 
-  if (diferencia < 60) {
-    return "hace unos segundos";
-  } else if (diferencia < 3600) {
-    const minutos = Math.floor(diferencia / 60);
-    return `hace ${minutos} minuto${minutos > 1 ? "s" : ""}`;
-  } else if (diferencia < 86400) {
-    const horas = Math.floor(diferencia / 3600);
-    return `hace ${horas} hora${horas > 1 ? "s" : ""}`;
-  } else {
-    const dias = Math.floor(diferencia / 86400);
-    return `hace ${dias} día${dias > 1 ? "s" : ""}`;
-  }
+  const fechaPublicacion = new Date(fecha);
+  const ahora = new Date();
+
+  const diferenciaMs = ahora - fechaPublicacion;
+  const segundos = Math.floor(diferenciaMs / 1000);
+  const minutos = Math.floor(segundos / 60);
+  const horas = Math.floor(minutos / 60);
+  const dias = Math.floor(horas / 24);
+
+  if (segundos < 60) return "ahora";
+  if (minutos < 60) return `hace ${minutos} min`;
+  if (horas < 24) return `hace ${horas} h`;
+  if (dias < 7) return `hace ${dias} d`;
+
+  return fechaPublicacion.toLocaleDateString("es-SV", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 // ===========================================
@@ -2438,6 +2827,60 @@ function guardarPublicaciones() {
   }
 }
 
+function obtenerTimestampPublicacion(publicacion) {
+  if (!publicacion || typeof publicacion !== "object") {
+    return 0;
+  }
+
+  const valorFecha =
+    publicacion.creationDate ??
+    publicacion.timestamp ??
+    publicacion.fechaCreacion ??
+    null;
+
+  if (!valorFecha) {
+    return 0;
+  }
+
+  const timestamp = new Date(valorFecha).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function ordenarContenedoresPublicaciones(feedPublicaciones) {
+  if (!feedPublicaciones) return;
+
+  const contenedores = Array.from(
+    feedPublicaciones.querySelectorAll(".contenedor-publicacion"),
+  );
+
+  const ejemplos = [];
+  const publicaciones = [];
+
+  contenedores.forEach((contenedor) => {
+    const publicacion = contenedor.querySelector(".publicacion");
+    if (!publicacion) return;
+
+    if (
+      publicacion.id === "pub_ejemplo_1" ||
+      publicacion.id === "pub_ejemplo_2"
+    ) {
+      ejemplos.push(contenedor);
+      return;
+    }
+
+    const timestamp = Number(publicacion.dataset.timestamp || 0);
+    publicaciones.push({ contenedor, timestamp });
+  });
+
+  publicaciones.sort((a, b) => b.timestamp - a.timestamp);
+
+  [...ejemplos, ...publicaciones.map((item) => item.contenedor)].forEach(
+    (contenedor) => {
+      feedPublicaciones.appendChild(contenedor);
+    },
+  );
+}
+
 // Función para cargar publicaciones (híbrida: backend + localStorage)
 async function cargarPublicaciones() {
   try {
@@ -2472,8 +2915,12 @@ async function cargarPublicaciones() {
       return;
     }
 
+    const publicacionesOrdenadas = [...publicaciones].sort(
+      (a, b) => obtenerTimestampPublicacion(b) - obtenerTimestampPublicacion(a),
+    );
+
     // Filtrar solo publicaciones que no existan ya en el DOM
-    const publicacionesNuevas = publicaciones.filter((pub) => {
+    const publicacionesNuevas = publicacionesOrdenadas.filter((pub) => {
       const backendId = pub.id;
       const frontendId = `pub_${backendId}`;
       return (
@@ -2524,6 +2971,8 @@ async function cargarPublicaciones() {
       }
     });
 
+    ordenarContenedoresPublicaciones(feedPublicaciones);
+
     const fuente = backendConectado && usarBackend ? "backend" : "localStorage";
     console.log(
       `✅ ${publicacionesNuevas.length} publicaciones nuevas cargadas desde ${fuente}`,
@@ -2552,7 +3001,9 @@ function crearPublicacionDesdeBackend(
   }
   const likes = publicacionData.likes || 0;
   const coments = publicacionData.coments || 0;
-  const timestamp = Date.now();
+  const timestamp = publicacionData.creationDate
+    ? new Date(publicacionData.creationDate).getTime()
+    : Date.now();
 
   // Generar HTML de imágenes si existen
   let htmlImages = "";
@@ -2634,7 +3085,7 @@ function crearPublicacionDesdeBackend(
     : "";
 
   const htmlPublicacion = `
-    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-pubid="${publicacionData.id}">
+    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-publication-id="${publicacionData.id}" data-pubid="${publicacionData.id}">
       <div class="usuario-info">
         <div class="avatar">
           <img src="${avatar}" alt="${autor}">
@@ -2642,7 +3093,7 @@ function crearPublicacionDesdeBackend(
         <div class="usuario-datos">
           <h4>${autor}</h4>
           <p class="usuario-handle">${handle}</p>
-          <p class="tiempo-publicacion">ahora</p>
+          <p class="tiempo-publicacion">${tiempoTranscurrido(publicacionData.creationDate)}</p>
         </div>
         ${menuOpciones}
       </div>
@@ -2693,6 +3144,8 @@ function crearPublicacionDesdeBackend(
 
   // Inicializar estado del like
   inicializarLikePublicacion(pubId);
+
+  ordenarContenedoresPublicaciones(feedPublicaciones);
 }
 
 // Función para crear publicación desde localStorage (formato existente)
@@ -3341,6 +3794,9 @@ function seleccionarVentana(botonSeleccionado) {
     document.querySelector(".mi-perfil");
   const publicaciones = document.querySelector(".publicaciones");
   const feedPublicaciones = document.querySelector(".feed-publicaciones");
+  const feedMisPublicaciones = document.querySelector(
+    ".contenido .feed-mis-publicaciones",
+  );
   const sugerencias = document.querySelector(".sugerencias");
   const solicitudes = document.querySelector(".solicitudes");
   const seguidos = document.querySelector(".seguidos");
@@ -3353,6 +3809,7 @@ function seleccionarVentana(botonSeleccionado) {
     if (publicaciones) publicaciones.style.display = "";
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "";
+    if (feedMisPublicaciones) feedMisPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "";
     if (solicitudes) solicitudes.style.display = "";
     if (seguidos) seguidos.style.display = "none";
@@ -3363,6 +3820,7 @@ function seleccionarVentana(botonSeleccionado) {
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
+    if (feedMisPublicaciones) feedMisPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
     if (solicitudes) solicitudes.style.display = "none";
   } else if (botonId === "comunidad") {
@@ -3371,6 +3829,7 @@ function seleccionarVentana(botonSeleccionado) {
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "none";
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
+    if (feedMisPublicaciones) feedMisPublicaciones.style.display = "none";
     if (sugerencias) sugerencias.style.display = "none";
     if (solicitudes) solicitudes.style.display = "none";
   } else if (botonId === "perfil") {
@@ -3383,8 +3842,15 @@ function seleccionarVentana(botonSeleccionado) {
     if (sugerencias) sugerencias.style.display = "none";
     if (seguidos) seguidos.style.display = "";
     if (seguidoresContenedor) seguidoresContenedor.style.display = "";
+    const feedMisPublicacionesPerfil = obtenerContenedorMisPublicaciones();
+    if (feedMisPublicacionesPerfil) {
+      feedMisPublicacionesPerfil.style.display = "flex";
+    }
     recargarSistemaFollow().catch((error) => {
       console.error("Error recargando follows:", error);
+    });
+    cargarPublicacionesMiPerfil().catch((error) => {
+      console.error("Error al cargar publicaciones del perfil:", error);
     });
   }
 }
@@ -4053,7 +4519,9 @@ async function crearNuevaPublicacion(texto, imagenes, encuesta = null) {
 function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
   const feedPublicaciones = document.querySelector(".feed-publicaciones");
   const pubId = `pub_${publicacionData.id}`;
-  const timestamp = Date.now();
+  const timestamp = publicacionData.creationDate
+    ? new Date(publicacionData.creationDate).getTime()
+    : Date.now();
 
   const autor =
     publicacionData.user || obtenerDatosUsuario().username || "Usuario";
@@ -4140,13 +4608,13 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
     : "";
 
   const htmlPublicacion = `
-    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-pubid="${publicacionData.id}">
+    <div class="publicacion" id="${pubId}" data-timestamp="${timestamp}" data-publication-id="${publicacionData.id}" data-pubid="${publicacionData.id}">
       <div class="usuario-info">
         <div class="avatar"><img src="${avatar}" alt="${autor}"></div>
         <div class="usuario-datos">
           <h4>${autor}</h4>
           <p class="usuario-handle">${handle}</p>
-          <p class="tiempo-publicacion">ahora</p>
+          <p class="tiempo-publicacion">${tiempoTranscurrido(publicacionData.creationDate)}</p>
         </div>
         ${menuOpcionesFront}
       </div>
@@ -4218,6 +4686,8 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
 
   // Inicializar estado del like
   inicializarLikePublicacion(pubId);
+
+  ordenarContenedoresPublicaciones(feedPublicaciones);
 }
 
 // Función original para crear publicación (localStorage)
@@ -4727,11 +5197,11 @@ async function toggleComentarios(publicacionId) {
     }
 
     // Si está conectado al backend, cargar comentarios desde allá
+    const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
+
     if (backendConectado && usarBackend && !seccionComentarios.dataset.loaded) {
-      const pubEl = document.getElementById(publicacionId);
-      const realPubId =
-        pubEl?.dataset?.pubid || publicacionId.replace("pub_", "");
-      const backendComments = await obtenerComentariosBackend(realPubId);
+      const backendComments =
+        await obtenerComentariosPublicacion(claveComentarios);
       if (backendComments.length > 0) {
         // Protección adicional: asegurar que comentariosPorPublicacion esté inicializado
         if (
@@ -4749,7 +5219,7 @@ async function toggleComentarios(publicacionId) {
           "para",
           publicacionId,
         );
-        comentariosPorPublicacion[publicacionId] = backendComments
+        comentariosPorPublicacion[claveComentarios] = backendComments
           .map((c) => {
             const comentarioNormalizado =
               c?.backendId !== undefined ? c : normalizarComentarioBackend(c);
@@ -4778,7 +5248,7 @@ async function toggleComentarios(publicacionId) {
           .filter((comentario) => comentario !== null);
         console.log(
           "✅ Comentarios asignados a comentariosPorPublicacion[" +
-            publicacionId +
+            claveComentarios +
             "]",
         );
         guardarComentarios();
@@ -4884,11 +5354,11 @@ async function publicarComentario(publicacionId) {
   }
 
   let comentarioBackend = null;
+  const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
 
   // Si el backend está conectado, enviar comentario al backend
   if (backendConectado && usarBackend) {
-    const pubEl = document.getElementById(publicacionId);
-    const realPubId = pubEl?.dataset?.pubid;
+    const realPubId = obtenerIdPublicacionReal(publicacionId);
     comentarioBackend = await agregarComentarioBackend(
       realPubId || publicacionId,
       textoComentario,
@@ -4931,10 +5401,10 @@ async function publicarComentario(publicacionId) {
       };
 
   // Agregar comentario al storage local
-  if (!comentariosPorPublicacion[publicacionId]) {
-    comentariosPorPublicacion[publicacionId] = [];
+  if (!comentariosPorPublicacion[claveComentarios]) {
+    comentariosPorPublicacion[claveComentarios] = [];
   }
-  comentariosPorPublicacion[publicacionId].unshift(nuevoComentario);
+  comentariosPorPublicacion[claveComentarios].unshift(nuevoComentario);
 
   // Guardar comentarios en localStorage
   guardarComentarios();
@@ -4986,9 +5456,10 @@ function actualizarDatosPublicacion(publicacionId, nuevoComentario = null) {
     }
 
     // Actualizar comentarios con los del objeto global
-    if (comentariosPorPublicacion[publicacionId]) {
+    const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
+    if (comentariosPorPublicacion[claveComentarios]) {
       datosPublicacion.comentarios = [
-        ...comentariosPorPublicacion[publicacionId],
+        ...comentariosPorPublicacion[claveComentarios],
       ];
     }
 
@@ -5066,7 +5537,8 @@ function renderizarComentarios(publicacionId) {
     return;
   }
 
-  const comentarios = comentariosPorPublicacion[publicacionId] || [];
+  const claveComentarios = obtenerClaveComentariosPublicacion(publicacionId);
+  const comentarios = comentariosPorPublicacion[claveComentarios] || [];
   console.log("📊 Comentarios a mostrar:", comentarios.length);
 
   contadorComentarios.textContent = comentarios.length;
@@ -5155,7 +5627,10 @@ function renderizarComentarios(publicacionId) {
 
 // Función para dar like a un comentario
 function toggleLikeComentario(publicacionId, comentarioId) {
-  const comentarios = comentariosPorPublicacion[publicacionId];
+  const comentarios =
+    comentariosPorPublicacion[
+      obtenerClaveComentariosPublicacion(publicacionId)
+    ];
   if (!comentarios) return;
 
   const comentario = comentarios.find((c) => c.id === comentarioId);
@@ -5181,7 +5656,10 @@ function responderComentario(publicacionId, comentarioId) {
   const campoComentario = document.getElementById(
     `campo-comentario-${publicacionId}`,
   );
-  const comentarios = comentariosPorPublicacion[publicacionId];
+  const comentarios =
+    comentariosPorPublicacion[
+      obtenerClaveComentariosPublicacion(publicacionId)
+    ];
 
   if (!comentarios || !campoComentario) return;
 
@@ -5224,8 +5702,11 @@ function actualizarContadorComentarios(publicacionId) {
   if (!botonComentarios) return;
 
   const contador = botonComentarios.querySelector("span");
-  const numeroComentarios = (comentariosPorPublicacion[publicacionId] || [])
-    .length;
+  const numeroComentarios = (
+    comentariosPorPublicacion[
+      obtenerClaveComentariosPublicacion(publicacionId)
+    ] || []
+  ).length;
 
   if (contador) {
     contador.textContent = numeroComentarios;
@@ -5731,13 +6212,49 @@ function toggleMenuPublicacion(publicacionId) {
   }
 }
 
+async function eliminarPublicacionPerfil(
+  publicationId,
+  publicacionDomId = null,
+) {
+  const realPublicationId = obtenerIdPublicacionReal(
+    publicationId || publicacionDomId,
+  );
+
+  if (!realPublicationId) {
+    console.error(
+      "❌ publicationId inválido para eliminar en perfil:",
+      publicationId,
+    );
+    return false;
+  }
+
+  const eliminada = await eliminarPublicacionBackend(realPublicationId);
+  if (!eliminada) return false;
+
+  const elementoPublicacion =
+    (publicacionDomId && document.getElementById(publicacionDomId)) ||
+    document.querySelector(`[data-publication-id="${realPublicationId}"]`);
+
+  if (elementoPublicacion) {
+    const contenedorPublicacion = elementoPublicacion.closest(
+      ".contenedor-publicacion",
+    );
+    if (contenedorPublicacion) {
+      contenedorPublicacion.remove();
+    } else {
+      elementoPublicacion.remove();
+    }
+  }
+
+  return true;
+}
+
 // Función para eliminar publicación
 function eliminarPublicacion(publicacionId) {
   const elementoPublicacion = document.getElementById(publicacionId);
   if (!elementoPublicacion) return;
 
-  const realPubId =
-    elementoPublicacion.dataset?.pubid || publicacionId.replace("pub_", "");
+  const realPubId = obtenerIdPublicacionReal(elementoPublicacion);
 
   // Eliminar del backend si está conectado
   if (backendConectado && usarBackend) {
@@ -6803,26 +7320,28 @@ function mostrarNotificacion(mensaje, tipo = "info") {
 
 // Función para calcular tiempo transcurrido
 function tiempoTranscurrido(fechaISO) {
-  try {
-    const fecha = new Date(fechaISO);
-    const ahora = new Date();
-    const diferencia = ahora - fecha;
+  if (!fechaISO) return "ahora";
 
-    const segundos = Math.floor(diferencia / 1000);
-    const minutos = Math.floor(segundos / 60);
-    const horas = Math.floor(minutos / 60);
-    const dias = Math.floor(horas / 24);
+  const fechaPublicacion = new Date(fechaISO);
+  if (Number.isNaN(fechaPublicacion.getTime())) return "ahora";
 
-    if (segundos < 60) return "ahora";
-    if (minutos < 60) return `${minutos}m`;
-    if (horas < 24) return `${horas}h`;
-    if (dias < 7) return `${dias}d`;
+  const ahora = new Date();
+  const diferenciaMs = ahora - fechaPublicacion;
+  const segundos = Math.floor(diferenciaMs / 1000);
+  const minutos = Math.floor(segundos / 60);
+  const horas = Math.floor(minutos / 60);
+  const dias = Math.floor(horas / 24);
 
-    return fecha.toLocaleDateString();
-  } catch (error) {
-    console.warn("Error calculando tiempo transcurrido:", error);
-    return "hace un momento";
-  }
+  if (segundos < 60) return "ahora";
+  if (minutos < 60) return `hace ${minutos} min`;
+  if (horas < 24) return `hace ${horas} h`;
+  if (dias < 7) return `hace ${dias} d`;
+
+  return fechaPublicacion.toLocaleDateString("es-SV", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 // Función para inicializar la conexión con el backend al cargar la página

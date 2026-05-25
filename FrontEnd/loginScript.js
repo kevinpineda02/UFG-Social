@@ -189,6 +189,16 @@ document.addEventListener("DOMContentLoaded", function () {
               data.user?.idCredential;
             const userId =
               data.userId ?? data.user?.id ?? data.user?.userId ?? data.id;
+            const rol =
+              data.rol ||
+              data.role ||
+              data.user?.rol ||
+              data.user?.role ||
+              data.credential?.rol ||
+              data.credential?.role ||
+              data.user?.credential?.rol ||
+              data.user?.credential?.role ||
+              "";
 
             if (credentialId != null) {
               localStorage.setItem("credentialId", String(credentialId));
@@ -196,6 +206,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (userId != null) {
               localStorage.setItem("userId", String(userId));
+            }
+
+            if (rol) {
+              localStorage.setItem("rol", String(rol));
+              localStorage.setItem("role", String(rol));
             }
           } catch (e) {}
           try {
@@ -218,8 +233,9 @@ document.addEventListener("DOMContentLoaded", function () {
       e.preventDefault();
 
       const submitBtn = registroFormElement.querySelector(".btn-primary");
-      const correoInput = registroFormElement
-        .querySelector('input[name="correo"]');
+      const correoInput = registroFormElement.querySelector(
+        'input[name="correo"]',
+      );
       const correo = correoInput.value.trim();
       const contrasena = registroFormElement.querySelector(
         'input[name="contrasena"]',
@@ -230,8 +246,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       const registerError =
         registroFormElement.querySelector(".register-error");
-      const emailError =
-        registroFormElement.querySelector(".email-error");
+      const emailError = registroFormElement.querySelector(".email-error");
       const confirmPassword = confirmPasswordInput.value;
 
       function clearRegisterError() {
@@ -585,13 +600,26 @@ document.addEventListener("DOMContentLoaded", function () {
           throw new Error(msg);
         }
         console.log("✓ Éxito: Perfil guardado");
-        
+
         // Guardar los datos del usuario en localStorage para que auth.js pueda usarlos
         try {
           localStorage.setItem("username", username);
-          localStorage.setItem("avatar", profileImageData || defaultProfileImageBase64 || "");
+          localStorage.setItem(
+            "avatar",
+            profileImageData || defaultProfileImageBase64 || "",
+          );
           if (data && data.id != null) {
             localStorage.setItem("userId", String(data.id));
+          }
+          const rol =
+            data?.rol ||
+            data?.role ||
+            data?.credential?.rol ||
+            data?.credential?.role ||
+            "";
+          if (rol) {
+            localStorage.setItem("rol", String(rol));
+            localStorage.setItem("role", String(rol));
           }
           console.log("✓ Datos del usuario guardados en localStorage");
         } catch (e) {

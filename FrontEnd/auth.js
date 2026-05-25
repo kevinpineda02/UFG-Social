@@ -140,18 +140,38 @@ function normalizarUsuarioBackend(usuario) {
   }
 
   // Normalizar campos del usuario desde diferentes formatos de respuesta del backend
-  const profilePhoto = usuario.profileImage || usuario.profilePhoto || usuario.avatar;
-  const username = usuario.username || usuario.nombreUsuario || usuario.userName || "";
+  const profilePhoto =
+    usuario.profileImage || usuario.profilePhoto || usuario.avatar;
+  const username =
+    usuario.username || usuario.nombreUsuario || usuario.userName || "";
+  const rol =
+    usuario.rol ||
+    usuario.role ||
+    usuario.credential?.rol ||
+    usuario.credential?.role ||
+    "";
   const nombreVisible =
     usuario.user || usuario.name || usuario.nombre || username || "Usuario";
 
   return {
     ...usuario,
-    id: usuario.id ?? usuario.userId ?? usuario.usuarioId ?? usuario.idUser ?? null,
-    userId: usuario.userId ?? usuario.id ?? usuario.usuarioId ?? usuario.idUser ?? null,
+    id:
+      usuario.id ??
+      usuario.userId ??
+      usuario.usuarioId ??
+      usuario.idUser ??
+      null,
+    userId:
+      usuario.userId ??
+      usuario.id ??
+      usuario.usuarioId ??
+      usuario.idUser ??
+      null,
     user: nombreVisible,
     username: username || nombreVisible,
     name: nombreVisible,
+    rol,
+    role: rol,
     handle:
       usuario.handle ||
       `@${(username || nombreVisible || "usuario").toLowerCase().replace(/\s+/g, "")}`,
@@ -183,7 +203,10 @@ async function getUserInfo() {
     const headers = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-      console.log("✓ Token en Authorization header:", token.substring(0, 20) + "...");
+      console.log(
+        "✓ Token en Authorization header:",
+        token.substring(0, 20) + "...",
+      );
     }
 
     const userId = getStoredUserId();
@@ -197,7 +220,7 @@ async function getUserInfo() {
       method: "GET",
       headers,
     });
-    
+
     console.log("📥 Respuesta del servidor - Status:", response.status);
 
     // Si es 401 (sin token válido), hacer logout
@@ -206,20 +229,20 @@ async function getUserInfo() {
       logout();
       return null;
     }
-    
+
     // Si no es OK, loguear pero no fallar completamente
     if (!response.ok) {
       console.warn(
         "⚠️ No se pudo obtener información del usuario (status " +
           response.status +
-          "). Usando datos del localStorage si están disponibles."
+          "). Usando datos del localStorage si están disponibles.",
       );
-      
+
       // Intentar crear un usuario básico desde localStorage
       const storedUserId = getStoredUserId();
       const storedUsername = localStorage.getItem("username");
       const storedAvatar = localStorage.getItem("avatar");
-      
+
       if (storedUserId || storedUsername) {
         currentUser = normalizarUsuarioBackend({
           id: storedUserId,
@@ -232,11 +255,11 @@ async function getUserInfo() {
         updateUserInterface();
         return currentUser;
       }
-      
+
       updateUserInterface();
       return null;
     }
-    
+
     // Parsear respuesta exitosa
     if (response.ok) {
       const data = await response.json();
@@ -249,17 +272,41 @@ async function getUserInfo() {
       } else if (data?.user && typeof data.user === "object") {
         usuarioData = data.user;
       }
-      
+
       console.log("📋 Usuario parseado:", usuarioData);
 
       currentUser = normalizarUsuarioBackend(usuarioData);
-      
+
       if (currentUser && currentUser.id != null) {
         try {
           localStorage.setItem("userId", String(currentUser.id));
-          localStorage.setItem("username", String(currentUser.username || currentUser.name));
-          if (currentUser.profileImage || currentUser.profilePhoto || currentUser.avatar) {
-            localStorage.setItem("avatar", String(currentUser.profileImage || currentUser.profilePhoto || currentUser.avatar));
+          localStorage.setItem(
+            "username",
+            String(currentUser.username || currentUser.name),
+          );
+          const rolActual =
+            currentUser.rol ||
+            currentUser.role ||
+            currentUser.credential?.rol ||
+            currentUser.credential?.role ||
+            "";
+          if (rolActual) {
+            localStorage.setItem("rol", String(rolActual));
+            localStorage.setItem("role", String(rolActual));
+          }
+          if (
+            currentUser.profileImage ||
+            currentUser.profilePhoto ||
+            currentUser.avatar
+          ) {
+            localStorage.setItem(
+              "avatar",
+              String(
+                currentUser.profileImage ||
+                  currentUser.profilePhoto ||
+                  currentUser.avatar,
+              ),
+            );
           }
           console.log("✓ Datos del usuario guardados en localStorage");
         } catch (error) {
@@ -274,7 +321,10 @@ async function getUserInfo() {
       window.dispatchEvent(
         new CustomEvent("gnet:user-updated", { detail: currentUser }),
       );
-      console.log("✓ Usuario actualizado:", currentUser.username || currentUser.name);
+      console.log(
+        "✓ Usuario actualizado:",
+        currentUser.username || currentUser.name,
+      );
       return currentUser;
     }
   } catch (error) {
@@ -368,6 +418,8 @@ function logout() {
     localStorage.removeItem("jwt");
     localStorage.removeItem("credentialId");
     localStorage.removeItem("userId");
+    localStorage.removeItem("rol");
+    localStorage.removeItem("role");
     localStorage.removeItem("requireProfile");
     localStorage.removeItem("pendingRecoveryEmail");
   } catch (error) {}
@@ -381,8 +433,22 @@ function getCurrentUser() {
 
 function setCurrentUser(user) {
   currentUser = normalizarUsuarioBackend(user) || user;
+  try {
+    const rolActual =
+      currentUser?.rol ||
+      currentUser?.role ||
+      currentUser?.credential?.rol ||
+      currentUser?.credential?.role ||
+      "";
+    if (rolActual) {
+      localStorage.setItem("rol", String(rolActual));
+      localStorage.setItem("role", String(rolActual));
+    }
+  } catch (error) {}
   updateUserInterface();
-  window.dispatchEvent(new CustomEvent("gnet:user-updated", { detail: currentUser }));
+  window.dispatchEvent(
+    new CustomEvent("gnet:user-updated", { detail: currentUser }),
+  );
   return currentUser;
 }
 

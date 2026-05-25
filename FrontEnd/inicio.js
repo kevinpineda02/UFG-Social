@@ -52,6 +52,55 @@ function getUserIdForApi() {
   return null;
 }
 
+function esAdminActual() {
+  const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+
+  const rol =
+    user?.rol ||
+    user?.role ||
+    user?.credential?.rol ||
+    user?.credential?.role ||
+    localStorage.getItem("rol") ||
+    localStorage.getItem("role") ||
+    "";
+
+  return String(rol).toUpperCase() === "ADMIN";
+}
+
+function puedeEliminarPublicacion(publication) {
+  const userId = getUserIdForApi();
+  const publicationOwnerId = Number(publication?.idUser || publication?.userId);
+
+  const esDueno = Number(userId) === publicationOwnerId;
+  const esAdmin = esAdminActual();
+
+  return esDueno || esAdmin;
+}
+
+function puedeEliminarComentario(comentario, datosUsuario = null) {
+  const userIdActual = getUserIdForApi();
+  const commentUserId = extraerIdNumerico(
+    comentario?.userId ??
+      comentario?.idUser ??
+      comentario?.usuarioId ??
+      comentario?.idUsuario,
+  );
+
+  const esComentarioPropio =
+    userIdActual && commentUserId
+      ? Number(userIdActual) === Number(commentUserId)
+      : false;
+
+  const datos = datosUsuario || obtenerDatosUsuario();
+  const esComentarioPropioPorHandle =
+    !commentUserId &&
+    typeof comentario?.handle === "string" &&
+    typeof datos?.handle === "string" &&
+    comentario.handle === datos.handle;
+
+  return esComentarioPropio || esComentarioPropioPorHandle || esAdminActual();
+}
+
 async function esperarUsuarioAutenticado() {
   const usuarioActual =
     typeof getCurrentUser === "function" ? getCurrentUser() : null;
@@ -175,8 +224,15 @@ function esElementoVisible(elemento) {
 }
 
 function obtenerPublicacionElemento(publicacionId, referencia = null) {
-  if (referencia && referencia.classList?.contains("publicacion")) {
+  if (referencia?.classList?.contains("publicacion")) {
     return referencia;
+  }
+
+  if (referencia && typeof referencia.closest === "function") {
+    const publicacionCercana = referencia.closest(".publicacion");
+    if (publicacionCercana) {
+      return publicacionCercana;
+    }
   }
 
   const idTexto = String(publicacionId || "");
@@ -199,7 +255,11 @@ function obtenerPublicacionElemento(publicacionId, referencia = null) {
 
   const visiblePerfil = candidatas.find((pub) => {
     const contenedorPerfil = pub.closest(".feed-mis-publicaciones");
-    return contenedorPerfil && esElementoVisible(pub) && esElementoVisible(contenedorPerfil);
+    return (
+      contenedorPerfil &&
+      esElementoVisible(pub) &&
+      esElementoVisible(contenedorPerfil)
+    );
   });
   if (visiblePerfil) {
     return visiblePerfil;
@@ -1506,10 +1566,7 @@ async function renderizarPanelSolicitudesPendientes() {
   contenedor.dataset.titulo = "Solicitudes de amistad";
   const solicitudes = await obtenerSolicitudesPendientes(userId);
 
-  if (!solicitudes.length) {
-    renderizarEstadoFollow(contenedor, "No tienes solicitudes pendientes.");
-    return;
-  }
+
 
   contenedor.innerHTML = `
     <h3 class="sugerencia-titulo">Solicitudes de amistad</h3>
@@ -1781,7 +1838,7 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
     const indicatorsHtml = images
       .map(
         (_, index) => `
-      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index})"></div>
+      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index}, this)"></div>
     `,
       )
       .join("");
@@ -1794,12 +1851,12 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
         ${
           images.length > 1
             ? `
-        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1)">
+        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1)">
+        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
@@ -1814,11 +1871,8 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
       </div>`;
   }
 
-  const datosUsuario = obtenerDatosUsuario();
   const esDelUsuarioActual =
-    opciones.forzarMenuEdicion ||
-    autor === datosUsuario.username ||
-    handle === datosUsuario.handle;
+    opciones.forzarMenuEdicion || puedeEliminarPublicacion(publicacionData);
 
   const menuOpciones = esDelUsuarioActual
     ? `
@@ -1924,7 +1978,7 @@ async function cargarPublicacionesMiPerfil() {
   const publicaciones = await response.json();
 
   if (!Array.isArray(publicaciones) || publicaciones.length === 0) {
-    contenedor.innerHTML = "<p>No has publicado nada todavía.</p>";
+    contenedor.innerHTML = "<p></p>";
     return;
   }
 
@@ -1946,7 +2000,9 @@ async function cargarPublicacionesMiPerfil() {
     const pubElement = nodo.querySelector(".publicacion");
 
     if (pubElement && pubElement.id) {
-      const botonComentarios = pubElement.querySelector(".accion-btn.comentarios");
+      const botonComentarios = pubElement.querySelector(
+        ".accion-btn.comentarios",
+      );
       if (botonComentarios) {
         botonComentarios.onclick = () =>
           alternarComentarios(pubElement.id, pubElement);
@@ -1954,7 +2010,8 @@ async function cargarPublicacionesMiPerfil() {
 
       const botonMenu = pubElement.querySelector(".btn-menu-publicacion");
       if (botonMenu) {
-        botonMenu.onclick = () => toggleMenuPublicacion(pubElement.id, pubElement);
+        botonMenu.onclick = () =>
+          toggleMenuPublicacion(pubElement.id, pubElement);
       }
 
       const botonEliminar = pubElement.querySelector(
@@ -2451,7 +2508,8 @@ async function eliminarPublicacionBackend(publicacionId) {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       console.error(
-        `Error eliminando publicación: ${response.status}`,
+        "Error eliminando publicación:",
+        response.status,
         errorText,
       );
       return false;
@@ -3088,7 +3146,7 @@ function crearPublicacionDesdeBackend(
     const indicatorsHtml = images
       .map(
         (_, index) => `
-      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index})"></div>
+      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index}, this)"></div>
     `,
       )
       .join("");
@@ -3101,12 +3159,12 @@ function crearPublicacionDesdeBackend(
         ${
           images.length > 1
             ? `
-        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1)">
+        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1)">
+        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
@@ -3122,9 +3180,7 @@ function crearPublicacionDesdeBackend(
   }
 
   // Verificar si la publicación es del usuario actual para mostrar menú de opciones
-  const datosUsuario = obtenerDatosUsuario();
-  const esDelUsuarioActual =
-    autor === datosUsuario.username || handle === datosUsuario.handle;
+  const esDelUsuarioActual = puedeEliminarPublicacion(publicacionData);
 
   const menuOpciones = esDelUsuarioActual
     ? `
@@ -3201,7 +3257,11 @@ function crearPublicacionDesdeBackend(
 
   // Inicializar carrusel si hay múltiples imágenes
   if (images.length > 1) {
-    inicializarCarruselPublicacion(pubId, images.length);
+    inicializarCarruselPublicacion(
+      pubId,
+      images.length,
+      contenedor.querySelector(".publicacion"),
+    );
   }
 
   // Inicializar estado del like
@@ -3292,7 +3352,7 @@ function mostrarComentariosBackend(publicacionId, comentarios) {
     return;
   }
 
-  const userIdActual = getUserIdForApi();
+  const datosUsuario = obtenerDatosUsuario();
 
   comentarios.forEach((comentario) => {
     const comentarioNormalizado =
@@ -3302,9 +3362,10 @@ function mostrarComentariosBackend(publicacionId, comentarios) {
 
     if (!comentarioNormalizado) return;
 
-    const commentUserId = extraerIdNumerico(comentarioNormalizado.userId);
-    const esComentarioPropio =
-      userIdActual && commentUserId ? userIdActual === commentUserId : false;
+    const esComentarioPropio = puedeEliminarComentario(
+      comentarioNormalizado,
+      datosUsuario,
+    );
 
     const elementoComentario = document.createElement("div");
     elementoComentario.className = "comentario";
@@ -3389,7 +3450,7 @@ function reinicializarEventosPublicacion(contenedor) {
   if (carrusel) {
     const slides = carrusel.querySelectorAll(".imagen-slide");
     if (slides.length > 1) {
-      inicializarCarruselPublicacion(publicacionId, slides.length);
+      inicializarCarruselPublicacion(publicacionId, slides.length, publicacion);
     }
   }
 
@@ -4626,17 +4687,17 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
         ${
           images.length > 1
             ? `
-        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1)">
+        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1)">
+        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
           </svg>
         </button>
-        <div class="indicadores">${images.map((_, i) => `<div class="indicador ${i === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${i})"></div>`).join("")}</div>
+        <div class="indicadores">${images.map((_, i) => `<div class="indicador ${i === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${i}, this)"></div>`).join("")}</div>
         <div class="contador-imagenes"><span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span></div>
         `
             : ""
@@ -4645,9 +4706,7 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
   }
 
   // Verificar si la publicación es del usuario actual para mostrar menú de opciones
-  const datosUsuarioFront = obtenerDatosUsuario();
-  const esDelUsuarioActualFront =
-    autor === datosUsuarioFront.username || handle === datosUsuarioFront.handle;
+  const esDelUsuarioActualFront = puedeEliminarPublicacion(publicacionData);
 
   const menuOpcionesFront = esDelUsuarioActualFront
     ? `
@@ -4744,7 +4803,12 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
     contenedorPublicacion.style.transform = "translateY(0)";
   }, 10);
 
-  if (images.length > 1) inicializarCarruselPublicacion(pubId, images.length);
+  if (images.length > 1)
+    inicializarCarruselPublicacion(
+      pubId,
+      images.length,
+      contenedorPublicacion.querySelector(".publicacion"),
+    );
 
   // Inicializar estado del like
   inicializarLikePublicacion(pubId);
@@ -4803,12 +4867,12 @@ function crearPublicacionOriginal(texto, imagenes, encuesta = null) {
                   imagenes.length > 1
                     ? `
                 <!-- Botones de navegación -->
-                <button class="btn-anterior" onclick="cambiarSlidePublicacion('${publicacionId}', -1)">
+                <button class="btn-anterior" onclick="cambiarSlidePublicacion('${publicacionId}', -1, this)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                     </svg>
                 </button>
-                <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${publicacionId}', 1)">
+                <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${publicacionId}', 1, this)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                     </svg>
@@ -4819,7 +4883,7 @@ function crearPublicacionOriginal(texto, imagenes, encuesta = null) {
                     ${imagenes
                       .map(
                         (_, index) => `
-                        <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${publicacionId}', ${index})"></div>
+                        <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${publicacionId}', ${index}, this)"></div>
                     `,
                       )
                       .join("")}
@@ -4950,7 +5014,11 @@ function crearPublicacionOriginal(texto, imagenes, encuesta = null) {
 
   // Inicializar carrusel específico para esta publicación si hay múltiples imágenes
   if (imagenes.length > 1) {
-    inicializarCarruselPublicacion(publicacionId, imagenes.length);
+    inicializarCarruselPublicacion(
+      publicacionId,
+      imagenes.length,
+      nuevaPublicacion,
+    );
   }
 
   // Inicializar estado del like
@@ -4961,77 +5029,97 @@ function crearPublicacionOriginal(texto, imagenes, encuesta = null) {
 }
 
 // Sistema de carruseles para publicaciones dinámicas
-let carruselesPublicaciones = {};
+const carruselesPublicaciones = new WeakMap();
 
-// Función para inicializar carrusel específico de una publicación
-function inicializarCarruselPublicacion(publicacionId, totalImagenes) {
-  carruselesPublicaciones[publicacionId] = {
-    slideActual: 0,
-    totalSlides: totalImagenes,
+function obtenerCarruselPublicacion(publicacionId, referencia = null) {
+  const publicacion = obtenerPublicacionElemento(publicacionId, referencia);
+  if (!publicacion) return null;
+
+  const slides = publicacion.querySelectorAll(".imagen-slide");
+  if (!slides.length) return null;
+
+  let carrusel = carruselesPublicaciones.get(publicacion);
+  if (!carrusel || carrusel.totalSlides !== slides.length) {
+    carrusel = {
+      slideActual: 0,
+      totalSlides: slides.length,
+    };
+    carruselesPublicaciones.set(publicacion, carrusel);
+  }
+
+  return {
+    publicacion,
+    slides,
+    indicadores: publicacion.querySelectorAll(".indicador"),
+    contadorActual: publicacion.querySelector(".imagen-actual"),
+    carrusel,
   };
 }
 
-// Función para cambiar slide en una publicación específica
-function cambiarSlidePublicacion(publicacionId, direccion) {
-  if (!carruselesPublicaciones[publicacionId]) return;
+function actualizarCarruselPublicacion(
+  publicacionId,
+  nuevoIndice,
+  referencia = null,
+) {
+  const estado = obtenerCarruselPublicacion(publicacionId, referencia);
+  if (!estado) return;
 
-  const publicacion = document.getElementById(publicacionId);
-  if (!publicacion) return;
+  const { slides, indicadores, contadorActual, carrusel } = estado;
+  const indiceAnterior = carrusel.slideActual;
 
-  const slides = publicacion.querySelectorAll(".imagen-slide");
-  const indicadores = publicacion.querySelectorAll(".indicador");
-  const contadorActual = publicacion.querySelector(".imagen-actual");
+  if (slides[indiceAnterior]) slides[indiceAnterior].classList.remove("active");
+  if (indicadores[indiceAnterior])
+    indicadores[indiceAnterior].classList.remove("active");
 
-  const carrusel = carruselesPublicaciones[publicacionId];
+  carrusel.slideActual =
+    ((nuevoIndice % carrusel.totalSlides) + carrusel.totalSlides) %
+    carrusel.totalSlides;
 
-  // Remover clase active del slide actual
-  slides[carrusel.slideActual].classList.remove("active");
-  indicadores[carrusel.slideActual].classList.remove("active");
+  if (slides[carrusel.slideActual])
+    slides[carrusel.slideActual].classList.add("active");
+  if (indicadores[carrusel.slideActual])
+    indicadores[carrusel.slideActual].classList.add("active");
+  if (contadorActual) contadorActual.textContent = carrusel.slideActual + 1;
+}
 
-  // Calcular nuevo slide
-  carrusel.slideActual += direccion;
+// Función para inicializar carrusel específico de una publicación
+function inicializarCarruselPublicacion(
+  publicacionId,
+  totalImagenes,
+  referencia = null,
+) {
+  const estado = obtenerCarruselPublicacion(publicacionId, referencia);
 
-  // Ciclo infinito
-  if (carrusel.slideActual >= carrusel.totalSlides) {
-    carrusel.slideActual = 0;
-  } else if (carrusel.slideActual < 0) {
-    carrusel.slideActual = carrusel.totalSlides - 1;
+  if (!estado) return;
+
+  carruselesPublicaciones.set(estado.publicacion, {
+    slideActual: 0,
+    totalSlides: totalImagenes || estado.slides.length || 0,
+  });
+
+  if (estado) {
+    actualizarCarruselPublicacion(publicacionId, 0, estado.publicacion);
   }
+}
 
-  // Activar nuevo slide
-  slides[carrusel.slideActual].classList.add("active");
-  indicadores[carrusel.slideActual].classList.add("active");
+// Función para cambiar slide en una publicación específica
+function cambiarSlidePublicacion(publicacionId, direccion, referencia = null) {
+  const estado = obtenerCarruselPublicacion(publicacionId, referencia);
+  if (!estado) return;
 
-  // Actualizar contador
-  contadorActual.textContent = carrusel.slideActual + 1;
+  actualizarCarruselPublicacion(
+    publicacionId,
+    estado.carrusel.slideActual + direccion,
+    estado.publicacion,
+  );
 }
 
 // Función para ir a un slide específico en una publicación
-function irSlidePublicacion(publicacionId, index) {
-  if (!carruselesPublicaciones[publicacionId]) return;
+function irSlidePublicacion(publicacionId, index, referencia = null) {
+  const estado = obtenerCarruselPublicacion(publicacionId, referencia);
+  if (!estado) return;
 
-  const publicacion = document.getElementById(publicacionId);
-  if (!publicacion) return;
-
-  const slides = publicacion.querySelectorAll(".imagen-slide");
-  const indicadores = publicacion.querySelectorAll(".indicador");
-  const contadorActual = publicacion.querySelector(".imagen-actual");
-
-  const carrusel = carruselesPublicaciones[publicacionId];
-
-  // Remover clase active del slide actual
-  slides[carrusel.slideActual].classList.remove("active");
-  indicadores[carrusel.slideActual].classList.remove("active");
-
-  // Cambiar al slide seleccionado
-  carrusel.slideActual = index;
-
-  // Activar nuevo slide
-  slides[carrusel.slideActual].classList.add("active");
-  indicadores[carrusel.slideActual].classList.add("active");
-
-  // Actualizar contador
-  contadorActual.textContent = carrusel.slideActual + 1;
+  actualizarCarruselPublicacion(publicacionId, index, estado.publicacion);
 }
 
 // Función para inicializar contadores de comentarios en publicaciones existentes
@@ -5271,7 +5359,8 @@ async function toggleComentarios(publicacionId, publicacionRef = null) {
       obtenerClaveComentariosPublicacion(domPublicacionId);
 
     if (backendConectado && usarBackend) {
-      const backendComments = await obtenerComentariosBackend(realPublicationId);
+      const backendComments =
+        await obtenerComentariosBackend(realPublicationId);
       if (backendComments.length > 0) {
         // Protección adicional: asegurar que comentariosPorPublicacion esté inicializado
         if (
@@ -5637,20 +5726,13 @@ function renderizarComentarios(publicacionId, publicacionRef = null) {
 
   // Generar HTML de comentarios
   const datosUsuario = obtenerDatosUsuario();
-  const userIdActual = getUserIdForApi();
 
   listaComentarios.innerHTML = comentarios
     .map((comentario) => {
-      const commentUserId = extraerIdNumerico(
-        comentario.userId ??
-          comentario.idUser ??
-          comentario.usuarioId ??
-          comentario.idUsuario,
+      const esComentarioPropio = puedeEliminarComentario(
+        comentario,
+        datosUsuario,
       );
-      const esComentarioPropio =
-        userIdActual && commentUserId
-          ? userIdActual === commentUserId
-          : comentario.handle === datosUsuario.handle;
 
       return `
         <div class="comentario" id="${comentario.id}">
@@ -5686,7 +5768,7 @@ function renderizarComentarios(publicacionId, publicacionRef = null) {
                 </div>
                 <div class="comentario-texto">${comentario.texto}</div>
                 <div class="comentario-acciones">
-                  <button class="accion-comentario" onclick="responderComentario('${domPublicacionId}', '${comentario.id}')">
+                  <button class="accion-comentario" onclick="responderComentario('${domPublicacionId}', '${comentario.id}', this)">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
                     </svg>
@@ -5738,13 +5820,17 @@ function toggleLikeComentario(publicacionId, comentarioId) {
 }
 
 // Función para responder a un comentario
-function responderComentario(publicacionId, comentarioId) {
-  const campoComentario = document.getElementById(
-    `campo-comentario-${publicacionId}`,
+function responderComentario(publicacionId, comentarioId, referencia = null) {
+  const publicacion = obtenerPublicacionElemento(publicacionId, referencia);
+  if (!publicacion) return;
+
+  const domPublicacionId = publicacion.id || String(publicacionId);
+  const campoComentario = publicacion.querySelector(
+    `#campo-comentario-${domPublicacionId}`,
   );
   const comentarios =
     comentariosPorPublicacion[
-      obtenerClaveComentariosPublicacion(publicacionId)
+      obtenerClaveComentariosPublicacion(domPublicacionId)
     ];
 
   if (!comentarios || !campoComentario) return;
@@ -6304,7 +6390,11 @@ function toggleMenuPublicacion(publicacionId, publicacionRef = null) {
   }
 }
 
-async function eliminarPublicacionPerfil(publicationId, domId, publicacionRef = null) {
+async function eliminarPublicacionPerfil(
+  publicationId,
+  domId,
+  publicacionRef = null,
+) {
   const userId = getUserIdForApi();
   const realPublicationId =
     obtenerIdPublicacionReal(publicationId) ||
@@ -6338,8 +6428,13 @@ async function eliminarPublicacionPerfil(publicationId, domId, publicacionRef = 
   }
 
   const card =
-    obtenerPublicacionElemento(domId || `pub_${realPublicationId}`, publicacionRef) ||
-    document.querySelector(`.publicacion[data-publication-id="${realPublicationId}"]`);
+    obtenerPublicacionElemento(
+      domId || `pub_${realPublicationId}`,
+      publicacionRef,
+    ) ||
+    document.querySelector(
+      `.publicacion[data-publication-id="${realPublicationId}"]`,
+    );
   if (card) {
     const wrapper = card.closest(".contenedor-publicacion") || card;
     wrapper.remove();
@@ -6614,7 +6709,10 @@ async function inicializarLikesPublicaciones() {
 }
 
 // Función para inicializar like de una publicación específica
-async function inicializarLikePublicacion(publicacionId, publicacionRef = null) {
+async function inicializarLikePublicacion(
+  publicacionId,
+  publicacionRef = null,
+) {
   const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
   if (!publicacion) return;
 

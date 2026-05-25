@@ -440,13 +440,12 @@ body {
 
 .publicaciones {
   grid-area: publicaciones;
-  display: flex;
+  display: block;
   flex-direction: column;
   max-width: none;
   width: 100%;
   min-width: 0;
   padding: 20px;
-
   background-color: var(--color-secundario);
   border-radius: 10px;
   color: var(--color-objetos);
@@ -456,7 +455,6 @@ body {
     background-color 0.4s ease,
     box-shadow 0.4s ease,
     transform 0.3s ease;
-  margin: 0;
 }
 
 .publicaciones .usuario-header {
@@ -889,6 +887,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.feed-publicaciones .btn-anterior,
+.feed-publicaciones .btn-siguiente,
+.feed-mis-publicaciones .btn-anterior,
+.feed-mis-publicaciones .btn-siguiente,
+.publicaciones-usuario .btn-anterior,
+.publicaciones-usuario .btn-siguiente {
+  opacity: 0.85;
 }
 
 .carrusel-imagenes:hover .btn-anterior,
@@ -2212,6 +2219,11 @@ body.modal-open {
 .btn-menu-comentario svg {
   width: 16px;
   height: 16px;
+}
+
+.solicitudes h3 {
+  text-align: center;
+  padding: 15px;
 }
 
 /* Dropdown del menú */

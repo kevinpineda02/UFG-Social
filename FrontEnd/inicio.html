@@ -13,6 +13,7 @@
     <title>UFG</title>
     <link rel="stylesheet" href="inicioStyles.css">
     <link rel="icon" type="image/png" href="./assets/Logo/UFGPerfil.jpg">
+    <link rel="stylesheet" href="mensajeria.css">
     
 
 </head>
@@ -54,6 +55,32 @@
         </div>
     </div>
     
+    <!--mensajeria-->
+    <div class="mensajeria" style="display: none;">
+        
+        <!--Contenedor Perfiles-->
+        <div class="chats-perfiles">
+           <!--Perfil de Usuario-->
+           <div class="burbuja-perfil">
+            <div class="burbuja">
+                <img src="/assets/perfil/perfil.png" class="imagen-perfil-chat">
+            </div>
+            <div class="nombre-usuario">
+                <p class="nombre-usuario">Nombre de Usuario</p>
+            </div>
+        </div>
+        
+        <div class="borde"></div>
+        
+        <!--Contenedor de chat-->
+        <div class="mensajes">
+
+        </div>
+    </div>
+</div>
+    
+    
+
     <div class="contenido">
         <!-- Sección de Perfil para Edición -->
         <div class="seccion-perfil" style="display: none;">
@@ -559,11 +586,10 @@ Comunidad</button></li>
         </div>
     </div>
 
-    <!--mensajeria-->
     
 
         <!-- Script de autenticación (debe cargarse primero) -->
-         <script src="auth.js" defer></script>
+
          <!-- Script principal de la página -->
          <script src="./inicio.js"></script>
          <script type="module" src="./chat.js"></script>

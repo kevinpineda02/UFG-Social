@@ -531,6 +531,9 @@ Comunidad</button></li>
         </div>
     </div>
 
+    
+    
+
     <!-- Modal de alerta personalizado -->
     <div id="modal-alert-overlay" class="modal-overlay modal-alert-overlay" aria-hidden="true" role="dialog" aria-modal="true">
         <div class="modal-content modal-alert" role="document" onclick="event.stopPropagation()">
@@ -548,7 +551,7 @@ Comunidad</button></li>
             </div>
         </div>
     </div>
-
+    
     <!-- Modal para imagen expandida -->
     <div id="modal-imagen" class="modal-imagen" style="display: none;" onclick="cerrarModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -556,10 +559,15 @@ Comunidad</button></li>
         </div>
     </div>
 
+    <!--mensajeria-->
+    
+
         <!-- Script de autenticación (debe cargarse primero) -->
          <script src="auth.js" defer></script>
          <!-- Script principal de la página -->
-        <script src="inicio.js" defer></script>
+         <script src="./inicio.js"></script>
+         <script type="module" src="./chat.js"></script>
+         <script src="./mensajeria.js"></script> 
         </body>
-    </html>
-
+        </html>
+        

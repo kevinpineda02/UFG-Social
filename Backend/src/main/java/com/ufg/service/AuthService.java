@@ -47,7 +47,8 @@ public class AuthService {
         return AuthResponse.builder()
                 .token(token)
                 .credentialId(credential.getId())
-                .userId(user.getId())  // ← ID de la tabla usuarios
+                .userId(user.getId())
+                .rol(credential.getRol().name())
                 .build();
     }
 

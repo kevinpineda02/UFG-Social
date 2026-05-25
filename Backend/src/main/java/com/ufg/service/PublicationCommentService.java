@@ -98,7 +98,19 @@ public class PublicationCommentService implements IPublicationCommentService {
             throw new RuntimeException("Comentario no encontrado con id: " + commentId);
         }
 
-        if (!comment.getUser().getId().equals(userId)) {
+        UserEntity fullUser = userRepository.findById(userId).orElse(null);
+
+        if (fullUser == null) {
+            throw new RuntimeException("Usuario autenticado no encontrado");
+        }
+
+        boolean isOwner = comment.getUser().getId().equals(fullUser.getId());
+
+        boolean isAdmin = fullUser.getCredential() != null
+                && fullUser.getCredential().getRol() != null
+                && fullUser.getCredential().getRol().name().equalsIgnoreCase("ADMIN");
+
+        if (!isOwner && !isAdmin) {
             throw new RuntimeException("No tienes permiso para eliminar este comentario");
         }
 

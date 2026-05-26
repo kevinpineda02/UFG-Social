@@ -35,4 +35,22 @@ public class ImageUploadService implements IImageUploadService {
             throw new RuntimeException("Error al subir imagen a Cloudinary", e);
         }
     }
+
+    @Override
+    public String uploadVideo(MultipartFile file, String folder) {
+        try {
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
+                            "resource_type", "video"
+                    )
+            );
+
+            return uploadResult.get("secure_url").toString();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error al subir video a Cloudinary", e);
+        }
+    }
 }

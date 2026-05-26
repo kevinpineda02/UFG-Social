@@ -9,30 +9,26 @@ import java.util.List;
 
 public interface IPublication {
 
-    //Transfomar de entidad a objeto
+    // Transformar de entidad a DTO
     PublicationDtos transformEntity(PublicationEntity entity);
 
-    //Transformar Objeto a entidad
+    // Transformar DTO a entidad
     PublicationEntity transformObject(PublicationDtos dtos);
 
-    //Leer todas las publicaciones
+    // Leer todas las publicaciones
     List<PublicationDtos> searchPublication();
 
-    //Buscar publicaciones de un usuario
+    // Buscar publicaciones de un usuario
     List<PublicationDtos> searchPublicationUser(Long idUser);
 
-
-    //Eliminar Publicacion
+    // Eliminar publicacion
     PublicationDtos deletePublication(Long id, UserEntity userAuthenticate);
 
-    //Crear Publicacion
-    PublicationDtos createPublication(PublicationDtos dtos);
-
-    PublicationDtos createPublicationWithImages(
+    // Crear publicacion final con imagenes o video
+    PublicationDtos createPublication(
             Long userId,
             String description,
-            String videoUrl,
-            List<MultipartFile> files
+            List<MultipartFile> files,
+            MultipartFile videoFile
     );
-
 }

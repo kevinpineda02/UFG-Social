@@ -56,14 +56,14 @@ public class PublicationRestController {
     public ResponseEntity<PublicationDtos> createPublication(
             @PathVariable Long userId,
             @RequestPart("description") String description,
-            @RequestPart(value = "videoUrl", required = false) String videoUrl,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestPart(value = "videoFile", required = false) MultipartFile videoFile
     ) {
-        PublicationDtos publication = publicationService.createPublicationWithImages(
+        PublicationDtos publication = publicationService.createPublication(
                 userId,
                 description,
-                videoUrl,
-                files
+                files,
+                videoFile
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(publication);

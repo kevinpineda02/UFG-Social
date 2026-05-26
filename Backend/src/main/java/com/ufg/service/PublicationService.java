@@ -145,57 +145,11 @@ public class PublicationService implements IPublication {
 
     @Override
     @Transactional
-    public PublicationDtos createPublication(PublicationDtos dtos) {
-
-        UserEntity userFound = userRepository.findById(dtos.getIdUser()).orElse(null);
-
-        if (userFound == null) {
-            throw new RuntimeException("Usuario no encontrado con id: " + dtos.getIdUser());
-        }
-
-        PublicationEntity entity = new PublicationEntity();
-
-        entity.setUser(userFound);
-        entity.setDescription(dtos.getDescription());
-        entity.setVideoUrl(dtos.getVideoUrl());
-        entity.setLikes(0);
-        entity.setComents(0);
-
-        PublicationEntity savedEntity = publicationRepository.save(entity);
-
-        if (dtos.getImages() != null) {
-            for (PublicationImageDtos imageDto : dtos.getImages()) {
-                PublicationImageEntity image = new PublicationImageEntity();
-
-                image.setPublication(savedEntity);
-                image.setImageUrl(imageDto.getImageUrl());
-
-                if (imageDto.getOrderImage() == null) {
-                    image.setOrderImage(0);
-                } else {
-                    image.setOrderImage(imageDto.getOrderImage());
-                }
-
-                publicationImageRepository.save(image);
-            }
-        }
-
-        PublicationDtos response = transformEntity(savedEntity);
-
-        if (dtos.getImages() != null) {
-            response.setImages(dtos.getImages());
-        }
-
-        return response;
-    }
-
-    @Override
-    @Transactional
-    public PublicationDtos createPublicationWithImages(
+    public PublicationDtos createPublication(
             Long userId,
             String description,
-            String videoUrl,
-            List<MultipartFile> files
+            List<MultipartFile> files,
+            MultipartFile videoFile
     ) {
         UserEntity userFound = userRepository.findById(userId).orElse(null);
 
@@ -203,19 +157,62 @@ public class PublicationService implements IPublication {
             throw new RuntimeException("Usuario no encontrado con id: " + userId);
         }
 
+        boolean hasImages = files != null && files.stream()
+                .anyMatch(file -> file != null && !file.isEmpty());
+
+        boolean hasVideo = videoFile != null && !videoFile.isEmpty();
+
+        if (hasImages) {
+            long imageCount = files.stream()
+                    .filter(file -> file != null && !file.isEmpty())
+                    .count();
+
+            if (imageCount > 5) {
+                throw new RuntimeException("Solo puedes subir un maximo de 5 imagenes por publicacion");
+            }
+
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    String contentType = file.getContentType();
+
+                    if (contentType == null || !contentType.startsWith("image/")) {
+                        throw new RuntimeException("Solo se permiten archivos de imagen en files");
+                    }
+                }
+            }
+        }
+
+        if (hasVideo) {
+            String contentType = videoFile.getContentType();
+
+            if (contentType == null || !contentType.startsWith("video/")) {
+                throw new RuntimeException("El archivo enviado en videoFile no es un video valido");
+            }
+        }
+
         PublicationEntity entity = new PublicationEntity();
 
         entity.setUser(userFound);
         entity.setDescription(description);
-        entity.setVideoUrl(videoUrl);
         entity.setLikes(0);
         entity.setComents(0);
+
+        if (hasVideo) {
+            String videoUrl = imageUploadService.uploadVideo(
+                    videoFile,
+                    "ufg_social/videos"
+            );
+
+            entity.setVideoUrl(videoUrl);
+        } else {
+            entity.setVideoUrl(null);
+        }
 
         PublicationEntity savedEntity = publicationRepository.save(entity);
 
         List<PublicationImageDtos> imagesResponse = new ArrayList<>();
 
-        if (files != null && !files.isEmpty()) {
+        if (hasImages) {
             int order = 0;
 
             for (MultipartFile file : files) {
@@ -249,4 +246,5 @@ public class PublicationService implements IPublication {
 
         return response;
     }
+
 }

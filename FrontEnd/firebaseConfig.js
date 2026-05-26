@@ -1,19 +1,14 @@
-// firebaseConfig.js
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-
-import {
-  getFirestore
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDF7twsuUhcPaZysOToqB9Annglih-cdTg",
-  authDomain: "chat-en-tiempo-real-64207.firebaseapp.com",
-  projectId: "chat-en-tiempo-real-64207",
-  storageBucket: "chat-en-tiempo-real-64207.firebasestorage.app",
-  messagingSenderId: "928173908621",
-  appId: "1:928173908621:web:cb803084bdcdaefbf438c4",
-  measurementId: "G-D3TV5EWJ61"
+  apiKey: "__FIREBASE_API_KEY__",
+  authDomain: "__FIREBASE_AUTH_DOMAIN__",
+  projectId: "__FIREBASE_PROJECT_ID__",
+  storageBucket: "__FIREBASE_STORAGE_BUCKET__",
+  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
+  appId: "__FIREBASE_APP_ID__",
+  measurementId: "__FIREBASE_MEASUREMENT_ID__"
 };
 
 const app = initializeApp(firebaseConfig);

@@ -1835,58 +1835,97 @@ function obtenerContenedorMisPublicaciones() {
   return contenedor;
 }
 
-function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
-  const pubId = `pub_${publicacionData.id}`;
-  const autor = publicacionData.user || "Usuario";
-  const username = publicacionData.username || "usuario";
-  const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
-  const handle = `@${username}`;
-  const description = publicacionData.description || "";
-  let images = publicacionData.images || [];
+function construirMediaItemsPublicacion(publicacionData = {}) {
+  const mediaItems = [];
+  let images = Array.isArray(publicacionData.images)
+    ? publicacionData.images.slice()
+    : [];
 
   if (images.length > 0 && typeof images[0] === "string") {
-    images = images.map((url, i) => ({ imageUrl: url, orderImage: i + 1 }));
+    images = images.map((url, index) => ({
+      imageUrl: url,
+      orderImage: index,
+    }));
   }
 
-  const likes = publicacionData.likes || 0;
-  const coments = publicacionData.coments || 0;
-  const timestamp = publicacionData.creationDate
-    ? new Date(publicacionData.creationDate).getTime()
-    : Date.now();
+  images
+    .filter(
+      (img) => typeof img?.imageUrl === "string" && img.imageUrl.trim() !== "",
+    )
+    .sort((a, b) => (a.orderImage || 0) - (b.orderImage || 0))
+    .forEach((img) => {
+      mediaItems.push({
+        type: "image",
+        url: img.imageUrl,
+      });
+    });
 
-  let htmlImages = "";
-  if (images.length > 0) {
-    const slidesHtml = images
-      .sort((a, b) => (a.orderImage || 0) - (b.orderImage || 0))
-      .map(
-        (img, index) => `
+  const videoUrl =
+    typeof publicacionData.videoUrl === "string"
+      ? publicacionData.videoUrl.trim()
+      : "";
+
+  if (videoUrl) {
+    mediaItems.push({
+      type: "video",
+      url: videoUrl,
+    });
+  }
+
+  return mediaItems;
+}
+
+function construirCarruselMedia(publicacionData, pubId) {
+  const mediaItems = construirMediaItemsPublicacion(publicacionData);
+
+  if (mediaItems.length === 0) {
+    return {
+      htmlMedia: "",
+      totalSlides: 0,
+    };
+  }
+
+  const slidesHtml = mediaItems
+    .map((item, index) => {
+      if (item.type === "video") {
+        return `
+      <div class="imagen-slide ${index === 0 ? "active" : ""} tiene-video">
+        <video controls preload="metadata">
+          <source src="${item.url}">
+          Tu navegador no soporta el elemento video.
+        </video>
+      </div>
+    `;
+      }
+
+      return `
       <div class="imagen-slide ${index === 0 ? "active" : ""}">
-        <img src="${img.imageUrl}" alt="Imagen de la publicación">
-        <button class="btn-expandir" onclick="expandirImagen('${img.imageUrl}', 'Imagen de la publicación')">
+        <img src="${item.url}" alt="Imagen de la publicación">
+        <button class="btn-expandir" onclick="expandirImagen('${item.url}', 'Imagen de la publicación')">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
           </svg>
         </button>
       </div>
-    `,
-      )
-      .join("");
+    `;
+    })
+    .join("");
 
-    const indicatorsHtml = images
-      .map(
-        (_, index) => `
+  const indicatorsHtml = mediaItems
+    .map(
+      (_, index) => `
       <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index}, this)"></div>
     `,
-      )
-      .join("");
+    )
+    .join("");
 
-    htmlImages = `
+  const htmlMedia = `
       <div class="carrusel-imagenes">
         <div class="carrusel-contenedor">
           ${slidesHtml}
         </div>
         ${
-          images.length > 1
+          mediaItems.length > 1
             ? `
         <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
@@ -1899,14 +1938,33 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
           </svg>
         </button>
         <div class="indicadores">${indicatorsHtml}</div>
-        <div class="contador-imagenes">
-          <span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span>
-        </div>
         `
             : ""
         }
+        <div class="contador-imagenes">
+          <span class="imagen-actual">1</span>/<span class="total-imagenes">${mediaItems.length}</span>
+        </div>
       </div>`;
-  }
+
+  return {
+    htmlMedia,
+    totalSlides: mediaItems.length,
+  };
+}
+
+function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
+  const pubId = `pub_${publicacionData.id}`;
+  const autor = publicacionData.user || "Usuario";
+  const username = publicacionData.username || "usuario";
+  const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
+  const handle = `@${username}`;
+  const description = publicacionData.description || "";
+  const likes = publicacionData.likes || 0;
+  const coments = publicacionData.coments || 0;
+  const timestamp = publicacionData.creationDate
+    ? new Date(publicacionData.creationDate).getTime()
+    : Date.now();
+  const { htmlMedia } = construirCarruselMedia(publicacionData, pubId);
 
   const esDelUsuarioActual =
     opciones.forzarMenuEdicion || puedeEliminarPublicacion(publicacionData);
@@ -1946,7 +2004,7 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
       </div>
       <div class="contenido-publicacion">
         ${description ? `<p>${description}</p>` : ""}
-        ${htmlImages}
+        ${htmlMedia}
       </div>
       <div class="separador"></div>
       <div class="acciones-publicacion">
@@ -2074,84 +2132,23 @@ async function cargarPublicacionesMiPerfil() {
   });
 }
 
-// Crear publicación en el backend (PublicationRestController)
-async function crearPublicacionBackend(
-  contenido,
-  imagenes = [],
-  videoUrl = null,
-) {
-  try {
-    const currentUser =
-      typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const userId =
-      currentUser?.id ||
-      currentUser?.userId ||
-      currentUser?.usuarioId ||
-      currentUser?.idUser ||
-      getStoredUserId();
-    const idUserNum = parseInt(userId);
-
-    const files = Array.isArray(imagenes)
-      ? imagenes
-          .map((item) => item?.archivo || item?.file || item)
-          .filter((archivo) => archivo instanceof File)
-      : [];
-
-    const formData = new FormData();
-    formData.append("description", contenido);
-
-    if (videoUrl && videoUrl.trim() !== "") {
-      formData.append("videoUrl", videoUrl);
-    }
-
-    files.forEach((file) => {
-      formData.append("files", file);
-    });
-
-    const response = await fetchConAutenticacion(
-      `${API_BASE_URL_HOME}/publication/${!isNaN(idUserNum) && idUserNum > 0 ? idUserNum : userId}`,
-      {
-        method: "POST",
-        headers: getAuthHeaders({}, true),
-        body: formData,
-      },
-    );
-
-    if (!response || !response.ok) {
-      const errorText = response ? await response.text().catch(() => "") : "";
-      console.error(
-        `Error creando publicación: ${response?.status} ${response?.statusText}`,
-        errorText,
-      );
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error creando publicación en backend:", error);
-    return null;
-  }
-}
-
-async function crearPublicacionConImagenes(
+async function crearPublicacion(
   userId,
   description,
-  videoUrl,
-  files,
+  imageFiles = [],
+  videoFile = null,
 ) {
   const formData = new FormData();
   formData.append("description", description);
 
-  if (videoUrl && videoUrl.trim() !== "") {
-    formData.append("videoUrl", videoUrl);
+  if (imageFiles && imageFiles.length > 0) {
+    Array.from(imageFiles).forEach((file) => {
+      formData.append("files", file);
+    });
   }
 
-  if (files && files.length > 0) {
-    Array.from(files).forEach((file) => {
-      if (file instanceof File) {
-        formData.append("files", file);
-      }
-    });
+  if (videoFile) {
+    formData.append("videoFile", videoFile);
   }
 
   const response = await fetchConAutenticacion(
@@ -2164,10 +2161,70 @@ async function crearPublicacionConImagenes(
   );
 
   if (!response || !response.ok) {
-    throw new Error("Error creando publicación con imágenes");
+    const errorText = response ? await response.text().catch(() => "") : "";
+    throw new Error(errorText || "Error creando publicación");
   }
 
   return await response.json();
+}
+
+// Crear publicación en el backend (PublicationRestController)
+async function crearPublicacionBackend(contenido, archivosSeleccionados = []) {
+  try {
+    const currentUser =
+      typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const userId =
+      currentUser?.id ||
+      currentUser?.userId ||
+      currentUser?.usuarioId ||
+      currentUser?.idUser ||
+      getStoredUserId();
+    const idUserNum = parseInt(userId);
+    const userIdResolvido =
+      !isNaN(idUserNum) && idUserNum > 0 ? idUserNum : userId;
+
+    if (!userIdResolvido) {
+      console.error("❌ No se pudo obtener userId para crear publicación");
+      return null;
+    }
+
+    const { imageFiles, videoFiles, invalidFiles } = obtenerArchivosPublicacion(
+      archivosSeleccionados,
+    );
+
+    if (invalidFiles.length > 0) {
+      console.error("❌ Se detectaron archivos multimedia no válidos");
+      return null;
+    }
+
+    const mensajeValidacion = validarArchivosPublicacion(
+      imageFiles,
+      videoFiles,
+    );
+    if (mensajeValidacion) {
+      console.error(`❌ ${mensajeValidacion}`);
+      return null;
+    }
+
+    return await crearPublicacion(
+      userIdResolvido,
+      contenido,
+      imageFiles,
+      videoFiles[0] || null,
+    );
+  } catch (error) {
+    console.error("Error creando publicación en backend:", error);
+    return null;
+  }
+}
+
+async function crearPublicacionConImagenes(
+  userId,
+  description,
+  imageFiles = [],
+  videoFile = null,
+) {
+  return crearPublicacion(userId, description, imageFiles, videoFile);
 }
 
 // ===========================================
@@ -3159,76 +3216,21 @@ function crearPublicacionDesdeBackend(
   insertarDespuesDe,
   feedPublicaciones,
 ) {
-  // Normalizar datos del backend al formato del frontend
   const pubId = `pub_${publicacionData.id}`;
   const autor = publicacionData.user || "Usuario";
   const username = publicacionData.username || "usuario";
   const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
   const handle = `@${username}`;
   const description = publicacionData.description || "";
-  let images = publicacionData.images || [];
-  if (images.length > 0 && typeof images[0] === "string") {
-    images = images.map((url, i) => ({ imageUrl: url, orderImage: i + 1 }));
-  }
   const likes = publicacionData.likes || 0;
   const coments = publicacionData.coments || 0;
   const timestamp = publicacionData.creationDate
     ? new Date(publicacionData.creationDate).getTime()
     : Date.now();
-
-  // Generar HTML de imágenes si existen
-  let htmlImages = "";
-  if (images.length > 0) {
-    const slidesHtml = images
-      .map(
-        (img, index) => `
-      <div class="imagen-slide ${index === 0 ? "active" : ""}">
-        <img src="${img.imageUrl}" alt="Imagen de la publicación">
-        <button class="btn-expandir" onclick="expandirImagen('${img.imageUrl}', 'Imagen de la publicación')">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-          </svg>
-        </button>
-      </div>
-    `,
-      )
-      .join("");
-
-    const indicatorsHtml = images
-      .map(
-        (_, index) => `
-      <div class="indicador ${index === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${index}, this)"></div>
-    `,
-      )
-      .join("");
-
-    htmlImages = `
-      <div class="carrusel-imagenes">
-        <div class="carrusel-contenedor">
-          ${slidesHtml}
-        </div>
-        ${
-          images.length > 1
-            ? `
-        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1, this)">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-        </button>
-        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1, this)">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-          </svg>
-        </button>
-        <div class="indicadores">${indicatorsHtml}</div>
-        <div class="contador-imagenes">
-          <span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span>
-        </div>
-        `
-            : ""
-        }
-      </div>`;
-  }
+  const { htmlMedia, totalSlides } = construirCarruselMedia(
+    publicacionData,
+    pubId,
+  );
 
   // Verificar si la publicación es del usuario actual para mostrar menú de opciones
   const esDelUsuarioActual = puedeEliminarPublicacion(publicacionData);
@@ -3268,7 +3270,7 @@ function crearPublicacionDesdeBackend(
       </div>
       <div class="contenido-publicacion">
         ${description ? `<p>${description}</p>` : ""}
-        ${htmlImages}
+        ${htmlMedia}
       </div>
       <div class="separador"></div>
       <div class="acciones-publicacion">
@@ -3306,11 +3308,10 @@ function crearPublicacionDesdeBackend(
     feedPublicaciones.appendChild(contenedor);
   }
 
-  // Inicializar carrusel si hay múltiples imágenes
-  if (images.length > 1) {
+  if (totalSlides > 1) {
     inicializarCarruselPublicacion(
       pubId,
-      images.length,
+      totalSlides,
       contenedor.querySelector(".publicacion"),
     );
   }
@@ -4271,49 +4272,91 @@ document.addEventListener("click", async function (event) {
 
 // Botones para cambiar de seccion
 
-// Variables para manejo de imágenes
+// Variables para manejo de archivos multimedia
 let imagenesSeleccionadas = [];
+const MAX_IMAGENES_PUBLICACION = 5;
+const MAX_VIDEOS_PUBLICACION = 1;
 
-// Función para abrir el selector de archivos multimedia (imágenes y videos)
+function obtenerArchivosPublicacion(archivos = []) {
+  const archivosValidos = Array.isArray(archivos)
+    ? archivos
+        .map((item) => item?.archivo || item?.file || item)
+        .filter((archivo) => archivo instanceof File)
+    : [];
+
+  const imageFiles = archivosValidos.filter((file) =>
+    file.type.startsWith("image/"),
+  );
+  const videoFiles = archivosValidos.filter((file) =>
+    file.type.startsWith("video/"),
+  );
+  const invalidFiles = archivosValidos.filter(
+    (file) =>
+      !file.type.startsWith("image/") && !file.type.startsWith("video/"),
+  );
+
+  return {
+    imageFiles,
+    videoFiles,
+    invalidFiles,
+  };
+}
+
+function validarArchivosPublicacion(imageFiles = [], videoFiles = []) {
+  if (imageFiles.length > MAX_IMAGENES_PUBLICACION) {
+    return "Solo puedes subir un máximo de 5 imágenes";
+  }
+
+  if (videoFiles.length > MAX_VIDEOS_PUBLICACION) {
+    return "Solo puedes subir un video por publicación";
+  }
+
+  for (const file of imageFiles) {
+    if (!file.type.startsWith("image/")) {
+      return "Solo se permiten imágenes en el campo de imágenes";
+    }
+  }
+
+  for (const file of videoFiles) {
+    if (!file.type.startsWith("video/")) {
+      return "El archivo seleccionado no es un video";
+    }
+  }
+
+  return null;
+}
+
+// Función para abrir el selector de imágenes
 function abrirSelectorImagenes() {
   const selectorImagenes = document.getElementById("selector-imagenes");
+  const { imageFiles } = obtenerArchivosPublicacion(imagenesSeleccionadas);
 
-  // Verificar si ya se alcanzó el límite
-  if (imagenesSeleccionadas.length >= 5) {
-    alert(
-      "Ya tienes el máximo de 5 archivos seleccionados. Elimina algunos para Agregar nuevos.",
-    );
+  if (imageFiles.length >= MAX_IMAGENES_PUBLICACION) {
+    alert("Solo puedes subir un máximo de 5 imágenes");
     return;
   }
 
-  // Configurar para imágenes y videos
-  selectorImagenes.accept =
-    "image/*,image/jpeg,image/png,image/gif,image/webp,video/*,video/mp4,video/webm,video/ogg";
+  selectorImagenes.accept = "image/*,image/jpeg,image/png,image/gif,image/webp";
+  selectorImagenes.multiple = true;
 
-  // Limpiar el valor del input para permitir seleccionar los mismos archivos
   selectorImagenes.value = "";
-  // Activar el selector
   selectorImagenes.click();
 }
 
 // Función para abrir el selector solo de videos
 function abrirSelectorVideos() {
   const selectorImagenes = document.getElementById("selector-imagenes");
+  const { videoFiles } = obtenerArchivosPublicacion(imagenesSeleccionadas);
 
-  // Verificar si ya se alcanzó el límite
-  if (imagenesSeleccionadas.length >= 5) {
-    alert(
-      "Ya tienes el máximo de 5 archivos seleccionados. Elimina algunos para Agregar nuevos.",
-    );
+  if (videoFiles.length >= MAX_VIDEOS_PUBLICACION) {
+    alert("Solo puedes subir un video por publicación");
     return;
   }
 
-  // Configurar solo para videos
   selectorImagenes.accept = "video/*,video/mp4,video/webm,video/ogg";
+  selectorImagenes.multiple = false;
 
-  // Limpiar el valor del input para permitir seleccionar los mismos archivos
   selectorImagenes.value = "";
-  // Activar el selector
   selectorImagenes.click();
 }
 
@@ -4323,57 +4366,72 @@ function manejarSeleccionImagenes(event) {
   const previewContainer = document.getElementById("preview-imagenes");
   const listaPreview = document.getElementById("lista-preview-imagenes");
 
-  console.log(`Archivos seleccionados: ${archivos.length}`); // Debug
-  console.log(`Imágenes ya seleccionadas: ${imagenesSeleccionadas.length}`); // Debug
-
-  // Verificar que hay archivos seleccionados
   if (archivos.length === 0) {
     return;
   }
 
-  // Calcular cuántas imágenes se pueden Agregar
-  const espacioDisponible = 5 - imagenesSeleccionadas.length;
+  const { imageFiles: imagenesActuales, videoFiles: videosActuales } =
+    obtenerArchivosPublicacion(imagenesSeleccionadas);
+  const archivosPermitidos = [];
+  let avisoTipoInvalidoMostrado = false;
+  let avisoLimiteImagenesMostrado = false;
+  let avisoLimiteVideosMostrado = false;
 
-  if (espacioDisponible <= 0) {
-    alert(
-      "Ya tienes el máximo de 5 archivos seleccionados. Elimina algunos para Agregar nuevos.",
-    );
-    event.target.value = ""; // Limpiar selección
+  let totalImagenes = imagenesActuales.length;
+  let totalVideos = videosActuales.length;
+
+  archivos.forEach((archivo) => {
+    if (!(archivo instanceof File)) {
+      return;
+    }
+
+    if (archivo.type.startsWith("image/")) {
+      if (totalImagenes >= MAX_IMAGENES_PUBLICACION) {
+        if (!avisoLimiteImagenesMostrado) {
+          alert("Solo puedes subir un máximo de 5 imágenes");
+          avisoLimiteImagenesMostrado = true;
+        }
+        return;
+      }
+
+      totalImagenes += 1;
+      archivosPermitidos.push(archivo);
+      return;
+    }
+
+    if (archivo.type.startsWith("video/")) {
+      if (totalVideos >= MAX_VIDEOS_PUBLICACION) {
+        if (!avisoLimiteVideosMostrado) {
+          alert("Solo puedes subir un video por publicación");
+          avisoLimiteVideosMostrado = true;
+        }
+        return;
+      }
+
+      totalVideos += 1;
+      archivosPermitidos.push(archivo);
+      return;
+    }
+
+    if (!avisoTipoInvalidoMostrado) {
+      alert("Solo se permiten imágenes o videos");
+      avisoTipoInvalidoMostrado = true;
+    }
+  });
+
+  if (archivosPermitidos.length === 0) {
+    event.target.value = "";
     return;
   }
 
-  // Verificar si la nueva selección excede el límite
-  if (archivos.length > espacioDisponible) {
-    alert(
-      `Solo puedes Agregar ${espacioDisponible} imagen${espacioDisponible !== 1 ? "es" : ""} más. Tienes ${imagenesSeleccionadas.length} de 5 imágenes seleccionadas.`,
-    );
-    event.target.value = ""; // Limpiar selección
-    return;
-  }
-
-  // Mostrar contenedor de preview si no está visible
   if (imagenesSeleccionadas.length === 0) {
     previewContainer.style.display = "block";
   }
 
   let imagenesProcessadas = 0;
-  const totalArchivos = archivos.length;
+  const totalArchivos = archivosPermitidos.length;
 
-  archivos.forEach((archivo, index) => {
-    // Verificar que sea un archivo de imagen o video
-    if (
-      !archivo.type.startsWith("image/") &&
-      !archivo.type.startsWith("video/")
-    ) {
-      imagenesProcessadas++;
-      if (imagenesProcessadas === totalArchivos) {
-        actualizarContadorImagenes();
-        // Limpiar el input para permitir seleccionar los mismos archivos de nuevo si es necesario
-        event.target.value = "";
-      }
-      return;
-    }
-
+  archivosPermitidos.forEach((archivo) => {
     const reader = new FileReader();
 
     reader.onload = function (e) {
@@ -4425,10 +4483,8 @@ function manejarSeleccionImagenes(event) {
 
       imagenesProcessadas++;
 
-      // Actualizar contador y limpiar input cuando todas las imágenes estén procesadas
       if (imagenesProcessadas === totalArchivos) {
         actualizarContadorImagenes();
-        // Limpiar el input para permitir seleccionar más imágenes
         event.target.value = "";
       }
     };
@@ -4438,7 +4494,6 @@ function manejarSeleccionImagenes(event) {
       imagenesProcessadas++;
       if (imagenesProcessadas === totalArchivos) {
         actualizarContadorImagenes();
-        // Limpiar el input
         event.target.value = "";
       }
     };
@@ -4488,16 +4543,13 @@ function eliminarImagenPorElemento(botonEliminar) {
 // Función para actualizar el contador de archivos multimedia
 function actualizarContadorImagenes() {
   const contador = document.getElementById("contador-imagenes");
-  const cantidad = imagenesSeleccionadas.length;
-  const espacioDisponible = 5 - cantidad;
-
-  // Contar imágenes y videos por separado
-  const imagenes = imagenesSeleccionadas.filter(
-    (item) => item.tipo === "imagen",
-  ).length;
-  const videos = imagenesSeleccionadas.filter(
-    (item) => item.tipo === "video",
-  ).length;
+  const { imageFiles, videoFiles } = obtenerArchivosPublicacion(
+    imagenesSeleccionadas,
+  );
+  const imagenes = imageFiles.length;
+  const videos = videoFiles.length;
+  const imagenesDisponibles = Math.max(MAX_IMAGENES_PUBLICACION - imagenes, 0);
+  const videosDisponibles = Math.max(MAX_VIDEOS_PUBLICACION - videos, 0);
 
   let texto = "";
   if (imagenes > 0 && videos > 0) {
@@ -4510,10 +4562,10 @@ function actualizarContadorImagenes() {
     texto = "0 archivos seleccionados";
   }
 
-  if (cantidad < 5) {
-    texto += ` (puedes Agregar ${espacioDisponible} más)`;
+  if (imagenesDisponibles === 0 && videosDisponibles === 0) {
+    texto += " (límite multimedia alcanzado)";
   } else {
-    texto += ` (máximo alcanzado)`;
+    texto += ` (puedes agregar ${imagenesDisponibles} imagen${imagenesDisponibles !== 1 ? "es" : ""} y ${videosDisponibles} video${videosDisponibles !== 1 ? "s" : ""} más)`;
   }
 
   contador.textContent = texto;
@@ -4775,12 +4827,26 @@ async function crearNuevaPublicacion(texto, imagenes, encuesta = null) {
   try {
     console.log("📝 Creando nueva publicación...");
 
-    console.log("📡 Guardando en backend...");
-    const publicacionBackend = await crearPublicacionBackend(
-      texto,
+    const { imageFiles, videoFiles, invalidFiles } = obtenerArchivosPublicacion(
       imagenes || [],
-      null,
     );
+
+    if (invalidFiles.length > 0) {
+      await showAlert("Solo se permiten imágenes y videos válidos.");
+      return false;
+    }
+
+    const mensajeValidacion = validarArchivosPublicacion(
+      imageFiles,
+      videoFiles,
+    );
+    if (mensajeValidacion) {
+      await showAlert(mensajeValidacion);
+      return false;
+    }
+
+    console.log("📡 Guardando en backend...");
+    const publicacionBackend = await crearPublicacionBackend(texto, imagenes);
 
     if (publicacionBackend) {
       console.log("✅ Publicación guardada en backend:", publicacionBackend.id);
@@ -4822,52 +4888,10 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
     "./assets/Logo/UFGPerfil.jpg";
   const handle = `@${username}`;
   const description = publicacionData.description || "";
-  let images = publicacionData.images || [];
-  if (images.length > 0 && typeof images[0] === "string") {
-    images = images.map((url, i) => ({ imageUrl: url, orderImage: i + 1 }));
-  }
-
-  // Generar HTML de imágenes
-  let htmlImages = "";
-  if (images.length > 0) {
-    const slidesHtml = images
-      .map(
-        (img, index) => `
-      <div class="imagen-slide ${index === 0 ? "active" : ""}">
-        <img src="${img.imageUrl}" alt="Imagen de la publicación">
-        <button class="btn-expandir" onclick="expandirImagen('${img.imageUrl}', 'Imagen de la publicación')">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-          </svg>
-        </button>
-      </div>
-    `,
-      )
-      .join("");
-
-    htmlImages = `
-      <div class="carrusel-imagenes">
-        <div class="carrusel-contenedor">${slidesHtml}</div>
-        ${
-          images.length > 1
-            ? `
-        <button class="btn-anterior" onclick="cambiarSlidePublicacion('${pubId}', -1, this)">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-        </button>
-        <button class="btn-siguiente" onclick="cambiarSlidePublicacion('${pubId}', 1, this)">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-          </svg>
-        </button>
-        <div class="indicadores">${images.map((_, i) => `<div class="indicador ${i === 0 ? "active" : ""}" onclick="irSlidePublicacion('${pubId}', ${i}, this)"></div>`).join("")}</div>
-        <div class="contador-imagenes"><span class="imagen-actual">1</span> / <span class="total-imagenes">${images.length}</span></div>
-        `
-            : ""
-        }
-      </div>`;
-  }
+  const { htmlMedia, totalSlides } = construirCarruselMedia(
+    publicacionData,
+    pubId,
+  );
 
   // Verificar si la publicación es del usuario actual para mostrar menú de opciones
   const esDelUsuarioActualFront = puedeEliminarPublicacion(publicacionData);
@@ -4905,7 +4929,7 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
       </div>
       <div class="contenido-publicacion">
         ${description ? `<p>${description}</p>` : ""}
-        ${htmlImages}
+        ${htmlMedia}
       </div>
       <div class="separador"></div>
       <div class="acciones-publicacion">
@@ -4967,10 +4991,10 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
     contenedorPublicacion.style.transform = "translateY(0)";
   }, 10);
 
-  if (images.length > 1)
+  if (totalSlides > 1)
     inicializarCarruselPublicacion(
       pubId,
-      images.length,
+      totalSlides,
       contenedorPublicacion.querySelector(".publicacion"),
     );
 

@@ -15,7 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -28,20 +28,43 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
+
+        configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:5500",
                 "http://localhost:8000",
                 "http://localhost:8080",
-                "http://127.0.0.1:5500"
+                "http://localhost:8081",
+                "http://127.0.0.1:5500",
+                "https://ufg-social.vercel.app"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin"
+        ));
+
+        configuration.setExposedHeaders(List.of(
+                "Authorization"
+        ));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 
@@ -59,12 +82,15 @@ public class SecurityConfig {
                                         "/swagger-ui.html",
                                         "/v3/api-docs/**"
                                 ).permitAll()
+
                                 .requestMatchers(HttpMethod.DELETE, "/publication/**").authenticated()
                                 .requestMatchers(HttpMethod.PATCH, "/publication/**").authenticated()
+                                .requestMatchers(HttpMethod.POST, "/publication/**").authenticated()
+
                                 .requestMatchers(HttpMethod.PATCH, "/user/**").authenticated()
                                 .requestMatchers("/follow/**").authenticated()
                                 .requestMatchers("/chat/**").authenticated()
-                                .requestMatchers("/images/**").permitAll()
+
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManager ->

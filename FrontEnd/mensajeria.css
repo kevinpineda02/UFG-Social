@@ -442,6 +442,7 @@
     width: 100vw;
     padding: 0;
     background: var(--color-primario);
+    
   }
 
   .mensajeria.chat-movil-abierto #chatWindow {

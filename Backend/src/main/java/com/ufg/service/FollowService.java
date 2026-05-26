@@ -79,6 +79,10 @@ public class FollowService implements IFollowService {
     @Transactional
     public FollowRequestDtos sendRequest(Long requesterId, Long receiverId) {
 
+        if (requesterId == null || receiverId == null) {
+            throw new RuntimeException("Los IDs de usuario no pueden ser nulos");
+        }
+
         if (requesterId.equals(receiverId)) {
             throw new RuntimeException("No puedes enviarte solicitud a ti mismo");
         }
@@ -103,16 +107,32 @@ public class FollowService implements IFollowService {
             throw new RuntimeException("Ya sigues a este usuario");
         }
 
-        boolean pendingExists = followRequestRepository
-                .findByRequesterIdAndReceiverIdAndStatus(
-                        requesterId,
-                        receiverId,
-                        FollowRequestStatus.PENDIENTE
-                )
-                .isPresent();
+        /*
+         * Corrección importante:
+         * Antes solo se buscaba una solicitud PENDIENTE.
+         * Si existía una solicitud vieja ACEPTADA o RECHAZADA, el sistema intentaba insertar
+         * otra fila con el mismo requesterId y receiverId, causando:
+         *
+         * Duplicate entry 'requesterId-receiverId' for key 'uq_solicitud_unica'
+         *
+         * Ahora se busca cualquier solicitud previa entre ambos usuarios.
+         * Si existe, se reutiliza cambiando su estado a PENDIENTE.
+         */
+        FollowRequestEntity existingRequest = followRequestRepository
+                .findByRequesterIdAndReceiverId(requesterId, receiverId)
+                .orElse(null);
 
-        if (pendingExists) {
-            throw new RuntimeException("Ya existe una solicitud pendiente para este usuario");
+        if (existingRequest != null) {
+
+            if (existingRequest.getStatus() == FollowRequestStatus.PENDIENTE) {
+                throw new RuntimeException("Ya existe una solicitud pendiente para este usuario");
+            }
+
+            existingRequest.setStatus(FollowRequestStatus.PENDIENTE);
+
+            FollowRequestEntity updatedRequest = followRequestRepository.save(existingRequest);
+
+            return transformRequestEntity(updatedRequest);
         }
 
         FollowRequestEntity request = new FollowRequestEntity();
@@ -291,6 +311,10 @@ public class FollowService implements IFollowService {
 
     @Override
     public FollowStatusDtos getFollowStatus(Long requesterId, Long targetUserId) {
+
+        if (requesterId == null || targetUserId == null) {
+            return new FollowStatusDtos(requesterId, targetUserId, "NONE");
+        }
 
         if (requesterId.equals(targetUserId)) {
             return new FollowStatusDtos(requesterId, targetUserId, "SELF");

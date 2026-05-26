@@ -1954,6 +1954,7 @@ function construirCarruselMedia(publicacionData, pubId) {
 
 function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
   const pubId = `pub_${publicacionData.id}`;
+  const publicationIdBackend = Number(publicacionData.id);
   const autor = publicacionData.user || "Usuario";
   const username = publicacionData.username || "usuario";
   const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
@@ -1978,7 +1979,7 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
         </svg>
       </button>
       <div class="menu-dropdown-publicacion" id="menu-pub-${pubId}">
-        <button class="menu-opcion eliminar" onclick="${opciones.modoPerfil ? `eliminarPublicacionPerfil('${publicacionData.id}', '${pubId}')` : `eliminarPublicacion('${pubId}')`}">
+        <button class="menu-opcion eliminar" onclick="${opciones.modoPerfil ? `eliminarPublicacionPerfil(${publicationIdBackend}, '${pubId}')` : `eliminarPublicacion(${publicationIdBackend}, this)`}">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
           </svg>
@@ -2008,13 +2009,13 @@ function construirHTMLPublicacionBackend(publicacionData, opciones = {}) {
       </div>
       <div class="separador"></div>
       <div class="acciones-publicacion">
-        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${pubId}')">
+        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, ${publicationIdBackend})">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
           </svg>
           <span>${likes}</span>
         </button>
-        <button class="accion-btn comentarios" onclick="alternarComentarios('${pubId}')">
+        <button class="accion-btn comentarios" onclick="alternarComentarios(${publicationIdBackend}, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
           </svg>
@@ -2095,12 +2096,22 @@ async function cargarPublicacionesMiPerfil() {
     const pubElement = nodo.querySelector(".publicacion");
 
     if (pubElement && pubElement.id) {
+      const publicationIdBackend = Number(
+        pubElement.dataset.publicationId || pubElement.dataset.pubid,
+      );
+
       const botonComentarios = pubElement.querySelector(
         ".accion-btn.comentarios",
       );
       if (botonComentarios) {
         botonComentarios.onclick = () =>
-          alternarComentarios(pubElement.id, pubElement);
+          alternarComentarios(
+            Number.isInteger(publicationIdBackend) &&
+              publicationIdBackend > 0
+              ? publicationIdBackend
+              : pubElement.id,
+            pubElement,
+          );
       }
 
       const botonMenu = pubElement.querySelector(".btn-menu-publicacion");
@@ -2115,18 +2126,31 @@ async function cargarPublicacionesMiPerfil() {
       if (botonEliminar) {
         botonEliminar.onclick = () =>
           eliminarPublicacionPerfil(
-            pubElement.dataset.publicationId || pubElement.dataset.pubid,
+            Number.isInteger(publicationIdBackend) &&
+              publicationIdBackend > 0
+              ? publicationIdBackend
+              : pubElement.dataset.publicationId || pubElement.dataset.pubid,
             pubElement.id,
             pubElement,
           );
       }
 
       if (typeof inicializarLikePublicacion === "function") {
-        inicializarLikePublicacion(pubElement.id, pubElement);
+        inicializarLikePublicacion(
+          Number.isInteger(publicationIdBackend) && publicationIdBackend > 0
+            ? publicationIdBackend
+            : pubElement.id,
+          pubElement,
+        );
       }
 
       if (typeof actualizarContadorComentarios === "function") {
-        actualizarContadorComentarios(pubElement.id, pubElement);
+        actualizarContadorComentarios(
+          Number.isInteger(publicationIdBackend) && publicationIdBackend > 0
+            ? publicationIdBackend
+            : pubElement.id,
+          pubElement,
+        );
       }
     }
   });
@@ -2242,17 +2266,17 @@ async function darLikeBackend(publicacionId) {
       return null;
     }
 
-    const realPublicacionId = extraerIdNumerico(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicacionId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error("❌ publicationId inválido para dar like:", publicacionId);
       return null;
     }
 
-    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/like/${userId}`;
+    const url = `${API_ENDPOINTS.publication}/${id}/like/${userId}`;
 
     console.log(
-      `📤 POST Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}, UserId: ${userId}`,
+      `📤 POST Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${id}, UserId: ${userId}`,
     );
 
     const response = await fetch(url, {
@@ -2284,9 +2308,9 @@ async function quitarLikeBackend(publicacionId) {
       return null;
     }
 
-    const realPublicacionId = extraerIdNumerico(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicacionId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error(
         "❌ publicationId inválido para quitar like:",
         publicacionId,
@@ -2294,10 +2318,10 @@ async function quitarLikeBackend(publicacionId) {
       return null;
     }
 
-    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/like/${userId}`;
+    const url = `${API_ENDPOINTS.publication}/${id}/like/${userId}`;
 
     console.log(
-      `📥 DELETE Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}, UserId: ${userId}`,
+      `📥 DELETE Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${id}, UserId: ${userId}`,
     );
 
     const response = await fetch(url, {
@@ -2329,9 +2353,9 @@ async function verificarLikeBackend(publicacionId) {
       return false;
     }
 
-    const realPublicacionId = extraerIdNumerico(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicacionId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error(
         "❌ publicationId inválido para verificar like:",
         publicacionId,
@@ -2339,10 +2363,10 @@ async function verificarLikeBackend(publicacionId) {
       return false;
     }
 
-    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/like/${userId}`;
+    const url = `${API_ENDPOINTS.publication}/${id}/like/${userId}`;
 
     console.log(
-      `🔍 GET Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}, UserId: ${userId}`,
+      `🔍 GET Like - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${id}, UserId: ${userId}`,
     );
 
     const response = await fetch(url, {
@@ -2367,9 +2391,9 @@ async function verificarLikeBackend(publicacionId) {
 // GET /publication/{publicationId}/likes/count
 async function obtenerCantidadLikesBackend(publicacionId) {
   try {
-    const realPublicacionId = extraerIdNumerico(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicacionId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error(
         "❌ publicationId inválido para contar likes:",
         publicacionId,
@@ -2377,10 +2401,10 @@ async function obtenerCantidadLikesBackend(publicacionId) {
       return 0;
     }
 
-    const url = `${API_ENDPOINTS.publication}/${realPublicacionId}/likes/count`;
+    const url = `${API_ENDPOINTS.publication}/${id}/likes/count`;
 
     console.log(
-      `📊 GET Count - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicacionId}`,
+      `📊 GET Count - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${id}`,
     );
 
     const response = await fetch(url, {
@@ -2416,17 +2440,17 @@ async function agregarComentarioBackend(publicacionId, textoComentario) {
       return null;
     }
 
-    const realPublicationId = extraerIdNumerico(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicationId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error("❌ publicationId inválido para comentar:", publicacionId);
       return null;
     }
 
-    const url = `${API_ENDPOINTS.publication}/${realPublicationId}/comments/${userId}`;
+    const url = `${API_ENDPOINTS.publication}/${id}/comments/${userId}`;
 
     console.log(
-      `💬 POST Comentario - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicationId}, UserId: ${userId}`,
+      `💬 POST Comentario - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${id}, UserId: ${userId}`,
     );
 
     const response = await fetch(url, {
@@ -2458,9 +2482,9 @@ async function agregarComentarioBackend(publicacionId, textoComentario) {
 // GET /publication/{publicationId}/comments
 async function obtenerComentariosBackend(publicacionId) {
   try {
-    const realPublicationId = obtenerIdPublicacionReal(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicationId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error(
         "❌ publicationId inválido para obtener comentarios:",
         publicacionId,
@@ -2468,36 +2492,29 @@ async function obtenerComentariosBackend(publicacionId) {
       return [];
     }
 
-    const url = `${API_ENDPOINTS.publication}/${realPublicationId}/comments`;
+    const url = `${API_BASE_URL_HOME}/publication/${id}/comments`;
 
     console.log(
-      `📥 GET Comentarios - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${realPublicationId}`,
+      `📥 GET Comentarios - URL: ${url}, PublicacionId: ${publicacionId}, RealId: ${id}`,
     );
 
-    const response = await fetch(url, {
+    const response = await fetchConAutenticacion(url, {
       method: "GET",
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders({ Accept: "application/json" }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text().catch(() => "") : "";
       console.error(
         "Error obteniendo comentarios:",
-        response.status,
+        response ? response.status : "sin respuesta",
         errorText,
       );
       return [];
     }
 
     const data = await response.json();
-
-    if (!Array.isArray(data)) {
-      return [];
-    }
-
-    return data
-      .map(normalizarComentarioBackend)
-      .filter((comentario) => comentario !== null);
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Error obteniendo comentarios del backend:", error);
     return [];
@@ -2506,9 +2523,9 @@ async function obtenerComentariosBackend(publicacionId) {
 
 async function obtenerComentariosPublicacion(publicationId) {
   try {
-    const realPublicationId = obtenerIdPublicacionReal(publicationId);
+    const id = Number(publicationId);
 
-    if (!realPublicationId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error(
         "❌ publicationId inválido para obtener comentarios:",
         publicationId,
@@ -2517,7 +2534,7 @@ async function obtenerComentariosPublicacion(publicationId) {
     }
 
     const response = await fetch(
-      `${API_ENDPOINTS.publication}/${realPublicationId}/comments`,
+      `${API_ENDPOINTS.publication}/${id}/comments`,
       {
         method: "GET",
         headers: getAuthHeaders(),
@@ -2598,15 +2615,15 @@ async function eliminarPublicacionBackend(publicacionId) {
       return false;
     }
 
-    const realPublicationId = extraerIdNumerico(publicacionId);
+    const id = Number(publicacionId);
 
-    if (!realPublicationId) {
+    if (!Number.isInteger(id) || id <= 0) {
       console.error("❌ publicationId inválido:", publicacionId);
       return false;
     }
 
     const response = await fetch(
-      `${API_ENDPOINTS.publication}/${realPublicationId}/user/${userId}`,
+      `${API_ENDPOINTS.publication}/${id}/user/${userId}`,
       {
         method: "DELETE",
         headers: getAuthHeaders(),
@@ -3217,6 +3234,7 @@ function crearPublicacionDesdeBackend(
   feedPublicaciones,
 ) {
   const pubId = `pub_${publicacionData.id}`;
+  const publicationIdBackend = Number(publicacionData.id);
   const autor = publicacionData.user || "Usuario";
   const username = publicacionData.username || "usuario";
   const avatar = publicacionData.profilePhoto || "./assets/Logo/UFGPerfil.jpg";
@@ -3244,7 +3262,7 @@ function crearPublicacionDesdeBackend(
         </svg>
       </button>
       <div class="menu-dropdown-publicacion" id="menu-pub-${pubId}">
-        <button class="menu-opcion eliminar" onclick="eliminarPublicacion('${pubId}')">
+        <button class="menu-opcion eliminar" onclick="eliminarPublicacion(${publicationIdBackend}, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
           </svg>
@@ -3274,13 +3292,13 @@ function crearPublicacionDesdeBackend(
       </div>
       <div class="separador"></div>
       <div class="acciones-publicacion">
-        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${pubId}')">
+        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, ${publicationIdBackend})">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
           </svg>
           <span>${likes}</span>
         </button>
-        <button class="accion-btn comentarios" onclick="alternarComentarios('${pubId}')">
+        <button class="accion-btn comentarios" onclick="alternarComentarios(${publicationIdBackend}, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
           </svg>
@@ -3317,7 +3335,7 @@ function crearPublicacionDesdeBackend(
   }
 
   // Inicializar estado del like
-  inicializarLikePublicacion(pubId);
+  inicializarLikePublicacion(publicationIdBackend, contenedor.querySelector(".publicacion"));
 
   ordenarContenedoresPublicaciones(feedPublicaciones);
 }
@@ -3359,7 +3377,11 @@ function crearPublicacionDesdeLocalStorage(
   // Inicializar estado del like
   const pubElement = contenedor.querySelector(".publicacion");
   if (pubElement && pubElement.id) {
-    inicializarLikePublicacion(pubElement.id);
+    inicializarLikePublicacion(
+      Number(pubElement.dataset.publicationId || pubElement.dataset.pubid) ||
+        pubElement.id,
+      pubElement,
+    );
   }
 }
 
@@ -4872,6 +4894,7 @@ async function crearNuevaPublicacion(texto, imagenes, encuesta = null) {
 function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
   const feedPublicaciones = document.querySelector(".feed-publicaciones");
   const pubId = `pub_${publicacionData.id}`;
+  const publicationIdBackend = Number(publicacionData.id);
   const timestamp = publicacionData.creationDate
     ? new Date(publicacionData.creationDate).getTime()
     : Date.now();
@@ -4905,7 +4928,7 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
         </svg>
       </button>
       <div class="menu-dropdown-publicacion" id="menu-pub-${pubId}">
-        <button class="menu-opcion eliminar" onclick="eliminarPublicacion('${pubId}')">
+        <button class="menu-opcion eliminar" onclick="eliminarPublicacion(${publicationIdBackend}, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
             <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
           </svg>
@@ -4933,13 +4956,13 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
       </div>
       <div class="separador"></div>
       <div class="acciones-publicacion">
-        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, '${pubId}')">
+        <button class="accion-btn me-gusta" onclick="alternarMeGusta(this, ${publicationIdBackend})">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
           </svg>
           <span>${publicacionData.likes || 0}</span>
         </button>
-        <button class="accion-btn comentarios" onclick="alternarComentarios('${pubId}')">
+        <button class="accion-btn comentarios" onclick="alternarComentarios(${publicationIdBackend}, this)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
           </svg>
@@ -4999,7 +5022,10 @@ function crearPublicacionEnFrontend(publicacionData, esDelBackend = false) {
     );
 
   // Inicializar estado del like
-  inicializarLikePublicacion(pubId);
+  inicializarLikePublicacion(
+    publicationIdBackend,
+    contenedorPublicacion.querySelector(".publicacion"),
+  );
 
   ordenarContenedoresPublicaciones(feedPublicaciones);
 }
@@ -5510,6 +5536,11 @@ async function toggleComentarios(publicacionId, publicacionRef = null) {
   }
 
   const domPublicacionId = publicacion.id || String(publicacionId);
+  const backendPublicationId = Number(
+    publicacion.dataset.publicationId ||
+      publicacion.dataset.pubid ||
+      publicacionId,
+  );
   const seccionComentarios = publicacion.querySelector(
     `#comentarios-${domPublicacionId}`,
   );
@@ -5542,14 +5573,24 @@ async function toggleComentarios(publicacionId, publicacionRef = null) {
     }
 
     // Si está conectado al backend, cargar comentarios desde allá
-    const realPublicationId = obtenerIdPublicacionReal(publicacion);
     const claveComentarios =
-      obtenerClaveComentariosPublicacion(domPublicacionId);
+      Number.isInteger(backendPublicationId) && backendPublicationId > 0
+        ? String(backendPublicationId)
+        : obtenerClaveComentariosPublicacion(domPublicacionId);
 
     if (backendConectado && usarBackend) {
-      const backendComments =
-        await obtenerComentariosBackend(realPublicationId);
-      if (backendComments.length > 0) {
+      if (
+        !Number.isInteger(backendPublicationId) ||
+        backendPublicationId <= 0
+      ) {
+        console.error(
+          "❌ publicationId inválido en toggleComentarios:",
+          publicacionId,
+        );
+      } else {
+        const backendComments =
+          await obtenerComentariosBackend(backendPublicationId);
+
         // Protección adicional: asegurar que comentariosPorPublicacion esté inicializado
         if (
           !comentariosPorPublicacion ||
@@ -5560,12 +5601,14 @@ async function toggleComentarios(publicacionId, publicacionRef = null) {
           );
           comentariosPorPublicacion = {};
         }
+
         console.log(
           "📥 Comentarios del backend recibidos:",
           backendComments.length,
           "para",
-          publicacionId,
+          backendPublicationId,
         );
+
         comentariosPorPublicacion[claveComentarios] = backendComments
           .map((c) => {
             const comentarioNormalizado =
@@ -5593,6 +5636,7 @@ async function toggleComentarios(publicacionId, publicacionRef = null) {
             };
           })
           .filter((comentario) => comentario !== null);
+
         console.log(
           "✅ Comentarios asignados a comentariosPorPublicacion[" +
             claveComentarios +
@@ -5687,6 +5731,11 @@ async function publicarComentario(publicacionId) {
   }
 
   const domPublicacionId = publicacion.id || String(publicacionId);
+  const backendPublicationId = Number(
+    publicacion.dataset.publicationId ||
+      publicacion.dataset.pubid ||
+      publicacionId,
+  );
   const campoComentario = publicacion.querySelector(
     `#campo-comentario-${domPublicacionId}`,
   );
@@ -5708,13 +5757,23 @@ async function publicarComentario(publicacionId) {
   }
 
   let comentarioBackend = null;
-  const claveComentarios = obtenerClaveComentariosPublicacion(domPublicacionId);
+  const claveComentarios =
+    Number.isInteger(backendPublicationId) && backendPublicationId > 0
+      ? String(backendPublicationId)
+      : obtenerClaveComentariosPublicacion(domPublicacionId);
 
   // Si el backend está conectado, enviar comentario al backend
   if (backendConectado && usarBackend) {
-    const realPubId = obtenerIdPublicacionReal(publicacion);
+    if (
+      !Number.isInteger(backendPublicationId) ||
+      backendPublicationId <= 0
+    ) {
+      console.error("❌ publicationId inválido para comentar:", publicacionId);
+      return;
+    }
+
     comentarioBackend = await agregarComentarioBackend(
-      realPubId || publicacionId,
+      backendPublicationId,
       textoComentario,
     );
     if (!comentarioBackend) {
@@ -6632,14 +6691,26 @@ async function eliminarPublicacionPerfil(
 }
 
 // Función para eliminar publicación
-function eliminarPublicacion(publicacionId) {
-  const elementoPublicacion = document.getElementById(publicacionId);
+function eliminarPublicacion(publicacionId, triggerRef = null) {
+  const elementoPublicacion = obtenerPublicacionElemento(
+    publicacionId,
+    triggerRef,
+  );
   if (!elementoPublicacion) return;
 
-  const realPubId = obtenerIdPublicacionReal(elementoPublicacion);
+  const realPubId = Number(
+    elementoPublicacion.dataset.publicationId ||
+      elementoPublicacion.dataset.pubid ||
+      publicacionId,
+  );
 
   // Eliminar del backend si está conectado
-  if (backendConectado && usarBackend) {
+  if (
+    backendConectado &&
+    usarBackend &&
+    Number.isInteger(realPubId) &&
+    realPubId > 0
+  ) {
     eliminarPublicacionBackend(realPubId);
   }
 
@@ -6668,18 +6739,22 @@ async function alternarMeGusta(botonElement, publicacionId) {
     const svgElement = botonElement.querySelector("svg");
     let conteoAnterior = parseInt(spanContador.textContent) || 0;
 
-    // Extraer ID real de la publicación
-    const elementoPublicacion = document.getElementById(publicacionId);
-    const realPublicacionId = extraerIdNumerico(
-      elementoPublicacion?.dataset?.pubid || publicacionId,
+    const elementoPublicacion = obtenerPublicacionElemento(
+      publicacionId,
+      botonElement,
     );
-    const numericPublicacionId = Number(realPublicacionId);
+    const domPublicacionId = elementoPublicacion?.id || String(publicacionId);
+    const numericPublicacionId = Number(
+      elementoPublicacion?.dataset?.publicationId ||
+        elementoPublicacion?.dataset?.pubid ||
+        publicacionId,
+    );
 
     console.log(
-      `🔗 Toggling like - publicacionId: ${publicacionId}, realId: ${realPublicacionId}, numeric: ${numericPublicacionId}`,
+      `🔗 Toggling like - publicacionId: ${publicacionId}, numeric: ${numericPublicacionId}`,
     );
 
-    if (!numericPublicacionId || numericPublicacionId === 0) {
+    if (!Number.isInteger(numericPublicacionId) || numericPublicacionId <= 0) {
       console.error("❌ publicacionId inválido:", publicacionId);
       mostrarNotificacion("Error: publicación no válida", "error");
       return;
@@ -6687,11 +6762,11 @@ async function alternarMeGusta(botonElement, publicacionId) {
 
     if (backendConectado && usarBackend) {
       // Verificar si el usuario ya dio like
-      const yaLeDioLike = await verificarLikeBackend(realPublicacionId);
+      const yaLeDioLike = await verificarLikeBackend(numericPublicacionId);
 
       if (yaLeDioLike) {
         // Quitar like
-        const exito = await quitarLikeBackend(realPublicacionId);
+        const exito = await quitarLikeBackend(numericPublicacionId);
         if (exito) {
           botonElement.classList.remove("liked");
           svgElement.setAttribute("fill", "none");
@@ -6703,7 +6778,7 @@ async function alternarMeGusta(botonElement, publicacionId) {
         }
       } else {
         // Dar like
-        const exito = await darLikeBackend(realPublicacionId);
+        const exito = await darLikeBackend(numericPublicacionId);
         if (exito) {
           botonElement.classList.add("liked");
           svgElement.setAttribute("fill", "currentColor");
@@ -6716,7 +6791,9 @@ async function alternarMeGusta(botonElement, publicacionId) {
       }
 
       // Obtener el contador actualizado desde el backend
-      const nuevoConteo = await obtenerCantidadLikesBackend(realPublicacionId);
+      const nuevoConteo = await obtenerCantidadLikesBackend(
+        numericPublicacionId,
+      );
       spanContador.textContent = nuevoConteo;
 
       console.log(
@@ -6732,26 +6809,27 @@ async function alternarMeGusta(botonElement, publicacionId) {
         localStorage.getItem("gnet_likes") || "{}",
       );
       const likesUsuario = likesLocales[claveUsuario] || {};
+      const claveLocal = domPublicacionId;
 
       // Verificar si el usuario ya dio like a esta publicación
-      const yaLeDioLike = likesUsuario[publicacionId] === true;
+      const yaLeDioLike = likesUsuario[claveLocal] === true;
 
       // Cargar contadores globales
       const contadoresGlobales = JSON.parse(
         localStorage.getItem("gnet_contadores_likes") || "{}",
       );
-      let nuevoConteo = contadoresGlobales[publicacionId] || conteoAnterior;
+      let nuevoConteo = contadoresGlobales[claveLocal] || conteoAnterior;
 
       if (yaLeDioLike) {
         // Quitar like
-        delete likesUsuario[publicacionId];
+        delete likesUsuario[claveLocal];
         nuevoConteo = Math.max(0, nuevoConteo - 1);
         botonElement.classList.remove("liked");
         svgElement.setAttribute("fill", "none");
         console.log(`👎 Like removed. Nuevo contador: ${nuevoConteo}`);
       } else {
         // Dar like
-        likesUsuario[publicacionId] = true;
+        likesUsuario[claveLocal] = true;
         nuevoConteo++;
         botonElement.classList.add("liked");
         svgElement.setAttribute("fill", "currentColor");
@@ -6760,7 +6838,7 @@ async function alternarMeGusta(botonElement, publicacionId) {
 
       // Guardar cambios
       likesLocales[claveUsuario] = likesUsuario;
-      contadoresGlobales[publicacionId] = nuevoConteo;
+      contadoresGlobales[claveLocal] = nuevoConteo;
       localStorage.setItem("gnet_likes", JSON.stringify(likesLocales));
       localStorage.setItem(
         "gnet_contadores_likes",
@@ -6792,8 +6870,18 @@ function inicializarContadoresComentariosExistentes() {
 }
 
 // Alias para compatibilidad con las publicaciones dinámicas
-function alternarComentarios(publicacionId, publicacionRef = null) {
-  return toggleComentarios(publicacionId, publicacionRef);
+async function alternarComentarios(publicacionId, publicacionRef = null) {
+  const id = Number(publicacionId);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    console.error(
+      "❌ publicationId inválido en alternarComentarios:",
+      publicacionId,
+    );
+    return;
+  }
+
+  await toggleComentarios(id, publicacionRef);
 }
 
 // Función auxiliar para establecer el estado visual de un botón de like
@@ -6848,6 +6936,11 @@ async function inicializarLikesPublicaciones() {
 
   todasLasPublicaciones.forEach(async (publicacion) => {
     const publicacionId = publicacion.id;
+    const backendPublicationId = Number(
+      publicacion.dataset.publicationId ||
+        publicacion.dataset.pubid ||
+        publicacionId,
+    );
     const botonLike = publicacion.querySelector(".me-gusta");
     const svgElement = botonLike?.querySelector("svg");
     const spanContador = botonLike?.querySelector("span");
@@ -6859,8 +6952,21 @@ async function inicializarLikesPublicaciones() {
       if (backendConectado && usarBackend) {
         // Verificar en el backend
         try {
-          usuarioYaDioLike = await verificarLikeBackend(publicacionId);
-          contador = await obtenerCantidadLikesBackend(publicacionId);
+          if (
+            Number.isInteger(backendPublicationId) &&
+            backendPublicationId > 0
+          ) {
+            usuarioYaDioLike = await verificarLikeBackend(
+              backendPublicationId,
+            );
+            contador = await obtenerCantidadLikesBackend(backendPublicationId);
+          } else {
+            usuarioYaDioLike = likesUsuario[publicacionId] === true;
+            contador =
+              contadoresGlobales[publicacionId] ||
+              parseInt(spanContador.textContent) ||
+              0;
+          }
           console.log(
             `✅ Datos de backend obtenidos para ${publicacionId}: like=${usuarioYaDioLike}, contador=${contador}`,
           );
@@ -6903,6 +7009,12 @@ async function inicializarLikePublicacion(
 ) {
   const publicacion = obtenerPublicacionElemento(publicacionId, publicacionRef);
   if (!publicacion) return;
+  const domPublicacionId = publicacion.id || String(publicacionId);
+  const backendPublicationId = Number(
+    publicacion.dataset.publicationId ||
+      publicacion.dataset.pubid ||
+      publicacionId,
+  );
 
   const botonLike = publicacion.querySelector(".me-gusta");
   const svgElement = botonLike?.querySelector("svg");
@@ -6914,19 +7026,24 @@ async function inicializarLikePublicacion(
 
   if (backendConectado && usarBackend) {
     try {
-      usuarioYaDioLike = await verificarLikeBackend(publicacionId);
-      contador = await obtenerCantidadLikesBackend(publicacionId);
+      if (Number.isInteger(backendPublicationId) && backendPublicationId > 0) {
+        usuarioYaDioLike = await verificarLikeBackend(backendPublicationId);
+        contador = await obtenerCantidadLikesBackend(backendPublicationId);
+      } else {
+        usuarioYaDioLike = obtenerLikeLocal(domPublicacionId);
+        contador = obtenerContadorLocal(domPublicacionId) || contador;
+      }
     } catch (error) {
       console.warn(
         `⚠️ Error obteniendo likes del backend para ${publicacionId}, usando localStorage`,
         error,
       );
-      usuarioYaDioLike = obtenerLikeLocal(publicacionId);
-      contador = obtenerContadorLocal(publicacionId) || contador;
+      usuarioYaDioLike = obtenerLikeLocal(domPublicacionId);
+      contador = obtenerContadorLocal(domPublicacionId) || contador;
     }
   } else {
-    usuarioYaDioLike = obtenerLikeLocal(publicacionId);
-    contador = obtenerContadorLocal(publicacionId) || contador;
+    usuarioYaDioLike = obtenerLikeLocal(domPublicacionId);
+    contador = obtenerContadorLocal(domPublicacionId) || contador;
   }
 
   setearEstadoLikeBoton(botonLike, usuarioYaDioLike, contador);

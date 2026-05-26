@@ -309,6 +309,8 @@ async function abrirChatConUsuario(userId, name, username, profilePhoto) {
     return;
   }
 
+  initSendListener();
+
   const chatId = generarChatId(myId, userId);
 
   currentChat.chatId = chatId;
@@ -417,44 +419,76 @@ async function enviarMensajeFirebase(chatId, mensaje) {
 }
 
 function initSendListener() {
-  if (_sendListenerAttached) return;
-
   const sendBtn = document.getElementById("chatSendBtn");
   const chatInput = document.getElementById("chatMessageInput");
+  const chatForm = document.getElementById("chatForm");
 
-  if (!sendBtn || !chatInput) return;
+  if (!sendBtn || !chatInput) {
+    console.error("No se puede inicializar envío de chat: faltan elementos", {
+      sendBtn,
+      chatInput,
+      chatForm,
+    });
+    return;
+  }
 
-  sendBtn.addEventListener("click", async () => {
+  if (_sendListenerAttached) return;
+
+  async function manejarEnvioMensaje(event) {
+    if (event) event.preventDefault();
+
     const texto = chatInput.value.trim();
 
-    if (!texto) return;
+    if (!texto) {
+      console.warn("Mensaje vacío, no se envía");
+      return;
+    }
 
     const { chatId, receiverId, myId } = currentChat;
 
     if (!chatId || !receiverId || !myId) {
-      console.warn("No hay chat activo");
+      console.warn("No hay chat activo", { chatId, receiverId, myId });
       return;
     }
 
-    const allow = await puedeChatearCon(receiverId);
-
-    if (!allow) {
-      alert("Solo puedes chatear con usuarios con seguimiento mutuo.");
-      return;
-    }
-
-    await enviarMensajeFirebase(chatId, {
-      text: texto,
-      senderId: myId,
+    console.log("Intentando enviar mensaje", {
+      texto,
+      chatId: currentChat.chatId,
+      receiverId: currentChat.receiverId,
+      myId: currentChat.myId,
     });
 
-    chatInput.value = "";
-  });
+    try {
+      const allow = await puedeChatearCon(receiverId);
+
+      if (!allow) {
+        alert("Solo puedes chatear con usuarios con seguimiento mutuo.");
+        return;
+      }
+
+      await enviarMensajeFirebase(chatId, {
+        text: texto,
+        senderId: myId,
+      });
+
+      console.log("Mensaje enviado correctamente a Firebase");
+      chatInput.value = "";
+    } catch (error) {
+      console.error("Error enviando mensaje de chat:", error);
+      alert("No se pudo enviar el mensaje");
+    }
+  }
+
+  sendBtn.addEventListener("click", manejarEnvioMensaje);
+
+  if (chatForm) {
+    chatForm.addEventListener("submit", manejarEnvioMensaje);
+  }
 
   chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      sendBtn.click();
+      manejarEnvioMensaje(e);
     }
   });
 

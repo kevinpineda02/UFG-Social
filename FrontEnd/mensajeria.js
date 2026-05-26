@@ -10,9 +10,30 @@ function esVistaMovilMensajeria() {
   return window.matchMedia("(max-width: 768px)").matches;
 }
 
+function setVisibilidadHamburguesa(visible) {
+  const botonHamburguesa = document.getElementById("btn-hamburguesa-celular");
+  const panelHamburguesa = document.getElementById("panel-hamburguesa-celular");
+
+  if (visible) {
+    if (botonHamburguesa) botonHamburguesa.style.display = "";
+    return;
+  }
+
+  if (typeof window.cerrarMenuHamburguesaCelular === "function") {
+    window.cerrarMenuHamburguesaCelular();
+  } else if (panelHamburguesa) {
+    panelHamburguesa.classList.remove("activo");
+    panelHamburguesa.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("menu-celular-abierto");
+  }
+
+  if (botonHamburguesa) botonHamburguesa.style.display = "none";
+}
+
 function activarVistaChat(esMovil = false) {
   if (esMovil) {
     document.body.classList.add("mensajeria-abierta");
+    setVisibilidadHamburguesa(false);
   }
   if (contenido) contenido.style.display = "none";
   if (tituloSeccion) tituloSeccion.style.display = "none";
@@ -23,6 +44,7 @@ function desactivarVistaChat(esMovil = false) {
   if (esMovil) {
     document.body.classList.remove("mensajeria-abierta");
     document.body.classList.remove("chat-abierto");
+    setVisibilidadHamburguesa(true);
   }
   if (typeof window.cerrarChatActual === "function") {
     window.cerrarChatActual();

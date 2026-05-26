@@ -4856,6 +4856,16 @@ body.mensajeria-abierta .feed-mis-publicaciones {
   display: none !important;
 }
 
+body.mensajeria-abierta #btn-hamburguesa-celular,
+body.chat-abierto #btn-hamburguesa-celular {
+  display: none !important;
+}
+
+body.mensajeria-abierta #panel-hamburguesa-celular,
+body.chat-abierto #panel-hamburguesa-celular {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .contenido > .seguidos,
   .contenido > .seguidores-contenedor {

@@ -29,6 +29,7 @@ const currentChat = {
 
 let _sendListenerAttached = false;
 let _mobileBackListenerAttached = false;
+let _isSendingMessage = false;
 
 function esVistaMovilChat() {
   return window.matchMedia("(max-width: 768px)").matches;
@@ -419,15 +420,13 @@ async function enviarMensajeFirebase(chatId, mensaje) {
 }
 
 function initSendListener() {
-  const sendBtn = document.getElementById("chatSendBtn");
   const chatInput = document.getElementById("chatMessageInput");
   const chatForm = document.getElementById("chatForm");
 
-  if (!sendBtn || !chatInput) {
+  if (!chatForm || !chatInput) {
     console.error("No se puede inicializar envío de chat: faltan elementos", {
-      sendBtn,
-      chatInput,
       chatForm,
+      chatInput,
     });
     return;
   }
@@ -436,6 +435,10 @@ function initSendListener() {
 
   async function manejarEnvioMensaje(event) {
     if (event) event.preventDefault();
+
+    if (_isSendingMessage) {
+      return;
+    }
 
     const texto = chatInput.value.trim();
 
@@ -450,6 +453,9 @@ function initSendListener() {
       console.warn("No hay chat activo", { chatId, receiverId, myId });
       return;
     }
+
+    _isSendingMessage = true;
+    chatInput.value = "";
 
     console.log("Intentando enviar mensaje", {
       texto,
@@ -472,25 +478,16 @@ function initSendListener() {
       });
 
       console.log("Mensaje enviado correctamente a Firebase");
-      chatInput.value = "";
     } catch (error) {
       console.error("Error enviando mensaje de chat:", error);
+      chatInput.value = texto;
       alert("No se pudo enviar el mensaje");
+    } finally {
+      _isSendingMessage = false;
     }
   }
 
-  sendBtn.addEventListener("click", manejarEnvioMensaje);
-
-  if (chatForm) {
-    chatForm.addEventListener("submit", manejarEnvioMensaje);
-  }
-
-  chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      manejarEnvioMensaje(e);
-    }
-  });
+  chatForm.addEventListener("submit", manejarEnvioMensaje);
 
   _sendListenerAttached = true;
 }

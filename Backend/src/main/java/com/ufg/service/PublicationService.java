@@ -8,10 +8,12 @@ import com.ufg.data.repository.PublicationRepository;
 import com.ufg.data.repository.UserRepository;
 import com.ufg.domain.PublicationDtos;
 import com.ufg.domain.PublicationImageDtos;
+import com.ufg.service.contract.IImageUploadService;
 import com.ufg.service.contract.IPublication;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +28,10 @@ public class PublicationService implements IPublication {
     UserRepository userRepository;
 
     @Autowired
-    IPublicationImageRepository  publicationImageRepository;
+    IPublicationImageRepository publicationImageRepository;
 
+    @Autowired
+    IImageUploadService imageUploadService;
 
     @Override
     public PublicationDtos transformEntity(PublicationEntity entity) {
@@ -95,7 +99,7 @@ public class PublicationService implements IPublication {
     }
 
     @Override
-    public List<PublicationDtos> searchPublicationUser(Long idUser){
+    public List<PublicationDtos> searchPublicationUser(Long idUser) {
         List<PublicationEntity> entities = publicationRepository.findByUserId(idUser);
 
         List<PublicationDtos> dtos = new ArrayList<>();
@@ -139,8 +143,6 @@ public class PublicationService implements IPublication {
         return deletedPublication;
     }
 
-
-
     @Override
     @Transactional
     public PublicationDtos createPublication(PublicationDtos dtos) {
@@ -183,6 +185,67 @@ public class PublicationService implements IPublication {
         if (dtos.getImages() != null) {
             response.setImages(dtos.getImages());
         }
+
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public PublicationDtos createPublicationWithImages(
+            Long userId,
+            String description,
+            String videoUrl,
+            List<MultipartFile> files
+    ) {
+        UserEntity userFound = userRepository.findById(userId).orElse(null);
+
+        if (userFound == null) {
+            throw new RuntimeException("Usuario no encontrado con id: " + userId);
+        }
+
+        PublicationEntity entity = new PublicationEntity();
+
+        entity.setUser(userFound);
+        entity.setDescription(description);
+        entity.setVideoUrl(videoUrl);
+        entity.setLikes(0);
+        entity.setComents(0);
+
+        PublicationEntity savedEntity = publicationRepository.save(entity);
+
+        List<PublicationImageDtos> imagesResponse = new ArrayList<>();
+
+        if (files != null && !files.isEmpty()) {
+            int order = 0;
+
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    String imageUrl = imageUploadService.uploadImage(
+                            file,
+                            "ufg_social/publications"
+                    );
+
+                    PublicationImageEntity image = new PublicationImageEntity();
+                    image.setPublication(savedEntity);
+                    image.setImageUrl(imageUrl);
+                    image.setOrderImage(order);
+
+                    PublicationImageEntity savedImage = publicationImageRepository.save(image);
+
+                    PublicationImageDtos imageDto = new PublicationImageDtos();
+                    imageDto.setId(savedImage.getId());
+                    imageDto.setImageUrl(savedImage.getImageUrl());
+                    imageDto.setOrderImage(savedImage.getOrderImage());
+
+                    imagesResponse.add(imageDto);
+
+                    order++;
+                }
+            }
+        }
+
+        PublicationDtos response = transformEntity(savedEntity);
+        response.setImages(imagesResponse);
 
         return response;
     }

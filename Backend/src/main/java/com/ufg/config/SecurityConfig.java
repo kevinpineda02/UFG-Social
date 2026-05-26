@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.PATCH, "/user/**").authenticated()
                                 .requestMatchers("/follow/**").authenticated()
                                 .requestMatchers("/chat/**").authenticated()
+                                .requestMatchers("/images/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManager ->

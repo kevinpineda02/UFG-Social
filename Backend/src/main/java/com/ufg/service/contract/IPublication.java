@@ -3,6 +3,7 @@ package com.ufg.service.contract;
 import com.ufg.data.entity.PublicationEntity;
 import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.PublicationDtos;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -27,5 +28,11 @@ public interface IPublication {
     //Crear Publicacion
     PublicationDtos createPublication(PublicationDtos dtos);
 
+    PublicationDtos createPublicationWithImages(
+            Long userId,
+            String description,
+            String videoUrl,
+            List<MultipartFile> files
+    );
 
 }

@@ -2,6 +2,7 @@ package com.ufg.service.contract;
 
 import com.ufg.data.entity.UserEntity;
 import com.ufg.domain.UserDtos;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,4 +25,6 @@ public interface IUserService {
 
 //Sugerencias
     List<UserDtos> getSuggestions(Long userId);
+
+    UserDtos updateProfilePhoto(Long id, MultipartFile file);
 }

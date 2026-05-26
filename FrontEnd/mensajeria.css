@@ -373,7 +373,7 @@
   bottom: 0;
   z-index: 6;
   padding: 12px 16px;
-  background: transparent;
+  background: var(--color-fondo-campo);
   display: flex;
   gap: 8px;
   align-items: center;
@@ -423,7 +423,6 @@
 
   .chat-contact-item{
     background: var(--color-secundario);
-
   }
 
  
@@ -442,7 +441,7 @@
     width: 100vw;
     padding: 0;
     background: var(--color-primario);
-    
+
   }
 
   .mensajeria.chat-movil-abierto #chatWindow {

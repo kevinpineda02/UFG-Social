@@ -10,7 +10,7 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL_HOME = "http://localhost:8081";
+const API_BASE_URL_HOME = "https://ufg-social.onrender.com";
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL_HOME}/health`,

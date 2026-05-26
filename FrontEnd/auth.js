@@ -8,7 +8,7 @@
 
 let currentUser = null;
 
-const API_BASE_URL = "http://127.0.0.1:8081";
+const API_BASE_URL = "https://ufg-social.onrender.com";
 
 function decodeBase64Url(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");

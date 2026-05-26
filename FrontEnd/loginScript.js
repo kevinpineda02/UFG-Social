@@ -6,6 +6,8 @@
  * @copyright © 2025 Kevin Pineda. Todos los derechos reservados.
  */
 
+const API_BASE_URL_HOME = "https://ufg-social.onrender.com";
+
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.querySelector(".logueo");
   const registroForm = document.querySelector(".registro");
@@ -161,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
         'input[name="contrasena"]',
       ).value;
 
-      fetch("http://127.0.0.1:8081/auth/login", {
+      fetch(`${API_BASE_URL_HOME}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
@@ -305,7 +307,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.opacity = "0.7";
       }
 
-      fetch("http://127.0.0.1:8081/auth/register", {
+      fetch(`${API_BASE_URL_HOME}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena }),
@@ -401,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.style.opacity = "0.7";
       }
 
-      fetch("/recovery", {
+      fetch(`${API_BASE_URL_HOME}/recovery`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailRecovery }),
@@ -500,7 +502,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const response = await fetch(
-        `http://127.0.0.1:8081/user/${userId}/profile-photo`,
+        `${API_BASE_URL_HOME}/user/${userId}/profile-photo`,
         {
           method: "PATCH",
           headers,
@@ -570,7 +572,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         console.log("📤 Headers:", headers);
 
-        const res = await fetch("http://127.0.0.1:8081/user", {
+        const res = await fetch(`${API_BASE_URL_HOME}/user`, {
           method: "POST",
           headers,
           body: JSON.stringify(body),

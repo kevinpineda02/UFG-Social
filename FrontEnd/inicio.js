@@ -3935,27 +3935,93 @@ function cargarModoGuardado() {
   }
 }
 
+function toggleMenuHamburguesaCelular(forzarEstado = null) {
+  const panel = document.getElementById("panel-hamburguesa-celular");
+  const boton = document.getElementById("btn-hamburguesa-celular");
+
+  if (!panel || !boton) return;
+
+  const abierto = panel.classList.contains("activo");
+  const debeAbrir = typeof forzarEstado === "boolean" ? forzarEstado : !abierto;
+
+  panel.classList.toggle("activo", debeAbrir);
+  panel.setAttribute("aria-hidden", debeAbrir ? "false" : "true");
+  boton.setAttribute("aria-expanded", debeAbrir ? "true" : "false");
+  boton.classList.toggle("activo", debeAbrir);
+  document.body.classList.toggle("menu-celular-abierto", debeAbrir);
+}
+
+function cerrarMenuHamburguesaCelular() {
+  toggleMenuHamburguesaCelular(false);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const botonHamburguesa = document.getElementById("btn-hamburguesa-celular");
+  const panelHamburguesa = document.getElementById("panel-hamburguesa-celular");
+
+  if (botonHamburguesa) {
+    botonHamburguesa.addEventListener("click", function (event) {
+      event.stopPropagation();
+      toggleMenuHamburguesaCelular();
+    });
+  }
+
+  if (panelHamburguesa) {
+    panelHamburguesa.addEventListener("click", function (event) {
+      event.stopPropagation();
+      if (event.target === panelHamburguesa) {
+        cerrarMenuHamburguesaCelular();
+      }
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    const contenedor = event.target.closest(".menu-secciones-celular");
+    if (!contenedor) {
+      cerrarMenuHamburguesaCelular();
+    }
+  });
+
+  window.addEventListener("resize", function () {
+    if (window.innerWidth > 768) {
+      cerrarMenuHamburguesaCelular();
+    }
+  });
+});
+
 // Función para seleccionar ventana en el sidebar
 function seleccionarVentana(botonSeleccionado) {
   // Remover clase active de todos los botones del sidebar
-  const botonesSidebar = document.querySelectorAll(".secciones button");
+  const botonesSidebar = document.querySelectorAll(
+    ".secciones button, .panel-hamburguesa-celular button",
+  );
   botonesSidebar.forEach((boton) => {
     boton.classList.remove("active");
+    boton.style.transform = "translateY(0)";
     // Pequeña animación de salida
     setTimeout(() => {
       boton.style.transform = "translateY(0)";
     }, 150);
   });
 
-  // Agregar clase active al botón seleccionado con animación especial
-  botonSeleccionado.classList.add("active");
-  botonSeleccionado.style.transform = "translateY(-10px) scale(1.05)";
-  setTimeout(() => {
-    botonSeleccionado.style.transform = "translateY(0) scale(1)";
-  }, 300);
-
   // Obtener el ID del botón y cambiar la vista
-  const botonId = botonSeleccionado.id;
+  const botonId = botonSeleccionado?.dataset?.section || botonSeleccionado.id;
+
+  // Agregar clase active al botón seleccionado (desktop y móvil)
+  botonesSidebar.forEach((boton) => {
+    const seccionBoton = boton?.dataset?.section || boton.id;
+    if (seccionBoton === botonId) {
+      boton.classList.add("active");
+      boton.style.transform = "translateY(-10px) scale(1.05)";
+      setTimeout(() => {
+        boton.style.transform = "translateY(0) scale(1)";
+      }, 300);
+    }
+  });
+
+  if (window.innerWidth <= 768) {
+    cerrarMenuHamburguesaCelular();
+  }
 
   // Ocultar todos los títulos de sección
   document.querySelector(".titulo-inicio").style.display = "none";
@@ -3963,9 +4029,8 @@ function seleccionarVentana(botonSeleccionado) {
   document.querySelector(".titulo-comunidad").style.display = "none";
   document.querySelector(".titulo-perfil").style.display = "none";
 
-  const seccionPerfil =
-    document.querySelector(".seccion-perfil") ||
-    document.querySelector(".mi-perfil");
+  const seccionPerfil = document.querySelector(".seccion-perfil");
+  const miPerfil = document.querySelector(".mi-perfil");
   const publicaciones = document.querySelector(".publicaciones");
   const feedPublicaciones = document.querySelector(".feed-publicaciones");
   const feedMisPublicaciones = document.querySelector(
@@ -3975,6 +4040,43 @@ function seleccionarVentana(botonSeleccionado) {
   const solicitudes = document.querySelector(".solicitudes");
   const seguidos = document.querySelector(".seguidos");
   const seguidoresContenedor = document.querySelector(".seguidores-contenedor");
+  const esMovil = window.matchMedia("(max-width: 768px)").matches;
+
+  const mostrarContenedoresPerfilMovil = (mostrar) => {
+    if (!esMovil) return;
+
+    if (miPerfil) {
+      miPerfil.style.display = mostrar ? "flex" : "none";
+    }
+  };
+
+  const mostrarContenedoresComunidadMovil = (mostrar) => {
+    if (!esMovil) return;
+
+    if (miPerfil) {
+      miPerfil.style.display = "none";
+    }
+
+    if (seguidos) {
+      seguidos.style.display = "none";
+    }
+
+    if (seguidoresContenedor) {
+      seguidoresContenedor.style.display = "none";
+    }
+
+    if (feedMisPublicaciones) {
+      feedMisPublicaciones.style.display = "none";
+    }
+
+    if (sugerencias) {
+      sugerencias.style.display = mostrar ? "flex" : "none";
+    }
+
+    if (solicitudes) {
+      solicitudes.style.display = mostrar ? "block" : "none";
+    }
+  };
 
   // Cambiar vista según el botón seleccionado
   if (botonId === "inicio") {
@@ -3982,10 +4084,13 @@ function seleccionarVentana(botonSeleccionado) {
     if (tituloInicio) tituloInicio.style.display = ""; // permitir que CSS determine display
     if (publicaciones) publicaciones.style.display = "";
     if (seccionPerfil) seccionPerfil.style.display = "none";
+    mostrarContenedoresPerfilMovil(false);
     if (feedPublicaciones) feedPublicaciones.style.display = "";
     if (feedMisPublicaciones) feedMisPublicaciones.style.display = "none";
-    if (sugerencias) sugerencias.style.display = "";
-    if (solicitudes) solicitudes.style.display = "";
+    if (esMovil && sugerencias) sugerencias.style.display = "none";
+    if (esMovil && solicitudes) solicitudes.style.display = "none";
+    if (!esMovil && sugerencias) sugerencias.style.display = "";
+    if (!esMovil && solicitudes) solicitudes.style.display = "";
     if (seguidos) seguidos.style.display = "none";
     if (seguidoresContenedor) seguidoresContenedor.style.display = "none";
   } else if (botonId === "btn-marketplace") {
@@ -3993,27 +4098,35 @@ function seleccionarVentana(botonSeleccionado) {
     if (tituloMarketplace) tituloMarketplace.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "none";
+    mostrarContenedoresPerfilMovil(false);
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
     if (feedMisPublicaciones) feedMisPublicaciones.style.display = "none";
-    if (sugerencias) sugerencias.style.display = "none";
-    if (solicitudes) solicitudes.style.display = "none";
+    if (esMovil && sugerencias) sugerencias.style.display = "none";
+    if (esMovil && solicitudes) solicitudes.style.display = "none";
   } else if (botonId === "comunidad") {
     const tituloComunidad = document.querySelector(".titulo-comunidad");
     if (tituloComunidad) tituloComunidad.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "none";
+    mostrarContenedoresPerfilMovil(false);
+    mostrarContenedoresComunidadMovil(true);
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
     if (feedMisPublicaciones) feedMisPublicaciones.style.display = "none";
-    if (sugerencias) sugerencias.style.display = "none";
-    if (solicitudes) solicitudes.style.display = "none";
+    if (!esMovil && sugerencias) sugerencias.style.display = "none";
+    if (!esMovil && solicitudes) solicitudes.style.display = "none";
   } else if (botonId === "perfil") {
     const tituloPerfil = document.querySelector(".titulo-perfil");
     if (tituloPerfil) tituloPerfil.style.display = "";
     if (publicaciones) publicaciones.style.display = "none";
     if (seccionPerfil) seccionPerfil.style.display = "block";
+    mostrarContenedoresPerfilMovil(true);
+    if (esMovil) {
+      if (sugerencias) sugerencias.style.display = "none";
+      if (solicitudes) solicitudes.style.display = "none";
+    }
     if (feedPublicaciones) feedPublicaciones.style.display = "none";
-    if (solicitudes) solicitudes.style.display = "none";
-    if (sugerencias) sugerencias.style.display = "none";
+    if (!esMovil && solicitudes) solicitudes.style.display = "none";
+    if (!esMovil && sugerencias) sugerencias.style.display = "none";
     if (seguidos) seguidos.style.display = "";
     if (seguidoresContenedor) seguidoresContenedor.style.display = "";
     const feedMisPublicacionesPerfil = obtenerContenedorMisPublicaciones();

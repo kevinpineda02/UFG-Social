@@ -538,7 +538,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const fileInput = userDataForm.querySelector(
           'input[name="profileImage"]',
         );
-        const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+        const selectedFile =
+          fileInput && fileInput.files ? fileInput.files[0] : null;
 
         const credentialId = localStorage.getItem("credentialId");
         const body = {

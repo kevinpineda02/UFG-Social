@@ -28,6 +28,102 @@ const currentChat = {
 };
 
 let _sendListenerAttached = false;
+let _mobileBackListenerAttached = false;
+
+function esVistaMovilChat() {
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function obtenerContenedorMensajeria() {
+  return document.querySelector(".mensajeria");
+}
+
+function asegurarBotonRegresoChat() {
+  const chatHeader = document.getElementById("chatHeader");
+
+  if (!chatHeader || chatHeader.querySelector("#chatBackBtn")) {
+    return;
+  }
+
+  const boton = document.createElement("button");
+  boton.type = "button";
+  boton.id = "chatBackBtn";
+  boton.className = "chat-back-btn";
+  boton.setAttribute("aria-label", "Volver a la lista de chats");
+  // Usar icono SVG en lugar de texto
+  boton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+    </svg>
+  `;
+
+  chatHeader.insertBefore(boton, chatHeader.firstChild);
+}
+
+function mostrarListaChatsMovil() {
+  const contenedor = obtenerContenedorMensajeria();
+  if (contenedor) {
+    contenedor.classList.remove("chat-movil-abierto");
+  }
+
+  document.body.classList.remove("chat-abierto");
+
+  const chatSidebar = document.querySelector(".chat-sidebar");
+  const chatArea = document.querySelector(".chat-area");
+  const chatEmpty = document.getElementById("chatEmpty");
+  const chatWindow = document.getElementById("chatWindow");
+
+  if (chatSidebar) chatSidebar.style.display = "flex";
+  if (chatArea) chatArea.style.display = "none";
+  if (chatEmpty) chatEmpty.style.display = "flex";
+  if (chatWindow) chatWindow.style.display = "none";
+
+  // Restaurar el botón hamburguesa cuando volvemos a la lista de chats
+  const btnHamb = document.getElementById("btn-hamburguesa-celular");
+  if (btnHamb) btnHamb.style.display = "";
+}
+
+function restaurarVistaDesktopChat() {
+  const contenedor = obtenerContenedorMensajeria();
+  if (contenedor) {
+    contenedor.classList.remove("chat-movil-abierto");
+  }
+
+  document.body.classList.remove("chat-abierto");
+
+  const chatSidebar = document.querySelector(".chat-sidebar");
+  const chatArea = document.querySelector(".chat-area");
+  const chatWindow = document.getElementById("chatWindow");
+
+  if (chatSidebar) chatSidebar.style.display = "";
+  if (chatArea) chatArea.style.display = "";
+  if (chatWindow) chatWindow.style.display = "";
+
+  // Asegurar que el menú hamburguesa esté visible en desktop
+  const btnHamb = document.getElementById("btn-hamburguesa-celular");
+  if (btnHamb) btnHamb.style.display = "";
+}
+
+function mostrarChatMovil() {
+  const contenedor = obtenerContenedorMensajeria();
+  if (contenedor) {
+    contenedor.classList.add("chat-movil-abierto");
+  }
+
+  document.body.classList.add("chat-abierto");
+
+  const chatSidebar = document.querySelector(".chat-sidebar");
+  const chatArea = document.querySelector(".chat-area");
+  const chatWindow = document.getElementById("chatWindow");
+
+  if (chatSidebar) chatSidebar.style.display = "none";
+  if (chatArea) chatArea.style.display = "flex";
+  if (chatWindow) chatWindow.style.display = "flex";
+
+  // Ocultar el botón de menú hamburguesa para evitar interacciones mientras el chat está abierto
+  const btnHamb = document.getElementById("btn-hamburguesa-celular");
+  if (btnHamb) btnHamb.style.display = "none";
+}
 
 function getAuthUserId() {
   if (typeof window.getUserIdForApi === "function") {
@@ -234,6 +330,11 @@ async function abrirChatConUsuario(userId, name, username, profilePhoto) {
 
   // No mostramos el username con @, solo el nombre en la cabecera
 
+  asegurarBotonRegresoChat();
+  if (esVistaMovilChat()) {
+    mostrarChatMovil();
+  }
+
   chatMessages.innerHTML = "";
 
   await crearOActualizarChat(chatId, myId, userId);
@@ -360,6 +461,27 @@ function initSendListener() {
   _sendListenerAttached = true;
 }
 
+function initMobileBackListener() {
+  if (_mobileBackListenerAttached) return;
+
+  document.addEventListener("click", (event) => {
+    const boton = event.target.closest("#chatBackBtn");
+    if (!boton) return;
+
+    if (esVistaMovilChat()) {
+      mostrarListaChatsMovil();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!esVistaMovilChat()) {
+      restaurarVistaDesktopChat();
+    }
+  });
+
+  _mobileBackListenerAttached = true;
+}
+
 function appendMensajeEnUI(msg, esPropio = false) {
   const chatMessages = document.getElementById("chatMessages");
 
@@ -396,6 +518,7 @@ function escapeHtml(text) {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSendListener();
+  initMobileBackListener();
 
   if (document.getElementById("chatContactsList")) {
     renderizarContactosChat();
@@ -404,6 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.abrirChatConUsuario = abrirChatConUsuario;
 window.cerrarChatActual = cerrarChatActual;
+window.mostrarListaChatsMovil = mostrarListaChatsMovil;
 window.enviarMensajeFirebase = enviarMensajeFirebase;
 window.escucharMensajesFirebase = escucharMensajesFirebase;
 window.renderizarContactosChat = renderizarContactosChat;

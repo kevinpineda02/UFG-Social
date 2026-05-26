@@ -18,6 +18,9 @@ const API_ENDPOINTS = {
   // Publicaciones (PublicationRestController)
   publication: `${API_BASE_URL_HOME}/publication`,
 
+  // Foto de perfil
+  profilePhoto: `${API_BASE_URL_HOME}/user`,
+
   // Usuario
   usuario: `${API_BASE_URL_HOME}/user`,
 };
@@ -364,7 +367,7 @@ function guardarPerfilLocal(perfil) {
   }
 }
 
-async function actualizarPerfilBackend(nombre, username, profilePhoto) {
+async function actualizarPerfilBackend(nombre, username) {
   const userId = getUserIdForApi();
 
   if (!userId) {
@@ -377,7 +380,6 @@ async function actualizarPerfilBackend(nombre, username, profilePhoto) {
     username: normalizarTexto(username, "usuario")
       .replace(/^@/, "")
       .replace(/\s+/g, ""),
-    profilePhoto: normalizarAvatar(profilePhoto),
   };
 
   const response = await fetchConAutenticacion(
@@ -411,6 +413,26 @@ function marcarPerfilInicialCompletado() {
   } catch (error) {
     console.warn("No se pudo marcar el perfil como configurado", error);
   }
+}
+
+async function actualizarFotoPerfil(userId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/user/${userId}/profile-photo`,
+    {
+      method: "PATCH",
+      headers: getAuthHeaders({}, true),
+      body: formData,
+    },
+  );
+
+  if (!response || !response.ok) {
+    throw new Error("Error actualizando foto de perfil");
+  }
+
+  return await response.json();
 }
 
 function perfilInicialCompletado() {
@@ -697,7 +719,7 @@ function getStoredToken() {
   }
 }
 
-function getAuthHeaders(extraHeaders = {}) {
+function getAuthHeaders(extraHeaders = {}, isFormData = false) {
   const token = typeof getStoredToken === "function" ? getStoredToken() : null;
   const fallbackToken =
     typeof getTokenFromStorageOrCookie === "function"
@@ -714,9 +736,16 @@ function getAuthHeaders(extraHeaders = {}) {
       effectiveToken.substring(0, 30) + "...",
     );
   }
-  return effectiveToken
+  const headers = effectiveToken
     ? { ...extraHeaders, Authorization: `Bearer ${effectiveToken}` }
-    : extraHeaders;
+    : { ...extraHeaders };
+
+  if (isFormData) {
+    delete headers["Content-Type"];
+    delete headers["content-type"];
+  }
+
+  return headers;
 }
 
 // ===========================================
@@ -761,7 +790,15 @@ async function verificarConexionBackend() {
 // Función helper para manejar errores de autenticación en peticiones
 async function fetchConAutenticacion(url, opciones = {}) {
   try {
-    const response = await fetch(url, opciones);
+    const opcionesFetch = { ...opciones };
+    if (opcionesFetch.body instanceof FormData && opcionesFetch.headers) {
+      const headers = { ...opcionesFetch.headers };
+      delete headers["Content-Type"];
+      delete headers["content-type"];
+      opcionesFetch.headers = headers;
+    }
+
+    const response = await fetch(url, opcionesFetch);
 
     // Solo redirigir a login si es 401 (sin token válido)
     // 403 es permitido: token válido pero sin permisos
@@ -2054,69 +2091,83 @@ async function crearPublicacionBackend(
       getStoredUserId();
     const idUserNum = parseInt(userId);
 
-    const imagesPayload = [];
-    for (let i = 0; i < imagenes.length; i++) {
-      const item = imagenes[i];
-      if (item.dataUrl) {
-        imagesPayload.push({
-          imageUrl: item.dataUrl,
-          orderImage: i + 1,
-        });
-      }
+    const files = Array.isArray(imagenes)
+      ? imagenes
+          .map((item) => item?.archivo || item?.file || item)
+          .filter((archivo) => archivo instanceof File)
+      : [];
+
+    const formData = new FormData();
+    formData.append("description", contenido);
+
+    if (videoUrl && videoUrl.trim() !== "") {
+      formData.append("videoUrl", videoUrl);
     }
 
-    const body = {
-      idUser: !isNaN(idUserNum) && idUserNum > 0 ? idUserNum : null,
-      description: contenido,
-      videoUrl: videoUrl,
-      user:
-        currentUser?.user ||
-        currentUser?.name ||
-        obtenerDatosUsuario().username ||
-        "",
-      username:
-        currentUser?.username ||
-        obtenerDatosUsuario().handle?.replace("@", "") ||
-        "",
-      profilePhoto:
-        currentUser?.profilePhoto ||
-        currentUser?.profileImage ||
-        currentUser?.avatar ||
-        "",
-      images: imagesPayload,
-    };
-    console.log(
-      "📦 Enviando publicación al backend:",
-      JSON.stringify({
-        ...body,
-        images: `[${body.images.length} imágenes]`,
-        profilePhoto: body.profilePhoto
-          ? `${body.profilePhoto.substring(0, 50)}...`
-          : "null",
-      }),
-    );
-
-    const response = await fetch(API_ENDPOINTS.publication, {
-      method: "POST",
-      headers: getAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify(body),
+    files.forEach((file) => {
+      formData.append("files", file);
     });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
+    const response = await fetchConAutenticacion(
+      `${API_BASE_URL_HOME}/publication/${!isNaN(idUserNum) && idUserNum > 0 ? idUserNum : userId}`,
+      {
+        method: "POST",
+        headers: getAuthHeaders({}, true),
+        body: formData,
+      },
+    );
+
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text().catch(() => "") : "";
       console.error(
-        `Error creando publicación: ${response.status} ${response.statusText}`,
+        `Error creando publicación: ${response?.status} ${response?.statusText}`,
         errorText,
       );
       return null;
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error creando publicación en backend:", error);
     return null;
   }
+}
+
+async function crearPublicacionConImagenes(
+  userId,
+  description,
+  videoUrl,
+  files,
+) {
+  const formData = new FormData();
+  formData.append("description", description);
+
+  if (videoUrl && videoUrl.trim() !== "") {
+    formData.append("videoUrl", videoUrl);
+  }
+
+  if (files && files.length > 0) {
+    Array.from(files).forEach((file) => {
+      if (file instanceof File) {
+        formData.append("files", file);
+      }
+    });
+  }
+
+  const response = await fetchConAutenticacion(
+    `${API_BASE_URL_HOME}/publication/${userId}`,
+    {
+      method: "POST",
+      headers: getAuthHeaders({}, true),
+      body: formData,
+    },
+  );
+
+  if (!response || !response.ok) {
+    throw new Error("Error creando publicación con imágenes");
+  }
+
+  return await response.json();
 }
 
 // ===========================================
@@ -7045,7 +7096,7 @@ function cambiarFotoPerfil() {
 }
 
 // Función para procesar la nueva foto de perfil
-function procesarNuevaFotoPerfil(event) {
+async function procesarNuevaFotoPerfil(event) {
   const archivo = event.target.files[0];
   if (!archivo) return;
 
@@ -7064,30 +7115,47 @@ function procesarNuevaFotoPerfil(event) {
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const nuevaImagenUrl = e.target.result;
+  const fotoPerfilPreview = document.getElementById("foto-perfil-preview");
+  const avatarAnterior = normalizarAvatar(
+    fotoPerfilPreview?.src || obtenerDatosUsuario().avatar,
+  );
+  const vistaTemporal = URL.createObjectURL(archivo);
 
-    // Actualizar preview en la sección de perfil
-    const fotoPerfilPreview = document.getElementById("foto-perfil-preview");
-    if (fotoPerfilPreview) {
-      fotoPerfilPreview.src = nuevaImagenUrl;
+  if (fotoPerfilPreview) {
+    fotoPerfilPreview.src = vistaTemporal;
+  }
+
+  actualizarFotosPerfilEnPagina(vistaTemporal);
+
+  try {
+    const userId = getUserIdForApi();
+    if (!userId) {
+      throw new Error("No se pudo obtener el ID del usuario");
     }
 
-    // Actualizar todas las fotos de perfil en la página
-    actualizarFotosPerfilEnPagina(nuevaImagenUrl);
+    const usuarioActualizado = await actualizarFotoPerfil(userId, archivo);
+    const fotoServidor = normalizarAvatar(
+      usuarioActualizado?.profilePhoto || vistaTemporal,
+    );
 
-    // Guardar en localStorage
-    guardarNuevaFotoPerfil(nuevaImagenUrl);
+    if (fotoPerfilPreview) {
+      fotoPerfilPreview.src = fotoServidor;
+    }
+
+    actualizarFotosPerfilEnPagina(fotoServidor);
+    guardarNuevaFotoPerfil(fotoServidor);
 
     mostrarAlertaExito("¡éxito!", "Foto de perfil actualizada correctamente");
-  };
-
-  reader.onerror = function () {
-    mostrarAlertaError("Error", "Error al procesar la imagen");
-  };
-
-  reader.readAsDataURL(archivo);
+  } catch (error) {
+    if (fotoPerfilPreview) {
+      fotoPerfilPreview.src = avatarAnterior;
+    }
+    actualizarFotosPerfilEnPagina(avatarAnterior);
+    console.error("Error actualizando foto de perfil:", error);
+    mostrarAlertaError("Error", "No se pudo actualizar la foto de perfil");
+  } finally {
+    URL.revokeObjectURL(vistaTemporal);
+  }
 }
 
 // Función para actualizar todas las fotos de perfil en la página
@@ -7096,6 +7164,11 @@ function actualizarFotosPerfilEnPagina(nuevaImagenUrl) {
   const avatarSidebar = document.querySelector(".mi-perfil .avatar img");
   if (avatarSidebar) {
     avatarSidebar.src = nuevaImagenUrl;
+  }
+
+  const fotoPerfilPrincipal = document.querySelector(".foto-perfil");
+  if (fotoPerfilPrincipal) {
+    fotoPerfilPrincipal.src = nuevaImagenUrl;
   }
 
   // Actualizar foto en el compositor de publicaciones
@@ -7293,7 +7366,6 @@ async function guardarCambiosPerfil() {
     return;
   }
 
-  // Obtener avatar actual
   const datosActuales = obtenerDatosUsuario();
   const avatarActual = normalizarAvatar(
     fotoPerfilPreview?.src || datosActuales.avatar,
@@ -7302,7 +7374,6 @@ async function guardarCambiosPerfil() {
   const perfilServidor = await actualizarPerfilBackend(
     nuevoUsername,
     nuevoHandle,
-    avatarActual,
   );
 
   if (!perfilServidor) {

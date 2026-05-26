@@ -382,29 +382,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Cargar imagen predeterminada y convertirla a base64
-  let defaultProfileImageBase64 = null;
-
-  async function loadDefaultProfileImage() {
-    try {
-      const response = await fetch(defaultProfilePreview);
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (err) {
-      console.warn("No se pudo cargar la imagen predeterminada:", err);
-      return null;
-    }
-  }
-
-  loadDefaultProfileImage().then((base64Data) => {
-    defaultProfileImageBase64 = base64Data;
-  });
-
   const recuperarFormElement = recuperarForm.querySelector("form");
   if (recuperarFormElement) {
     recuperarFormElement.addEventListener("submit", function (e) {
@@ -502,15 +479,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Handler para el formulario de datos de usuario (después de crear la cuenta)
   const userDataForm = document.querySelector(".form-one-loguin form");
   if (userDataForm) {
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (err) => reject(err);
-        reader.readAsDataURL(file);
-      });
-    }
-
     function getTokenFromStorageOrCookie() {
       try {
         const stored = localStorage.getItem("token");
@@ -520,6 +488,31 @@ document.addEventListener("DOMContentLoaded", function () {
       const match = document.cookie.match(new RegExp("(^| )jwt=([^;]+)"));
       if (match) return match[2];
       return null;
+    }
+
+    async function actualizarFotoPerfilUsuario(userId, file, token) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const headers = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        `http://127.0.0.1:8081/user/${userId}/profile-photo`,
+        {
+          method: "PATCH",
+          headers,
+          body: formData,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Error actualizando foto de perfil");
+      }
+
+      return await response.json();
     }
 
     userDataForm.addEventListener("submit", async function (e) {
@@ -545,18 +538,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const fileInput = userDataForm.querySelector(
           'input[name="profileImage"]',
         );
-        let profileImageData = null;
-
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-          profileImageData = await fileToBase64(fileInput.files[0]);
-        }
+        const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
 
         const credentialId = localStorage.getItem("credentialId");
         const body = {
           name,
           username,
           credentialId: credentialId ? Number(credentialId) : null,
-          profilePhoto: profileImageData || defaultProfileImageBase64,
         };
 
         const token = getTokenFromStorageOrCookie();
@@ -577,7 +565,7 @@ document.addEventListener("DOMContentLoaded", function () {
           name,
           username,
           credentialId: credentialId ? Number(credentialId) : null,
-          profilePhotoLength: profileImageData ? profileImageData.length : 0,
+          hasProfileFile: Boolean(selectedFile),
         });
         console.log("📤 Headers:", headers);
 
@@ -604,10 +592,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // Guardar los datos del usuario en localStorage para que auth.js pueda usarlos
         try {
           localStorage.setItem("username", username);
-          localStorage.setItem(
-            "avatar",
-            profileImageData || defaultProfileImageBase64 || "",
-          );
           if (data && data.id != null) {
             localStorage.setItem("userId", String(data.id));
           }
@@ -624,6 +608,26 @@ document.addEventListener("DOMContentLoaded", function () {
           console.log("✓ Datos del usuario guardados en localStorage");
         } catch (e) {
           console.warn("No se pudieron guardar datos en localStorage:", e);
+        }
+
+        let avatarFinal = defaultProfilePreview;
+        if (selectedFile && data && data.id != null) {
+          try {
+            const usuarioConFoto = await actualizarFotoPerfilUsuario(
+              data.id,
+              selectedFile,
+              token,
+            );
+            avatarFinal = usuarioConFoto?.profilePhoto || avatarFinal;
+          } catch (error) {
+            console.warn("No se pudo actualizar la foto de perfil:", error);
+          }
+        }
+
+        try {
+          localStorage.setItem("avatar", avatarFinal);
+        } catch (error) {
+          console.warn("No se pudo guardar el avatar en localStorage:", error);
         }
 
         window.location.replace("inicio.html");

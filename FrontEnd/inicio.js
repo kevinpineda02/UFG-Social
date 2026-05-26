@@ -870,7 +870,7 @@ function renderizarEstadoFollow(contenedor, mensaje) {
   contenedor.innerHTML = `
     <h3>${contenedor.dataset?.titulo || "Seguimiento"}</h3>
     <div class="usuarios-perfil">
-      <div class="perfil-usuarios">
+      <div class="perfil-usuarios follow-card follow-card--empty">
         <span>${mensaje}</span>
       </div>
     </div>
@@ -892,13 +892,15 @@ function crearTarjetaFollow({
 
   return `
     <div class="usuarios-perfil">
-      <div class="perfil-usuarios"${dataRequestId}${dataUserId}>
+      <div class="perfil-usuarios follow-card"${dataRequestId}${dataUserId}>
         <img src="${avatar}" alt="Avatar de ${nombre}">
         <div class="follow-datos">
           <span>${nombre}</span>
           <small>${handle}${meta ? ` · ${meta}` : ""}</small>
         </div>
-        ${botones}
+        <div class="follow-acciones">
+          ${botones}
+        </div>
       </div>
     </div>
   `;
@@ -1158,7 +1160,7 @@ function obtenerEstadoBotonSeguidor(follow, seguidos, solicitudesEnviadas) {
 
   if (yaLoSigo) {
     return {
-      texto: "Dejar de seguir",
+      texto: "Eliminar",
       accion: "unfollow-followed",
       disabled: false,
       clase: "dejar-de-seguir",
@@ -1167,9 +1169,9 @@ function obtenerEstadoBotonSeguidor(follow, seguidos, solicitudesEnviadas) {
 
   if (solicitudEnviada) {
     return {
-      texto: "Solicitud enviada",
-      accion: "pending",
-      disabled: true,
+      texto: "Cancelar solicitud",
+      accion: "cancel_request",
+      disabled: false,
       clase: "seguir",
     };
   }
@@ -1565,8 +1567,6 @@ async function renderizarPanelSolicitudesPendientes() {
 
   contenedor.dataset.titulo = "Solicitudes de amistad";
   const solicitudes = await obtenerSolicitudesPendientes(userId);
-
-
 
   contenedor.innerHTML = `
     <h3 class="sugerencia-titulo">Solicitudes de amistad</h3>

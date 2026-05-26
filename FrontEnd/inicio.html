@@ -55,28 +55,38 @@
         </div>
     </div>
     
-    <!--mensajeria-->
-    <div class="mensajeria" style="display: none;">
-        
-        <!--Contenedor Perfiles-->
-        <div class="chats-perfiles">
-           <!--Perfil de Usuario-->
-           <div class="burbuja-perfil">
-            <div class="burbuja">
-                <img src="/assets/perfil/perfil.png" class="imagen-perfil-chat">
+        <!--mensajeria-->
+        <div class="mensajeria" style="display: none;">
+
+            <div class="chat-sidebar">
+                <h2 class="titlet-chat">Chats</h2>
+                <div id="chatContactsList"></div>
             </div>
-            <div class="nombre-usuario">
-                <p class="nombre-usuario">Nombre de Usuario</p>
+
+            <div class="borde"></div>
+
+            <div class="chat-area">
+                <div id="chatWindow">
+                    <div id="chatEmpty"><span>Selecciona un contacto para iniciar el chat.</span></div>
+
+                    <div id="chatHeader" style="display:none;">
+                        <img id="chatReceiverPhoto" src="" alt="" style="width:48px;height:48px;border-radius:50%;">
+                        <div style="margin-left:12px;">
+                            <div id="chatReceiverName"></div>
+                            <small id="chatReceiverUsername"></small>
+                        </div>
+                    </div>
+
+                    <div id="chatMessages" class="mensajes-list" aria-live="polite"></div>
+
+                    <form id="chatForm" class="mensaje-input-container" style="display:none;" onsubmit="return false;">
+                        <input id="chatMessageInput" type="text" placeholder="Escribe un mensaje...">
+                        <button class="btn-enviar" id="chatSendBtn" type="button">Enviar</button>
+                    </form>
+                </div>
             </div>
-        </div>
-        
-        <div class="borde"></div>
-        
-        <!--Contenedor de chat-->
-        <div class="mensajes">
 
         </div>
-    </div>
 </div>
     
     
@@ -221,8 +231,8 @@ Comunidad</button></li>
                 <div class="perfil-usuarios">
                     <img src="./assets/perfil/perfil1.png" alt="Avatar usuario">
                     <span>Nombre de Usuario</span>
-                    <button class="seguir" id="seguir-btn">Seguir</button>
-                    <button class="dejar-de-seguir">Dejar de seguir</button>
+                        <button class="seguir" id="seguir-btn">Seguir</button>
+                        <button class="dejar-de-seguir">Eliminar</button>
                 </div>
             </div>
         </div>
@@ -589,11 +599,12 @@ Comunidad</button></li>
     
 
         <!-- Script de autenticación (debe cargarse primero) -->
+         <script src="auth.js"></script>
 
          <!-- Script principal de la página -->
          <script src="./inicio.js"></script>
          <script type="module" src="./chat.js"></script>
-         <script src="./mensajeria.js"></script> 
+         <script type="module" src="./mensajeria.js"></script> 
         </body>
         </html>
         

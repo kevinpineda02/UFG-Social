@@ -526,7 +526,7 @@ body {
   max-width: 700px;
   width: 100%;
   min-width: 0;
-  margin-top: 200px;
+  margin-top: 90px;
   margin-left: 20px;
 }
 
@@ -3337,6 +3337,45 @@ body.modal-open {
     padding: 8px;
   }
 
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor {
+    max-width: 250px;
+    right: 10px;
+    padding: 8px;
+  }
+
+  .contenido > .seguidos .follow-card,
+  .contenido > .seguidores-contenedor .follow-card {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .contenido > .seguidos .follow-acciones,
+  .contenido > .seguidores-contenedor .follow-acciones {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .contenido > .seguidos .follow-datos span,
+  .contenido > .seguidores-contenedor .follow-datos span,
+  .contenido > .seguidos .follow-datos small,
+  .contenido > .seguidores-contenedor .follow-datos small {
+    white-space: normal;
+  }
+
+  .contenido > .seguidores-contenedor .perfil-usuarios {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .contenido > .seguidores-contenedor .perfil-usuarios span {
+    white-space: normal;
+  }
+
+  .contenido > .seguidores-contenedor .perfil-usuarios button {
+    margin-left: 0;
+  }
+
   .publicaciones,
   .publicaciones-usuario,
   .contenedor-publicacion {
@@ -3532,6 +3571,7 @@ body.modal-open {
   .feed-publicaciones,
   .contenedor-publicacion,
   .publicaciones-usuario,
+  .seccion-perfil,
   .sugerencias,
   .solicitudes,
   .contenido > .seguidos,
@@ -3581,6 +3621,10 @@ body.modal-open {
     padding: 20px;
   }
 
+  .seccion-perfil {
+    padding: 20px;
+  }
+
   .feed-publicaciones {
     margin-top: 0;
   }
@@ -3608,6 +3652,7 @@ body.modal-open {
   .secciones,
   .publicaciones,
   .feed-publicaciones,
+  .seccion-perfil,
   .sugerencias,
   .solicitudes,
   .contenido > .seguidos,
@@ -3632,11 +3677,35 @@ body.modal-open {
     top: auto;
   }
 
+  .contenido > .seguidos .follow-card,
+  .contenido > .seguidores-contenedor .follow-card {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .contenido > .seguidos .follow-acciones,
+  .contenido > .seguidores-contenedor .follow-acciones {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .contenido > .seguidos .follow-datos span,
+  .contenido > .seguidores-contenedor .follow-datos span,
+  .contenido > .seguidos .follow-datos small,
+  .contenido > .seguidores-contenedor .follow-datos small {
+    white-space: normal;
+  }
+
   .secciones {
     padding: 12px;
   }
 
   .publicaciones {
+    padding: 16px;
+  }
+
+  .seccion-perfil {
     padding: 16px;
   }
 
@@ -3804,16 +3873,16 @@ body.modal-open {
 /* Contenedor principal de la sección de perfil */
 
 .seccion-perfil {
-  max-width: 700px;
+  grid-area: publicaciones;
   width: 100%;
-  padding: 30px;
+  max-width: none;
+  min-width: 0;
+  padding: 20px;
   margin-left: 20px;
   position: relative !important;
-  box-shadow: var(--color-sombra) 0px 2px 12px 2px;
+  box-shadow: var(--color-sombra) 0px 2px 12px;
   background: var(--color-secundario);
-  border-radius: 12px;
-  grid-column: 2 / -1;
-  grid-row: 1 / span 2;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -3977,12 +4046,41 @@ body.modal-open {
 .contenido > .seguidos,
 .contenido > .seguidores-contenedor {
   background: var(--color-secundario);
+  display: flex;
+  position: relative;
+  align-self: start;
   border-radius: 12px;
   box-shadow: var(--color-sombra) 0px 2px 12px 2px;
   padding: 14px 16px;
-  display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  min-width: 0;
+  height: 340px;
+  max-height: 340px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  animation: slideInTop 0.6s ease-out 0.3s both;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.contenido > .seguidos::-webkit-scrollbar,
+.contenido > .seguidores-contenedor::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.contenido > .seguidos::-webkit-scrollbar-track,
+.contenido > .seguidores-contenedor::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.contenido > .seguidos::-webkit-scrollbar-thumb,
+.contenido > .seguidores-contenedor::-webkit-scrollbar-thumb {
+  background: var(--color-bordes);
+  border-radius: 999px;
 }
 
 .contenido > .seguidos h3,
@@ -3999,12 +4097,48 @@ body.modal-open {
   align-items: center;
   gap: 12px;
   padding: 8px 14px;
+  flex-wrap: wrap;
 }
 
-/* Empujar el botón al borde derecho y mantener nombre en línea */
-.contenido > .seguidos .perfil-usuarios button,
-.contenido > .seguidores-contenedor .perfil-usuarios button {
+.contenido > .seguidos .follow-card,
+.contenido > .seguidores-contenedor .follow-card {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.contenido > .seguidos .follow-card--empty,
+.contenido > .seguidores-contenedor .follow-card--empty {
+  justify-content: center;
+  text-align: center;
+}
+
+.contenido > .seguidos .follow-datos,
+.contenido > .seguidores-contenedor .follow-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.contenido > .seguidos .follow-acciones,
+.contenido > .seguidores-contenedor .follow-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.contenido > .seguidos .follow-acciones button,
+.contenido > .seguidores-contenedor .follow-acciones button {
+  margin-left: 0;
   flex: 0 0 auto;
 }
 
@@ -4016,24 +4150,32 @@ body.modal-open {
   object-fit: cover;
 }
 
-.contenido > .seguidos .perfil-usuarios span,
-.contenido > .seguidores-contenedor .perfil-usuarios span {
+.contenido > .seguidos .follow-datos span,
+.contenido > .seguidores-contenedor .follow-datos span {
   color: var(--color-objetos);
   font-weight: 600;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.contenido > .seguidos .follow-datos small,
+.contenido > .seguidores-contenedor .follow-datos small {
+  color: var(--color-datos);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Ajustes verticales para columna derecha */
 .contenido > .seguidos {
   margin-top: 0px;
-  max-height: 280px;
-  height: 260px;
+  margin-left: 10px;
 }
 
 .contenido > .seguidores-contenedor {
   margin-top: 20px;
-  max-height: 280px;
-  height: 260px;
+  margin-left: 10px;
 }
 
 .dejar-de-seguir {
@@ -4261,8 +4403,10 @@ body.modal-open {
 /* Responsive para la sección de perfil */
 @media (max-width: 768px) {
   .seccion-perfil {
+    width: 100%;
+    max-width: 100%;
     padding: 12px;
-    margin: 8px;
+    margin: 8px 0;
   }
 
   .perfil-header {
@@ -4292,6 +4436,23 @@ body.modal-open {
   .perfil-acciones {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor {
+    padding: 12px;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .contenido > .seguidos .perfil-usuarios,
+  .contenido > .seguidores-contenedor .perfil-usuarios {
+    align-items: flex-start;
+  }
+
+  .contenido > .seguidos .perfil-usuarios span,
+  .contenido > .seguidores-contenedor .perfil-usuarios span {
+    white-space: normal;
   }
 
   .usuario-item {
@@ -4380,6 +4541,13 @@ body.modal-open {
     max-width: 100%;
   }
 
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor {
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+  }
+
   .mi-perfil,
   .secciones,
   .sugerencias,
@@ -4424,6 +4592,11 @@ body.modal-open {
   }
 
   .sugerencias {
+    max-height: none;
+  }
+
+  .contenido > .seguidos,
+  .contenido > .seguidores-contenedor {
     max-height: none;
   }
 }

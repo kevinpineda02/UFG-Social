@@ -18,7 +18,7 @@ import {
 const API_BASE =
   typeof window.API_BASE_URL_HOME !== "undefined"
     ? window.API_BASE_URL_HOME
-    : "https://ufg-social.onrender.com";
+    : "http://18.118.211.33:8081";
 
 const currentChat = {
   chatId: null,

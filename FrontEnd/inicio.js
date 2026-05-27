@@ -10,7 +10,7 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL_HOME = "https://ufg-social.onrender.com";
+const API_BASE_URL_HOME = "http://18.118.211.33:8081";
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL_HOME}/health`,
@@ -2106,8 +2106,7 @@ async function cargarPublicacionesMiPerfil() {
       if (botonComentarios) {
         botonComentarios.onclick = () =>
           alternarComentarios(
-            Number.isInteger(publicationIdBackend) &&
-              publicationIdBackend > 0
+            Number.isInteger(publicationIdBackend) && publicationIdBackend > 0
               ? publicationIdBackend
               : pubElement.id,
             pubElement,
@@ -2126,8 +2125,7 @@ async function cargarPublicacionesMiPerfil() {
       if (botonEliminar) {
         botonEliminar.onclick = () =>
           eliminarPublicacionPerfil(
-            Number.isInteger(publicationIdBackend) &&
-              publicationIdBackend > 0
+            Number.isInteger(publicationIdBackend) && publicationIdBackend > 0
               ? publicationIdBackend
               : pubElement.dataset.publicationId || pubElement.dataset.pubid,
             pubElement.id,
@@ -3335,7 +3333,10 @@ function crearPublicacionDesdeBackend(
   }
 
   // Inicializar estado del like
-  inicializarLikePublicacion(publicationIdBackend, contenedor.querySelector(".publicacion"));
+  inicializarLikePublicacion(
+    publicationIdBackend,
+    contenedor.querySelector(".publicacion"),
+  );
 
   ordenarContenedoresPublicaciones(feedPublicaciones);
 }
@@ -5764,10 +5765,7 @@ async function publicarComentario(publicacionId) {
 
   // Si el backend está conectado, enviar comentario al backend
   if (backendConectado && usarBackend) {
-    if (
-      !Number.isInteger(backendPublicationId) ||
-      backendPublicationId <= 0
-    ) {
+    if (!Number.isInteger(backendPublicationId) || backendPublicationId <= 0) {
       console.error("❌ publicationId inválido para comentar:", publicacionId);
       return;
     }
@@ -6791,9 +6789,8 @@ async function alternarMeGusta(botonElement, publicacionId) {
       }
 
       // Obtener el contador actualizado desde el backend
-      const nuevoConteo = await obtenerCantidadLikesBackend(
-        numericPublicacionId,
-      );
+      const nuevoConteo =
+        await obtenerCantidadLikesBackend(numericPublicacionId);
       spanContador.textContent = nuevoConteo;
 
       console.log(
@@ -6956,9 +6953,7 @@ async function inicializarLikesPublicaciones() {
             Number.isInteger(backendPublicationId) &&
             backendPublicationId > 0
           ) {
-            usuarioYaDioLike = await verificarLikeBackend(
-              backendPublicationId,
-            );
+            usuarioYaDioLike = await verificarLikeBackend(backendPublicationId);
             contador = await obtenerCantidadLikesBackend(backendPublicationId);
           } else {
             usuarioYaDioLike = likesUsuario[publicacionId] === true;

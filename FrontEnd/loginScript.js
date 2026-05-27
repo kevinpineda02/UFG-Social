@@ -6,7 +6,7 @@
  * @copyright © 2025 Kevin Pineda. Todos los derechos reservados.
  */
 
-const API_BASE_URL_HOME = "http://18.118.211.33:8081";
+const API_BASE_URL_HOME = "/api-backend";
 
 document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.querySelector(".logueo");

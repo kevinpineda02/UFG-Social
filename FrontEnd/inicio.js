@@ -10,7 +10,12 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL_HOME = "/api-backend";
+const API_BASE_URL =
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://18.118.211.33:8081"
+    : "/api-backend";
+const API_BASE_URL_HOME = API_BASE_URL;
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL_HOME}/health`,
@@ -138,6 +143,7 @@ async function esperarUsuarioAutenticado() {
 // Estado de conexión con el backend
 let backendConectado = false;
 let usarBackend = true; // Cambiar a false para usar solo localStorage
+let publicacionEnCurso = false;
 
 const PERFIL_LOCAL_KEY = "gnet_perfil_usuario";
 const PERFIL_SETUP_KEY = "gnet_perfil_setup_done";
@@ -748,6 +754,27 @@ function getAuthHeaders(extraHeaders = {}, isFormData = false) {
   return headers;
 }
 
+function obtenerBotonPublicar() {
+  return (
+    document.querySelector(
+      '.publicaciones .iconos .icono-btn[onclick="publicarContenido()"]',
+    ) || document.querySelector(".publicaciones .iconos .icono-btn:last-of-type")
+  );
+}
+
+function actualizarEstadoBotonPublicar(bloqueado) {
+  const boton = obtenerBotonPublicar();
+
+  if (!boton) {
+    return;
+  }
+
+  boton.disabled = bloqueado;
+  boton.setAttribute("aria-busy", bloqueado ? "true" : "false");
+  boton.style.opacity = bloqueado ? "0.6" : "";
+  boton.style.cursor = bloqueado ? "not-allowed" : "";
+}
+
 // ===========================================
 // FunciónONES DE API BACKEND
 // ===========================================
@@ -1184,44 +1211,15 @@ async function obtenerIdsUsuariosSeguidos(userId) {
 }
 
 function obtenerEstadoBotonSeguidor(follow, seguidos, solicitudesEnviadas) {
-  const followerId = Number(follow.followerId);
-
-  const yaLoSigo = seguidos.some(
-    (item) => Number(item.followedId) === followerId,
-  );
-
-  const solicitudEnviada = solicitudesEnviadas.some(
-    (item) =>
-      Number(item.receiverId) === followerId && item.status === "PENDIENTE",
-  );
-
-  if (yaLoSigo) {
-    return {
-      texto: "Eliminar",
-      accion: "unfollow-followed",
-      disabled: false,
-      clase: "dejar-de-seguir",
-    };
-  }
-
-  if (solicitudEnviada) {
-    return {
-      texto: "Cancelar solicitud",
-      accion: "cancel_request",
-      disabled: false,
-      clase: "seguir",
-    };
-  }
-
   return {
-    texto: "Seguir",
-    accion: "follow-follower",
+    texto: "Eliminar",
+    accion: "eliminar-seguidor",
     disabled: false,
-    clase: "seguir",
+    clase: "dejar-de-seguir",
   };
 }
 
-async function dejarDeSeguir(followerId, followedId) {
+async function eliminarRelacionSeguimiento(followerId, followedId) {
   const response = await fetchConAutenticacion(
     `${API_BASE_URL_HOME}/follow/${followerId}/${followedId}`,
     {
@@ -1232,11 +1230,31 @@ async function dejarDeSeguir(followerId, followedId) {
 
   if (!response || !response.ok) {
     throw new Error(
-      `Error dejando de seguir: ${response ? response.status : "sin respuesta"}`,
+      `Error eliminando la relación de seguimiento: ${response ? response.status : "sin respuesta"}`,
     );
   }
 
   return true;
+}
+
+async function dejarDeSeguir(usuarioSeguidoId) {
+  const usuarioActualId = getUserIdForApi();
+
+  if (!usuarioActualId || !usuarioSeguidoId) {
+    throw new Error("IDs inválidos para dejar de seguir");
+  }
+
+  return eliminarRelacionSeguimiento(usuarioActualId, usuarioSeguidoId);
+}
+
+async function eliminarSeguidor(usuarioSeguidorId) {
+  const usuarioActualId = getUserIdForApi();
+
+  if (!usuarioActualId || !usuarioSeguidorId) {
+    throw new Error("IDs inválidos para eliminar seguidor");
+  }
+
+  return eliminarRelacionSeguimiento(usuarioSeguidorId, usuarioActualId);
 }
 
 async function contarSeguidores(userId) {
@@ -1564,10 +1582,8 @@ async function cargarSugerenciasUsuarios() {
         }
 
         if (accionActual === "unfollow") {
-          const userIdActual = getUserIdForApi();
-          if (!userIdActual) return;
           try {
-            await dejarDeSeguir(userIdActual, targetId);
+            await dejarDeSeguir(targetId);
             await recargarSistemaFollow();
           } catch (e) {
             console.error("Error al dejar de seguir:", e);
@@ -1672,7 +1688,7 @@ async function renderizarPanelSeguidores() {
           avatar: follow.followerProfilePhoto,
           userId: follow.followerId,
           botones: `
-            <button class="${estadoBoton.clase}" data-follow-action="${estadoBoton.accion}" data-user-id="${follow.followerId ?? ""}" data-followed-id="${follow.followerId ?? ""}" data-follower-id="${follow.followerId ?? ""}" ${estadoBoton.disabled ? "disabled" : ""}>${estadoBoton.texto}</button>
+            <button class="${estadoBoton.clase}" data-follow-action="${estadoBoton.accion}" data-follower-id="${follow.followerId ?? ""}" ${estadoBoton.disabled ? "disabled" : ""}>${estadoBoton.texto}</button>
           `,
         });
       })
@@ -1715,7 +1731,7 @@ async function renderizarPanelSeguidos() {
           avatar: follow.followedProfilePhoto,
           userId: follow.followedId,
           botones: `
-            <button class="dejar-de-seguir" data-follow-action="unfollow-followed" data-followed-id="${follow.followedId ?? ""}" data-follower-id="${follow.followerId ?? ""}">Dejar de seguir</button>
+            <button class="dejar-de-seguir" data-follow-action="dejar-de-seguir" data-followed-id="${follow.followedId ?? ""}">Dejar de seguir</button>
           `,
         });
       })
@@ -4180,6 +4196,9 @@ document.addEventListener("click", async function (event) {
   const followedId =
     boton.dataset.followedId ||
     boton.closest(".perfil-usuarios")?.dataset.followedId;
+  const followerId =
+    boton.dataset.followerId ||
+    boton.closest(".perfil-usuarios")?.dataset.followerId;
 
   if (!requesterId) {
     mostrarNotificacion("Debes iniciar sesión para usar follows", "error");
@@ -4189,8 +4208,7 @@ document.addEventListener("click", async function (event) {
   try {
     if (
       accion === "send-request" ||
-      accion === "follow-back" ||
-      accion === "follow-follower"
+      accion === "follow-back"
     ) {
       if (!userId) {
         mostrarNotificacion(
@@ -4232,7 +4250,7 @@ document.addEventListener("click", async function (event) {
           boton.disabled = false;
           boton.classList.remove("btn-seguir");
           boton.classList.add("dejar-de-seguir");
-          boton.dataset.followAction = "unfollow-followed";
+          boton.dataset.followAction = "dejar-de-seguir";
           boton.dataset.followedId = String(receiverNumericId);
         }
         mostrarNotificacion("Ya sigues a este usuario", "info");
@@ -4269,7 +4287,7 @@ document.addEventListener("click", async function (event) {
       return;
     }
 
-    if (accion === "unfollow" || accion === "unfollow-followed") {
+    if (accion === "unfollow" || accion === "dejar-de-seguir") {
       const followedUserId = followedId || userId;
 
       if (!followedUserId) {
@@ -4280,9 +4298,26 @@ document.addEventListener("click", async function (event) {
         return;
       }
 
-      await dejarDeSeguir(requesterId, followedUserId);
+      await dejarDeSeguir(followedUserId);
       await recargarSistemaFollow();
       mostrarNotificacion("Dejaste de seguir a este usuario", "info");
+      return;
+    }
+
+    if (accion === "eliminar-seguidor") {
+      const followerNumericId = followerId || userId;
+
+      if (!followerNumericId) {
+        mostrarNotificacion(
+          "No se pudo identificar el seguidor a eliminar",
+          "error",
+        );
+        return;
+      }
+
+      await eliminarSeguidor(followerNumericId);
+      await recargarSistemaFollow();
+      mostrarNotificacion("Seguidor eliminado", "info");
     }
   } catch (error) {
     console.error("Error ejecutando follow:", error);
@@ -4847,6 +4882,16 @@ function verificarEnter(event) {
 
 // Función para crear una nueva publicación (usa backend exclusivamente)
 async function crearNuevaPublicacion(texto, imagenes, encuesta = null) {
+  if (publicacionEnCurso) {
+    console.warn(
+      "⏳ Ya existe una publicación en curso. Se ignora el intento duplicado.",
+    );
+    return false;
+  }
+
+  publicacionEnCurso = true;
+  actualizarEstadoBotonPublicar(true);
+
   try {
     console.log("📝 Creando nueva publicación...");
 
@@ -4888,6 +4933,9 @@ async function crearNuevaPublicacion(texto, imagenes, encuesta = null) {
     console.error("❌ Error creando publicación:", error);
     mostrarNotificacion("Error al crear la publicación", "error");
     return false;
+  } finally {
+    publicacionEnCurso = false;
+    actualizarEstadoBotonPublicar(false);
   }
 }
 

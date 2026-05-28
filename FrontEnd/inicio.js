@@ -757,7 +757,8 @@ function obtenerBotonPublicar() {
   return (
     document.querySelector(
       '.publicaciones .iconos .icono-btn[onclick="publicarContenido()"]',
-    ) || document.querySelector(".publicaciones .iconos .icono-btn:last-of-type")
+    ) ||
+    document.querySelector(".publicaciones .iconos .icono-btn:last-of-type")
   );
 }
 
@@ -1218,7 +1219,11 @@ function obtenerEstadoBotonSeguidor() {
   };
 }
 
-async function eliminarRelacionSeguimiento(followerId, followedId, accion = "seguimiento") {
+async function eliminarRelacionSeguimiento(
+  followerId,
+  followedId,
+  accion = "seguimiento",
+) {
   const currentUserId = getUserIdForApi();
   const followerIdNum = Number(followerId);
   const followedIdNum = Number(followedId);

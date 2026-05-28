@@ -568,8 +568,6 @@ body {
     background-color 0.4s ease,
     transform 0.3s ease;
   overflow: hidden;
-  position: relative;
-  bottom: 90px;
 }
 
 @media (max-width: 520px) {

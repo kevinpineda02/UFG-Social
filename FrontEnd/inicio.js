@@ -10,12 +10,11 @@
 // CONFIGURACIóN DE LA API BACKEND
 // ===========================================
 
-const API_BASE_URL =
+const API_BASE_URL_HOME =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname === "localhost"
     ? "http://18.118.211.33:8081"
     : "/api-backend";
-const API_BASE_URL_HOME = API_BASE_URL;
 const API_ENDPOINTS = {
   // Verificación de salud del backend
   health: `${API_BASE_URL_HOME}/health`,
@@ -1210,27 +1209,50 @@ async function obtenerIdsUsuariosSeguidos(userId) {
     .filter((id) => Number.isFinite(id) && id > 0);
 }
 
-function obtenerEstadoBotonSeguidor(follow, seguidos, solicitudesEnviadas) {
+function obtenerEstadoBotonSeguidor() {
   return {
     texto: "Eliminar",
-    accion: "eliminar-seguidor",
+    accion: "remove-follower",
     disabled: false,
     clase: "dejar-de-seguir",
   };
 }
 
-async function eliminarRelacionSeguimiento(followerId, followedId) {
-  const response = await fetchConAutenticacion(
-    `${API_BASE_URL_HOME}/follow/${followerId}/${followedId}`,
-    {
-      method: "DELETE",
-      headers: getAuthHeaders({ Accept: "application/json" }),
-    },
-  );
+async function eliminarRelacionSeguimiento(followerId, followedId, accion = "seguimiento") {
+  const currentUserId = getUserIdForApi();
+  const followerIdNum = Number(followerId);
+  const followedIdNum = Number(followedId);
+
+  if (!currentUserId) {
+    throw new Error("No se pudo identificar al usuario actual");
+  }
+
+  if (
+    !Number.isFinite(followerIdNum) ||
+    followerIdNum <= 0 ||
+    !Number.isFinite(followedIdNum) ||
+    followedIdNum <= 0
+  ) {
+    throw new Error("IDs inválidos para eliminar la relación de seguimiento");
+  }
+
+  const url = `${API_BASE_URL_HOME}/follow/${followerIdNum}/${followedIdNum}`;
+  console.log("🗑️ DELETE follow:", {
+    accion,
+    url,
+    followerId: followerIdNum,
+    followedId: followedIdNum,
+    currentUserId,
+  });
+
+  const response = await fetchConAutenticacion(url, {
+    method: "DELETE",
+    headers: getAuthHeaders({ Accept: "application/json" }),
+  });
 
   if (!response || !response.ok) {
     throw new Error(
-      `Error eliminando la relación de seguimiento: ${response ? response.status : "sin respuesta"}`,
+      `Error eliminando relación de seguimiento: ${response ? response.status : "sin respuesta"}`,
     );
   }
 
@@ -1238,23 +1260,21 @@ async function eliminarRelacionSeguimiento(followerId, followedId) {
 }
 
 async function dejarDeSeguir(usuarioSeguidoId) {
-  const usuarioActualId = getUserIdForApi();
-
-  if (!usuarioActualId || !usuarioSeguidoId) {
-    throw new Error("IDs inválidos para dejar de seguir");
-  }
-
-  return eliminarRelacionSeguimiento(usuarioActualId, usuarioSeguidoId);
+  const currentUserId = getUserIdForApi();
+  return eliminarRelacionSeguimiento(
+    currentUserId,
+    usuarioSeguidoId,
+    "dejar-de-seguir",
+  );
 }
 
 async function eliminarSeguidor(usuarioSeguidorId) {
-  const usuarioActualId = getUserIdForApi();
-
-  if (!usuarioActualId || !usuarioSeguidorId) {
-    throw new Error("IDs inválidos para eliminar seguidor");
-  }
-
-  return eliminarRelacionSeguimiento(usuarioSeguidorId, usuarioActualId);
+  const currentUserId = getUserIdForApi();
+  return eliminarRelacionSeguimiento(
+    usuarioSeguidorId,
+    currentUserId,
+    "eliminar-seguidor",
+  );
 }
 
 async function contarSeguidores(userId) {
@@ -1582,6 +1602,8 @@ async function cargarSugerenciasUsuarios() {
         }
 
         if (accionActual === "unfollow") {
+          const userIdActual = getUserIdForApi();
+          if (!userIdActual) return;
           try {
             await dejarDeSeguir(targetId);
             await recargarSistemaFollow();
@@ -1658,11 +1680,7 @@ async function renderizarPanelSeguidores() {
   }
 
   contenedor.dataset.titulo = "Seguidores";
-  const [seguidores, seguidos, solicitudesEnviadas] = await Promise.all([
-    obtenerSeguidores(userId),
-    obtenerSeguidos(userId),
-    obtenerSolicitudesEnviadas(userId),
-  ]);
+  const seguidores = await obtenerSeguidores(userId);
 
   if (!seguidores.length) {
     renderizarEstadoFollow(contenedor, "Aún no tienes seguidores.");
@@ -1674,11 +1692,7 @@ async function renderizarPanelSeguidores() {
     ${seguidores
       .map((item) => {
         const follow = normalizarRelacionFollow(item);
-        const estadoBoton = obtenerEstadoBotonSeguidor(
-          follow,
-          seguidos,
-          solicitudesEnviadas,
-        );
+        const estadoBoton = obtenerEstadoBotonSeguidor(follow);
         return crearTarjetaFollow({
           nombre: follow.followerName,
           handle: normalizarHandle(
@@ -1688,7 +1702,7 @@ async function renderizarPanelSeguidores() {
           avatar: follow.followerProfilePhoto,
           userId: follow.followerId,
           botones: `
-            <button class="${estadoBoton.clase}" data-follow-action="${estadoBoton.accion}" data-follower-id="${follow.followerId ?? ""}" ${estadoBoton.disabled ? "disabled" : ""}>${estadoBoton.texto}</button>
+            <button class="${estadoBoton.clase}" data-follow-action="${estadoBoton.accion}" data-user-id="${follow.followerId ?? ""}" data-follower-id="${follow.followerId ?? ""}" data-followed-id="${userId}" ${estadoBoton.disabled ? "disabled" : ""}>${estadoBoton.texto}</button>
           `,
         });
       })
@@ -1731,7 +1745,7 @@ async function renderizarPanelSeguidos() {
           avatar: follow.followedProfilePhoto,
           userId: follow.followedId,
           botones: `
-            <button class="dejar-de-seguir" data-follow-action="dejar-de-seguir" data-followed-id="${follow.followedId ?? ""}">Dejar de seguir</button>
+            <button class="dejar-de-seguir" data-follow-action="unfollow-followed" data-followed-id="${follow.followedId ?? ""}" data-follower-id="${follow.followerId ?? ""}">Dejar de seguir</button>
           `,
         });
       })
@@ -4193,12 +4207,12 @@ document.addEventListener("click", async function (event) {
     boton.closest(".perfil-usuarios")?.dataset.requestId;
   const userId =
     boton.dataset.userId || boton.closest(".perfil-usuarios")?.dataset.userId;
-  const followedId =
-    boton.dataset.followedId ||
-    boton.closest(".perfil-usuarios")?.dataset.followedId;
   const followerId =
     boton.dataset.followerId ||
     boton.closest(".perfil-usuarios")?.dataset.followerId;
+  const followedId =
+    boton.dataset.followedId ||
+    boton.closest(".perfil-usuarios")?.dataset.followedId;
 
   if (!requesterId) {
     mostrarNotificacion("Debes iniciar sesión para usar follows", "error");
@@ -4208,7 +4222,8 @@ document.addEventListener("click", async function (event) {
   try {
     if (
       accion === "send-request" ||
-      accion === "follow-back"
+      accion === "follow-back" ||
+      accion === "follow-follower"
     ) {
       if (!userId) {
         mostrarNotificacion(
@@ -4250,7 +4265,7 @@ document.addEventListener("click", async function (event) {
           boton.disabled = false;
           boton.classList.remove("btn-seguir");
           boton.classList.add("dejar-de-seguir");
-          boton.dataset.followAction = "dejar-de-seguir";
+          boton.dataset.followAction = "unfollow-followed";
           boton.dataset.followedId = String(receiverNumericId);
         }
         mostrarNotificacion("Ya sigues a este usuario", "info");
@@ -4287,7 +4302,24 @@ document.addEventListener("click", async function (event) {
       return;
     }
 
-    if (accion === "unfollow" || accion === "dejar-de-seguir") {
+    if (accion === "remove-follower") {
+      const followerUserId = followerId || userId;
+
+      if (!followerUserId) {
+        mostrarNotificacion(
+          "No se pudo identificar al seguidor a eliminar",
+          "error",
+        );
+        return;
+      }
+
+      await eliminarSeguidor(followerUserId);
+      await recargarSistemaFollow();
+      mostrarNotificacion("Eliminaste a este seguidor", "info");
+      return;
+    }
+
+    if (accion === "unfollow" || accion === "unfollow-followed") {
       const followedUserId = followedId || userId;
 
       if (!followedUserId) {
@@ -4301,23 +4333,6 @@ document.addEventListener("click", async function (event) {
       await dejarDeSeguir(followedUserId);
       await recargarSistemaFollow();
       mostrarNotificacion("Dejaste de seguir a este usuario", "info");
-      return;
-    }
-
-    if (accion === "eliminar-seguidor") {
-      const followerNumericId = followerId || userId;
-
-      if (!followerNumericId) {
-        mostrarNotificacion(
-          "No se pudo identificar el seguidor a eliminar",
-          "error",
-        );
-        return;
-      }
-
-      await eliminarSeguidor(followerNumericId);
-      await recargarSistemaFollow();
-      mostrarNotificacion("Seguidor eliminado", "info");
     }
   } catch (error) {
     console.error("Error ejecutando follow:", error);

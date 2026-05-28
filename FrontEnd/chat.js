@@ -18,7 +18,10 @@ import {
 const API_BASE =
   typeof window.API_BASE_URL_HOME !== "undefined"
     ? window.API_BASE_URL_HOME
-    : "/api-backend";
+    : window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "localhost"
+      ? "http://18.118.211.33:8081"
+      : "/api-backend";
 
 const currentChat = {
   chatId: null,

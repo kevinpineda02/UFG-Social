@@ -8,7 +8,11 @@
 
 let currentUser = null;
 
-const API_BASE_URL = "/api-backend";
+const API_BASE_URL =
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://18.118.211.33:8081"
+    : "/api-backend";
 
 function decodeBase64Url(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");

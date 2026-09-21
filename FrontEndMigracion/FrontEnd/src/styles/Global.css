@@ -1,0 +1,41 @@
+/* Variables para modo oscuro */
+:root {
+  --color-primario: #020202;
+  --color-secundario: #161616;
+  --color-terciario: #ef6c22;
+  --color-objetos: #ffffff;
+  --color-sombra: #ffffff1c;
+  --color-datos: #888888;
+  --color-hoover: rgba(255, 255, 255, 0.1);
+  --color-indicador: #555555;
+  --color-bordes: #333333;
+  --color-error: #ef4444;
+  --color-texto-principal: #ffffff;
+  --color-texto-secundario: #888888;
+  --color-fondo-campo: #161616;
+  --color-fondo-secundario: #2a2a2a;
+  --color-terciario-hover: #d15a1f;
+  --color-span: #ef6c22;
+  --border-chat: #333333;
+}
+
+/* Variables para modo claro */
+:root.modo-claro {
+  --color-primario: #f5f5f5;
+  --color-secundario: #ffffff;
+  --color-terciario: #2c22ef;
+  --color-objetos: #333333;
+  --color-sombra: #00000020;
+  --color-datos: #505050;
+  --color-hoover: rgba(6, 6, 6, 0.114);
+  --color-indicador: rgba(0, 0, 0, 0.783);
+  --color-bordes: #cccccc;
+  --color-error: #ef4444;
+  --color-texto-principal: #333333;
+  --color-texto-secundario: #505050;
+  --color-fondo-campo: #f8f9fa;
+  --color-fondo-secundario: #f0f0f0;
+  --color-terciario-hover: #1e1bcc;
+  --color-span: #f6af17;
+  --border-chat: #aba9a9;
+}

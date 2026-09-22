@@ -1,6 +1,6 @@
 package com.ufg.service.contract;
 
-import com.ufg.domain.UserDtos;
+import com.ufg.dto.UserDtos;
 
 import java.util.List;
 

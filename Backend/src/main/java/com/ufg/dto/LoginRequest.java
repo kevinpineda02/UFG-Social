@@ -1,5 +1,4 @@
-package com.ufg.domain;
-
+package com.ufg.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,11 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
-
-    @NotBlank(message = "Debe de ser un corrreo")
-    @Email
+public class LoginRequest {
+    @NotBlank(message = "Correo incorrecto")
+    @Email(regexp ="^[A-Za-z0-9._%+-]+@ufg.edu\\\\.sv", message = "El Correo debe de pertenecer a la ufg")
     private String correo;
-    @NotBlank(message = "La contraseña no debe de ser nula")
+
+    @NotBlank(message = "La contraseña es incorrecta")
     private String contrasena;
 }
+

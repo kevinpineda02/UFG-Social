@@ -2,6 +2,8 @@ import React from 'react'
 import { LoginForm } from '../components/ui/LoginForm'
 import { FondoLogin } from '../components/ui/FondoLogin'
 
+
+//Vista Principal De Login
 export const LoginPage = () => {
   return (
     <>

@@ -1,8 +1,8 @@
 package com.ufg.service.contract;
 
-import com.ufg.domain.FollowDtos;
-import com.ufg.domain.FollowRequestDtos;
-import com.ufg.domain.FollowStatusDtos;
+import com.ufg.dto.FollowDtos;
+import com.ufg.dto.FollowRequestDtos;
+import com.ufg.dto.FollowStatusDtos;
 
 import java.util.List;
 

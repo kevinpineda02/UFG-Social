@@ -6,7 +6,7 @@ import com.ufg.data.entity.UserEntity;
 import com.ufg.data.repository.IPublicationCommentRepository;
 import com.ufg.data.repository.PublicationRepository;
 import com.ufg.data.repository.UserRepository;
-import com.ufg.domain.PublicationCommentDtos;
+import com.ufg.dto.PublicationCommentDtos;
 import com.ufg.service.contract.IPublicationCommentService;
 import org.springframework.stereotype.Service;
 

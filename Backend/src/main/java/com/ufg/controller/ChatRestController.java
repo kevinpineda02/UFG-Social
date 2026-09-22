@@ -1,6 +1,6 @@
 package com.ufg.controller;
 
-import com.ufg.domain.UserDtos;
+import com.ufg.dto.UserDtos;
 import com.ufg.service.ChatPermissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

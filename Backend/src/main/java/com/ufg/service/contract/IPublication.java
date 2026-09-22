@@ -2,7 +2,7 @@ package com.ufg.service.contract;
 
 import com.ufg.data.entity.PublicationEntity;
 import com.ufg.data.entity.UserEntity;
-import com.ufg.domain.PublicationDtos;
+import com.ufg.dto.PublicationDtos;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

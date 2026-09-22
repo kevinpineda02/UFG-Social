@@ -1,9 +1,9 @@
 package com.ufg.controller;
 
 import com.ufg.data.entity.UserEntity;
-import com.ufg.domain.PublicationCommentDtos;
-import com.ufg.domain.PublicationDtos;
-import com.ufg.domain.PublicationImageDtos;
+import com.ufg.dto.PublicationCommentDtos;
+import com.ufg.dto.PublicationDtos;
+import com.ufg.dto.PublicationImageDtos;
 import com.ufg.service.PublicationCommentService;
 import com.ufg.service.PublicationImageService;
 import com.ufg.service.PublicationLikeService;

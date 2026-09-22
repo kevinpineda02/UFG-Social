@@ -1,7 +1,7 @@
 package com.ufg.service.contract;
 
 import com.ufg.data.entity.UserEntity;
-import com.ufg.domain.UserDtos;
+import com.ufg.dto.UserDtos;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

@@ -3,7 +3,7 @@ package com.ufg.service;
 import com.ufg.data.entity.FollowEntity;
 import com.ufg.data.entity.UserEntity;
 import com.ufg.data.repository.FollowRepository;
-import com.ufg.domain.UserDtos;
+import com.ufg.dto.UserDtos;
 import com.ufg.service.contract.IChatPermissionService;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.ufg.domain;
+package com.ufg.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,6 +1,6 @@
 package com.ufg.service.contract;
 
-import com.ufg.domain.PublicationCommentDtos;
+import com.ufg.dto.PublicationCommentDtos;
 
 import java.util.List;
 

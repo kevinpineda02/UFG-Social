@@ -1,6 +1,6 @@
 package com.ufg.controller;
 
-import com.ufg.domain.UserDtos;
+import com.ufg.dto.UserDtos;
 import com.ufg.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

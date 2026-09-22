@@ -1,6 +1,6 @@
 package com.ufg.service.contract;
 
-import com.ufg.domain.PublicationImageDtos;
+import com.ufg.dto.PublicationImageDtos;
 
 import java.util.List;
 

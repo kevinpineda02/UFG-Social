@@ -1,8 +1,8 @@
 package com.ufg.controller;
 
-import com.ufg.domain.FollowDtos;
-import com.ufg.domain.FollowRequestDtos;
-import com.ufg.domain.FollowStatusDtos;
+import com.ufg.dto.FollowDtos;
+import com.ufg.dto.FollowRequestDtos;
+import com.ufg.dto.FollowStatusDtos;
 import com.ufg.service.FollowService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

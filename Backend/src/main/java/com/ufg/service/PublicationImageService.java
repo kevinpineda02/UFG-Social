@@ -4,7 +4,7 @@ import com.ufg.data.entity.PublicationEntity;
 import com.ufg.data.entity.PublicationImageEntity;
 import com.ufg.data.repository.IPublicationImageRepository;
 import com.ufg.data.repository.PublicationRepository;
-import com.ufg.domain.PublicationImageDtos;
+import com.ufg.dto.PublicationImageDtos;
 import com.ufg.service.contract.IPublicationImageService;
 import org.springframework.stereotype.Service;
 

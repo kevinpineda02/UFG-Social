@@ -1,16 +1,16 @@
-package com.ufg.domain;
+package com.ufg.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PublicationImageDtos {
+public class PublicationLikeDtos {
 
     @Positive(message = "El id debe ser positivo")
     private Long id;
@@ -18,9 +18,12 @@ public class PublicationImageDtos {
     @Positive(message = "El id de la publicación debe ser positivo")
     private Long publicationId;
 
-    @NotBlank(message = "La imagen no puede ir vacía")
-    private String imageUrl;
+    @Positive(message = "El id del usuario debe ser positivo")
+    private Long userId;
 
-    @PositiveOrZero(message = "El orden no puede ser negativo")
-    private Integer orderImage;
+    private String user;
+    private String username;
+    private String profilePhoto;
+
+    private LocalDateTime creationDate;
 }

@@ -1,8 +1,8 @@
 package com.ufg.controller;
 
 import com.ufg.auth.AuthResponse;
-import com.ufg.domain.LoginRequest;
-import com.ufg.domain.RegisterRequest;
+import com.ufg.dto.LoginRequest;
+import com.ufg.dto.RegisterRequest;
 import com.ufg.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

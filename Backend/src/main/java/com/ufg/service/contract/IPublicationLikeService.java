@@ -1,6 +1,6 @@
 package com.ufg.service.contract;
 
-import com.ufg.domain.PublicationDtos;
+import com.ufg.dto.PublicationDtos;
 
 public interface IPublicationLikeService {
 

@@ -6,7 +6,7 @@ import com.ufg.data.entity.UserEntity;
 import com.ufg.data.repository.IPublicationLikeRepository;
 import com.ufg.data.repository.PublicationRepository;
 import com.ufg.data.repository.UserRepository;
-import com.ufg.domain.PublicationDtos;
+import com.ufg.dto.PublicationDtos;
 import com.ufg.service.contract.IPublicationLikeService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;

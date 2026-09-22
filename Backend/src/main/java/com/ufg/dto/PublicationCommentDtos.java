@@ -1,4 +1,4 @@
-package com.ufg.domain;
+package com.ufg.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;

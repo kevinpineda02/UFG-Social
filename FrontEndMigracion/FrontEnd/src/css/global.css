@@ -1,5 +1,6 @@
 /* Variables para modo oscuro */
 :root {
+--fuente-principal: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-primario: #020202;
   --color-secundario: #161616;
   --color-terciario: #ef6c22;
@@ -17,10 +18,12 @@
   --color-terciario-hover: #d15a1f;
   --color-span: #ef6c22;
   --border-chat: #333333;
+  --color-invertido: #ffffff;
 }
 
 /* Variables para modo claro */
 :root.modo-claro {
+--fuente-principal: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-primario: #f5f5f5;
   --color-secundario: #ffffff;
   --color-terciario: #2c22ef;
@@ -32,11 +35,11 @@
   --color-bordes: #cccccc;
   --color-error: #ef4444;
   --color-texto-principal: #333333;
-  --color-texto-secundario: #505050;
+  --color-texto-secundario: #c7c7c7;
   --color-fondo-campo: #f8f9fa;
   --color-fondo-secundario: #f0f0f0;
   --color-terciario-hover: #1e1bcc;
   --color-span: #f6af17;
   --border-chat: #aba9a9;
+  --color-invertido: #000000;
 }
-

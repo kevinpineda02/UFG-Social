@@ -1,16 +1,111 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-   <link
-  href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap"
-  rel="stylesheet"
-/>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UFG-Social</title>
+  <link rel="stylesheet" href="src/css/login.css">
+</head>
+<body>
+  <main>
+  <!--Contenido-->
+
+  <div class="contenido">
+    
+    <div class="cambio-tema">
+    <button class="btn-tema" id="tema"><svg data-slot="icon" aria-hidden="true" fill="none" stroke-width="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg></button>
+    </div>
+       <!--Contendor de fondo--->
+    <div class="contenedor-fondo" src="../FrontEnd/src/assets/perfil/perfil.png">
+    </div>
+
+    <!--Formulario de inicio de sesión-->
+    <div class="formulario-login">
+      <form class="form-login">
+        <div class="titulo-contenedor">
+        <h2 class="titulo-form">UFG</h2>
+        <h3 class="subtitulo-form">Inicia Sesion con tu cuenta</h3>
+        </div>
+        <div class="input-contenedores">
+          <div class="input-grupo">
+          <label for="usuario">Usuario:</label>
+          <input type="text" id="nombreUsuario" name="usuario" placeholder="example@ufg.edu.sv" required>
+          </div>
+          <div class="input-grupo">
+          <label for="contrasena">Contraseña:</label>
+          <input type="password" id="contrasena" name="contrasena" placeholder="Contraseña" required>
+           <span class="link-recuperar-contrasena">¿Se te olvidó la contraseña? <a href="#" >Recupérala aquí</a></span>
+          </div>
+        </div>
+       
+        <div class="iniciar-sesion">
+          <button type="submit" class="boton-iniciar-sesion" id="btn-sesion">Iniciar sesión</button>
+        </div>
+        <div class="registrarse">
+          <span>¿No tienes una cuenta? <a href="#" id="registrarse">Regístrate aquí</a></span>
+        </div>
+      </form>
+    </div>
+
+    
+
+   <!--Formulario de registro-->
+    <div class="formulario-registro">
+      <form class="form-registro">
+        <div class="titulo-contenedor">
+          <h2 class="titulo-form">UFG</h2>
+          <h3 class="subtitulo-form" id="subtitulo-registro">Crea una Cuenta</h3>
+        </div>
+        <div class="input-contenedores" id="inputs-registro">
+           <label for="usuario" id="nombre">Nombre:</label>
+          <input type="text" id="usuario" name="usuario" placeholder="Nombre" required>
+          <label for="usuario">Nombre de Usuario:</label>
+          <input type="text" id="nombreUsuario" name="usuario" placeholder="Nombre de usuario" required>
+          <label for="correo">Correo electrónico:</label>
+          <input type="email" id="correo" name="correo" placeholder="example@ufg.edu.sv" required>
+          <label for="contrasena">Contraseña:</label>
+          <input type="password" id="contrasena" name="contrasena" placeholder="********" required>
+          <label for="confirmar-contrasena">Confirmar Contraseña:</label>
+          <input type="password" id="confirmar-contrasena" name="confirmar-contrasena" placeholder="********" required>
+        </div>
+
+        <div class="boton-continuar">
+          <button id="btn-sesion" type="submit" class="boton-registrarse">Registrarse</button>
+        </div>
+
+        <div class="tengo-cuenta">
+          <span>¿Ya tienes una cuenta? <a href="#" id="iniciar-sesion">Inicia sesión aquí</a></span>
+        </div>
+          
+        </div>
+      </form>
+    </div>
+
+    <!--Formulario de perfil-->
+     <div class="profile" style="display: none;">
+              <label class="foto-perfil">Foto de Perfil:</label>
+              <div class="file-input-wrapper">
+                <label for="imagenPerfil" class="archivo-foto-perfil">
+                  <span class="explorar-btn">Explorar...</span>
+                  <span class="nombre-archivo" id="foto-seleccionada">No file selected.</span>
+                </label>
+                <input
+                  type="file"
+                  id="imagenPerfil"
+                  name="imagenPerfil"
+                  accept="image/*"
+                  class="hidden-file-input"
+                />
+              </div>
+              <button id="btn-sesion" type="submit" class="btn-primary">Crear Cuenta</button>
+            </div>
+          </form>
+        </div>
+
+  </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>

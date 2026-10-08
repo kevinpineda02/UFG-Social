@@ -1,0 +1,297 @@
+@import "./global.css";
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("../assets/fuentes/PlusJakartaSans-Variable.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, main {
+  height: 100%;
+  background-color: var(--color-primario);
+  color: var(--color-texto-principal);
+  font-family: var(--fuente-principal);
+}
+
+input, button, textarea, select {
+  font-family: inherit;
+}
+
+
+.cambio-tema {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.btn-tema svg {
+  width: 24px;
+  height: 24px;
+  color: var(--color-objetos);
+}
+
+.btn-tema {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.btn-tema:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-cambiar-formulario:hover {
+  background-color: var(--color-terciario-hover);
+  color: var(--color-objetos);
+}
+
+
+/* Estilos para el contenedor principal */
+.contenido {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+.contenedor-fondo {
+  flex: 65%;
+  background-image: url("../assets/fondos/ASU-carruselMobile.webp");
+  background-size: cover;
+  background-position: center;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  min-width: 320px;
+  box-shadow: 1px 0 15px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  border-radius: 0px 15px 15px 0px;
+}
+
+.contenedor-fondo::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2); /* Ajusta la opacidad según tus necesidades */
+}
+
+/* Estilos para el formulario de inicio de sesión */
+.formulario-login {
+  flex: 35%;
+  display: flex;
+  position: relative; 
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.titulo-form{
+  position: relative;
+  color: var(--color-terciario);
+  font-size: 3.2rem;
+  cursor: default;
+  font-weight: 700;
+}
+
+.subtitulo-form{
+    position: relative;
+    color: var(--color-datos);
+    font-size: 0.95rem;
+    cursor: default;
+}
+
+.titulo-contenedor{
+    position: relative;
+    bottom: 50px;
+}
+
+.input-contenedores input{
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-bordes);
+  border-radius: 8px;
+  background: var(--color-fondo-secundario);
+  color: var(--color-objetos);
+  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.input-contenedores input:focus {
+  border-color: var(--color-terciario);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.input-contenedores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 350px;      /* ancho del bloque de inputs */
+  margin: 0 auto;        /* centra el bloque dentro del panel */
+}
+
+.input-contenedores label{
+  display: block;
+  font-weight: 550;
+  font-size: 0.95rem;
+  width: 100%;
+  text-align: left;
+  color: var(--color-objetos);
+  font-size: 0.9rem;
+  cursor: default;
+}
+.input-grupo{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 350px;      /* ancho del bloque de inputs */
+    margin: 0 auto;        /* centra el bloque dentro del panel */
+    margin-bottom: 20px;
+
+}
+
+#btn-sesion{
+    width: 100%;
+    max-width: 350px;
+    padding: 12px;
+    background: var(--color-terciario);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.link-recuperar-contrasena {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.86rem;
+    color: var(--color-datos);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    text-align: left;
+}
+
+.link-recuperar-contrasena a {
+    color: var(--color-terciario);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.formulario-registro{
+  flex: 35%;
+  display: none;
+  position: relative; 
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.registrarse {
+  margin-top: 15px;
+  font-size: 0.86rem;
+  color: var(--color-datos);
+  top:20px;
+  position: relative;
+}
+
+.registrarse a {
+  color: var(--color-terciario);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+#inputs-registro{
+  gap: 15px;
+}
+
+.boton-registrarse {
+  top: 25px;
+}
+
+#subtitulo-registro{
+  top: 10px;
+  position: relative;
+}
+
+.tengo-cuenta{
+  position: relative;
+  top: 55px;
+  color: var(--color-datos);
+  font-size: 0.86rem;
+}
+
+.tengo-cuenta a{
+  color: var(--color-terciario);
+  text-decoration: none;
+  font-weight: 600;
+  padding-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .contenido {
+    flex-direction: column;
+  }
+
+  .contenedor-fondo {
+    flex: 0.8;
+    height: 100px; /* Ajusta la altura según tus necesidades */
+    border-radius: 0px 0px 5px 5px;
+  }
+
+  .formulario-login, .formulario-registro {
+    height: 500px;
+    flex: 1;
+    padding: 20px;
+    border-radius: 15px;
+    position: relative;
+    bottom: 150px;
+  }
+  .boton-registrarse {
+  padding-bottom: 25px;
+}
+
+.input-contenedores label{
+  color: var(--color-texto-principal);
+}
+
+.contenedor-fondo::after {
+  background-color: rgba(0, 0, 0, 0.5); /* Ajusta la opacidad según tus necesidades */
+}
+
+.subtitulo-form{
+  color: var(--color-texto-secundario);
+}
+
+.titulo-form{
+margin-top: 150px;
+}
+
+#nombre{
+  color: #d8d7d7;
+
+}
+
+}

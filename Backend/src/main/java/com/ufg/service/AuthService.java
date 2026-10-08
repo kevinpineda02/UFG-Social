@@ -36,7 +36,7 @@ public class AuthService {
         CredentialEntity credential = credentialRepository.findByCorreo(request.getCorreo())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // 3. Buscar el usuario usando el credentialId (CON GUIÓN BAJO)
+        // 3. Buscar el usuario usando el credentialId (con guion bajo)
         UserEntity user = userRepository.findByCredential_Id(credential.getId())
                 .orElseThrow(() -> new RuntimeException("Perfil de usuario no encontrado"));
 
@@ -52,21 +52,23 @@ public class AuthService {
                 .build();
     }
 
-    //Metodo de Registro de usuarios
     public AuthResponse register(RegisterRequest request) {
+
+        credentialRepository.findByCorreo(request.getCorreo())
+                .ifPresent(user -> {
+                    throw new RuntimeException("El correo ya está registrado");
+                });
+
         CredentialEntity user = CredentialEntity.builder()
                 .correo(request.getCorreo())
                 .contrasena(passwordEncoder.encode(request.getContrasena()))
                 .rol(Rol.USER)
                 .build();
 
-        // Guardar usuario
         CredentialEntity savedUser = credentialRepository.save(user);
 
-        // Generar token con el ID
         String token = jwtService.getToken(savedUser);
 
-        // RETORNAR TAMBIÉN EL ID
         return AuthResponse.builder()
                 .token(token)
                 .credentialId(savedUser.getId())

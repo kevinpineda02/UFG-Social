@@ -17,8 +17,12 @@ import lombok.NoArgsConstructor;
 public class RegisterRequest {
 
     //Validadores de correo y contraseña
-    @NotBlank(message = "Debe de ser un corrreo")
-    @Email(regexp ="^[A-Za-z0-9._%+-]+@ufg.edu\\\\.sv$", message = "Debe de ser un correo valido")
+    @NotBlank(message = "Debe de ser un correo")
+    @Email(message = "Debe ser un correo válido")
+    @Pattern(
+            regexp = "^[A-Za-z0-9._%+-]+@ufg\\.edu\\.sv$",
+            message = "Debe utilizar un correo institucional @ufg.edu.sv"
+    )
     private String correo;
 
     @NotBlank(message = "La contraseña no debe de ser nula")

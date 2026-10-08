@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-
+// Servicio para gestionar los permisos de chat entre usuarios
 @Service
 public class ChatPermissionService implements IChatPermissionService {
 
+    // Inyección de dependencias del repositorio de seguimiento
     private final FollowRepository followRepository;
 
+    // Constructor para inyectar la dependencia del repositorio de seguimiento
     public ChatPermissionService(FollowRepository followRepository) {
         this.followRepository = followRepository;
     }

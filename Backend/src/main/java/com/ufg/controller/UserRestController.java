@@ -16,27 +16,32 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserRestController {
 
+    //Inyeccion de dependencias
     @Autowired
     UserService userService;
 
+    // Endpoint para crear un usuario
     @PostMapping
     public ResponseEntity<UserDtos> createdUser(@Valid @RequestBody UserDtos userDtos) {
         UserDtos createdUserDtos = userService.createUser(userDtos);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUserDtos);
     }
 
+    // Endpoint para buscar un usuario por id
     @GetMapping("/{id}")
     public ResponseEntity<UserDtos> userById(@PathVariable Long id) {
         UserDtos userDtos = userService.searchUserId(id);
         return ResponseEntity.ok(userDtos);
     }
 
+    // Endpoint para buscar todos los usuarios
     @GetMapping("/users")
     public ResponseEntity<List<UserDtos>> searchUsers() {
         List<UserDtos> dtos = userService.searchUsers();
         return ResponseEntity.ok(dtos);
     }
 
+    // Endpoint para editar un usuario
     @PatchMapping("/{id}")
     public ResponseEntity<UserDtos> editUser(
             @PathVariable Long id,
@@ -47,6 +52,7 @@ public class UserRestController {
         return ResponseEntity.ok(userEdited);
     }
 
+    // Endpoint para actualizar la foto de perfil de un usuario
     @PatchMapping(
             value = "/{id}/profile-photo",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -61,6 +67,7 @@ public class UserRestController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    // Endpoint para obtener sugerencias de usuarios
     @GetMapping("/suggestions/{userId}")
     public ResponseEntity<List<UserDtos>> getSuggestions(@PathVariable Long userId) {
         List<UserDtos> suggestions = userService.getSuggestions(userId);

@@ -11,12 +11,15 @@ import java.util.List;
 @RequestMapping("/chat")
 public class ChatRestController {
 
+    // Inyección de dependencias del servicio de permisos de chat
     private final ChatPermissionService chatPermissionService;
 
+    // Constructor para inyectar la dependencia del servicio de permisos de chat
     public ChatRestController(ChatPermissionService chatPermissionService) {
         this.chatPermissionService = chatPermissionService;
     }
 
+    // Endpoint to check if two users can chat
     @GetMapping("/can-chat/{senderId}/{receiverId}")
     public ResponseEntity<Boolean> canChat(
             @PathVariable Long senderId,
@@ -27,6 +30,7 @@ public class ChatRestController {
         return ResponseEntity.ok(canChat);
     }
 
+    // Endpoint to get chat contacts for a user
     @GetMapping("/contacts/{userId}")
     public ResponseEntity<List<UserDtos>> getChatContacts(
             @PathVariable Long userId) {

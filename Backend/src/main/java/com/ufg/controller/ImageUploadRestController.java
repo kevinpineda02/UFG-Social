@@ -15,11 +15,13 @@ public class ImageUploadRestController {
 
     private final IImageUploadService imageUploadService;
 
+    // Constructor para inyectar la dependencia del servicio de subida de imágenes
     @Autowired
     public ImageUploadRestController(IImageUploadService imageUploadService) {
         this.imageUploadService = imageUploadService;
     }
 
+    // Endpoint para subir una imagen
     @PostMapping(
             value = "/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,

@@ -13,12 +13,15 @@ import java.util.List;
 @RequestMapping("/follow")
 public class FollowRestController {
 
+    // Inyección de dependencias del servicio de seguimiento
     private final FollowService followService;
 
+    // Constructor para inyectar la dependencia del servicio de seguimiento
     public FollowRestController(FollowService followService) {
         this.followService = followService;
     }
 
+    // Endpoint para enviar una solicitud de seguimiento
     @PostMapping("/request/{requesterId}/{receiverId}")
     public ResponseEntity<FollowRequestDtos> sendRequest(
             @PathVariable Long requesterId,
@@ -29,6 +32,7 @@ public class FollowRestController {
         return ResponseEntity.ok(request);
     }
 
+    // Endpoint para cancelar una solicitud de seguimiento
     @DeleteMapping("/request/{requesterId}/{receiverId}")
     public ResponseEntity<String> cancelRequest(
             @PathVariable Long requesterId,
@@ -39,6 +43,7 @@ public class FollowRestController {
         return ResponseEntity.ok("Solicitud cancelada correctamente");
     }
 
+    // Endpoint para aceptar una solicitud de seguimiento
     @PostMapping("/request/{requestId}/accept")
     public ResponseEntity<FollowRequestDtos> acceptRequest(
             @PathVariable Long requestId) {
@@ -48,6 +53,7 @@ public class FollowRestController {
         return ResponseEntity.ok(request);
     }
 
+    // Endpoint para rechazar una solicitud de seguimiento
     @PostMapping("/request/{requestId}/reject")
     public ResponseEntity<FollowRequestDtos> rejectRequest(
             @PathVariable Long requestId) {
@@ -57,6 +63,7 @@ public class FollowRestController {
         return ResponseEntity.ok(request);
     }
 
+    // Endpoint para obtener las solicitudes de seguimiento pendientes de un usuario
     @GetMapping("/requests/pending/{userId}")
     public ResponseEntity<List<FollowRequestDtos>> getPendingRequests(
             @PathVariable Long userId) {
@@ -66,6 +73,7 @@ public class FollowRestController {
         return ResponseEntity.ok(requests);
     }
 
+    // Endpoint para obtener las solicitudes de seguimiento enviadas por un usuario
     @GetMapping("/requests/sent/{userId}")
     public ResponseEntity<List<FollowRequestDtos>> getSentRequests(
             @PathVariable Long userId) {
@@ -75,6 +83,7 @@ public class FollowRestController {
         return ResponseEntity.ok(requests);
     }
 
+    // Endpoint para obtener los seguidores de un usuario
     @GetMapping("/followers/{userId}")
     public ResponseEntity<List<FollowDtos>> getFollowers(
             @PathVariable Long userId) {
@@ -84,6 +93,7 @@ public class FollowRestController {
         return ResponseEntity.ok(followers);
     }
 
+    // Endpoint para obtener los usuarios que sigue un usuario
     @GetMapping("/following/{userId}")
     public ResponseEntity<List<FollowDtos>> getFollowing(
             @PathVariable Long userId) {
@@ -93,6 +103,7 @@ public class FollowRestController {
         return ResponseEntity.ok(following);
     }
 
+    // Endpoint para contar los seguidores de un usuario
     @GetMapping("/followers/{userId}/count")
     public ResponseEntity<Long> countFollowers(
             @PathVariable Long userId) {
@@ -102,6 +113,7 @@ public class FollowRestController {
         return ResponseEntity.ok(count);
     }
 
+    // Endpoint para contar los usuarios que sigue un usuario
     @GetMapping("/following/{userId}/count")
     public ResponseEntity<Long> countFollowing(
             @PathVariable Long userId) {
@@ -111,6 +123,7 @@ public class FollowRestController {
         return ResponseEntity.ok(count);
     }
 
+    // Endpoint para dejar de seguir a un usuario
     @DeleteMapping("/{followerId}/{followedId}")
     public ResponseEntity<String> unfollow(
             @PathVariable Long followerId,
@@ -121,6 +134,7 @@ public class FollowRestController {
         return ResponseEntity.ok("Relación de seguimiento eliminada correctamente");
     }
 
+    // Endpoint para obtener el estado de seguimiento entre dos usuarios
     @GetMapping("/status/{requesterId}/{targetUserId}")
     public ResponseEntity<FollowStatusDtos> getFollowStatus(
             @PathVariable Long requesterId,

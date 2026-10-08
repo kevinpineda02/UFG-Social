@@ -22,9 +22,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    // Inyección de dependencias del filtro de autenticación JWT y el proveedor de autenticación
     private final JwtAuthenticationFilter jwtAtuhentiucationFilter;
+    // Inyección de dependencias del proveedor de autenticación
     private final AuthenticationProvider authProvider;
 
+    // Configuración de CORS para permitir solicitudes desde dominios específicos
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -36,7 +39,8 @@ public class SecurityConfig {
                 "http://localhost:8080",
                 "http://localhost:8081",
                 "http://127.0.0.1:5500",
-                "https://ufg-social.vercel.app"
+                "https://ufg-social.vercel.app",
+                "http://localhost:5173/"
         ));
 
         configuration.setAllowedMethods(List.of(
@@ -68,6 +72,7 @@ public class SecurityConfig {
         return source;
     }
 
+    // Configuración de seguridad HTTP, incluyendo CORS, CSRF, autorización de solicitudes y gestión de sesiones
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http

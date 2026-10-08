@@ -22,24 +22,30 @@ import java.util.List;
 @RequestMapping("/publication")
 public class PublicationRestController {
 
+    //Inyeccion de dependencias
     @Autowired
     PublicationService publicationService;
 
+    //Inyeccion de dependencias
     @Autowired
     PublicationLikeService publicationLikeService;
 
+    //Inyeccion de dependencias
     @Autowired
     PublicationCommentService publicationCommentService;
 
+    //Inyeccion de dependencias
     @Autowired
     PublicationImageService publicationImageService;
 
+    // Endpoint para buscar publicaciones
     @GetMapping
     public ResponseEntity<List<PublicationDtos>> searchPublication() {
         List<PublicationDtos> publications = publicationService.searchPublication();
         return ResponseEntity.ok(publications);
     }
 
+    // Endpoint para buscar publicaciones de un usuario
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PublicationDtos>> searchPublicationUser(
             @PathVariable Long userId) {
@@ -48,6 +54,7 @@ public class PublicationRestController {
         return ResponseEntity.ok(publications);
     }
 
+    // Endpoint para crear una publicación
     @PostMapping(
             value = "/{userId}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -69,6 +76,7 @@ public class PublicationRestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(publication);
     }
 
+    //Endpoint para buscar si un usuario le dio like a una publicación
     @GetMapping("/{publicationId}/like/{userId}")
     public ResponseEntity<Boolean> userLikedPublication(
             @PathVariable Long publicationId,
@@ -79,6 +87,7 @@ public class PublicationRestController {
         return ResponseEntity.ok(liked);
     }
 
+    //Endpoint para dar like a una publicación
     @PostMapping("/{publicationId}/like/{userId}")
     public ResponseEntity<PublicationDtos> likePublication(
             @PathVariable Long publicationId,
@@ -89,6 +98,7 @@ public class PublicationRestController {
         return ResponseEntity.ok(publication);
     }
 
+    //Endpoint para quitar like a una publicación
     @DeleteMapping("/{publicationId}/like/{userId}")
     public ResponseEntity<PublicationDtos> unlikePublication(
             @PathVariable Long publicationId,
@@ -99,12 +109,14 @@ public class PublicationRestController {
         return ResponseEntity.ok(publication);
     }
 
+    //Endpoint para contar los likes de una publicación
     @GetMapping("/{publicationId}/likes/count")
     public ResponseEntity<Integer> countLikes(@PathVariable Long publicationId) {
         Integer likes = publicationLikeService.countLikes(publicationId);
         return ResponseEntity.ok(likes);
     }
 
+    //Endpoint para buscar los comentarios de una publicación
     @GetMapping("/{publicationId}/comments")
     public ResponseEntity<List<PublicationCommentDtos>> searchCommentsByPublication(
             @PathVariable Long publicationId) {
@@ -115,6 +127,7 @@ public class PublicationRestController {
         return ResponseEntity.ok(comments);
     }
 
+    //Endpoint para crear un comentario en una publicación
     @PostMapping("/{publicationId}/comments/{userId}")
     public ResponseEntity<PublicationCommentDtos> createComment(
             @PathVariable Long publicationId,
@@ -127,6 +140,7 @@ public class PublicationRestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(commentCreated);
     }
 
+    //Endpoint para eliminar un comentario de una publicación
     @DeleteMapping("/comments/{commentId}/user/{userId}")
     public ResponseEntity<PublicationCommentDtos> deleteComment(
             @PathVariable Long commentId,
@@ -138,6 +152,7 @@ public class PublicationRestController {
         return ResponseEntity.ok(deletedComment);
     }
 
+    //Endpoint para buscar las imágenes de una publicación
     @GetMapping("/{publicationId}/images")
     public ResponseEntity<List<PublicationImageDtos>> searchImagesByPublication(
             @PathVariable Long publicationId) {
@@ -148,12 +163,14 @@ public class PublicationRestController {
         return ResponseEntity.ok(images);
     }
 
+    //Endpoint para eliminar una imagen de una publicación
     @DeleteMapping("/images/{imageId}")
     public ResponseEntity<PublicationImageDtos> deleteImage(@PathVariable Long imageId) {
         PublicationImageDtos deletedImage = publicationImageService.deleteImage(imageId);
         return ResponseEntity.ok(deletedImage);
     }
 
+    //Endpoint para eliminar una publicación
     @DeleteMapping("/{publicationId}/user/{userId}")
     public ResponseEntity<PublicationDtos> deletePublication(
             @PathVariable Long publicationId,

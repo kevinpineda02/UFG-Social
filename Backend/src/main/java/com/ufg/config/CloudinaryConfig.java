@@ -5,9 +5,11 @@ import com.cloudinary.utils.ObjectUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+// Configuración de Cloudinary para la gestión de imágenes y archivos
 @Configuration
 public class CloudinaryConfig {
 
+    // Configuración de Cloudinary para la gestión de imágenes y archivos
     @Bean
     public Cloudinary cloudinary() {
         return new Cloudinary(ObjectUtils.asMap(

@@ -3,6 +3,7 @@ package com.ufg.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Builder
 
 public class UserDtos {
     private Long id;
@@ -30,7 +32,6 @@ public class UserDtos {
     @PositiveOrZero(message = "Los seguidos no pueden ser negativos")
     private Integer followed = 0;
 
-    @URL(message = "La URL de la foto de perfil no es válida")
     private String profilePhoto;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

@@ -9,60 +9,67 @@ import com.ufg.service.contract.IUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+// Servicio con la lógica de negocio de los usuarios (crear, buscar, editar, sugerencias y foto de perfil)
 @Service
 public class UserService implements IUserService {
 
+    // Accede a la base de datos de usuarios
     private final UserRepository userRepository;
+    // Sube las imágenes al almacenamiento externo
     private final IImageUploadService imageUploadService;
 
+    // Constructor: Spring inyecta aquí el repositorio y el servicio de imágenes
     public UserService(UserRepository userRepository,
                        IImageUploadService imageUploadService) {
         this.userRepository = userRepository;
         this.imageUploadService = imageUploadService;
     }
 
+    // Convierte una entidad (BD) a DTO (lo que se envía al cliente)
     @Override
     public UserDtos transformEntity(UserEntity entity) {
-        UserDtos userDtos = new UserDtos();
 
-        userDtos.setId(entity.getId());
-        userDtos.setName(entity.getName());
-        userDtos.setUsername(entity.getUsername());
-        userDtos.setProfilePhoto(entity.getProfilePhoto());
-        userDtos.setCreationDate(entity.getCreationDate());
-        userDtos.setFollowers(entity.getFollowers());
-        userDtos.setFollowed(entity.getFollowed());
+        Long credentialId = entity.getCredential() != null
+                ? entity.getCredential().getId()
+                : null;
 
-        if (entity.getCredential() != null) {
-            userDtos.setCredentialId(entity.getCredential().getId());
-        }
-
-        return userDtos;
+        return UserDtos.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .username(entity.getUsername())
+                .profilePhoto(entity.getProfilePhoto())
+                .creationDate(entity.getCreationDate())
+                .followers(entity.getFollowers())
+                .followed(entity.getFollowed())
+                .credentialId(credentialId)
+                .build();
     }
 
+    // Convierte un DTO (del cliente) a entidad (para guardar en BD)
     public UserEntity transformToEntity(UserDtos userDtos) {
-        UserEntity entity = new UserEntity();
 
-        entity.setId(userDtos.getId());
-        entity.setName(userDtos.getName());
-        entity.setUsername(userDtos.getUsername());
-        entity.setProfilePhoto(userDtos.getProfilePhoto());
-        entity.setCreationDate(userDtos.getCreationDate());
-        entity.setFollowers(userDtos.getFollowers());
-        entity.setFollowed(userDtos.getFollowed());
+        CredentialEntity credential = Optional.ofNullable(userDtos.getCredentialId())
+                .map(id -> CredentialEntity.builder()
+                        .id(id)
+                        .build())
+                .orElse(null);
 
-        if (userDtos.getCredentialId() != null) {
-            CredentialEntity credential = new CredentialEntity();
-            credential.setId(userDtos.getCredentialId());
-            entity.setCredential(credential);
-        }
-
-        return entity;
+        return UserEntity.builder()
+                .id(userDtos.getId())
+                .name(userDtos.getName())
+                .username(userDtos.getUsername())
+                .profilePhoto(userDtos.getProfilePhoto())
+                .creationDate(userDtos.getCreationDate())
+                .followers(userDtos.getFollowers())
+                .followed(userDtos.getFollowed())
+                .credential(credential)
+                .build();
     }
 
+    // Crea un usuario nuevo y devuelve el usuario guardado
     @Override
     public UserDtos createUser(UserDtos userDtos) {
         UserEntity entity = transformToEntity(userDtos);
@@ -72,64 +79,58 @@ public class UserService implements IUserService {
         return transformEntity(saveEntity);
     }
 
+    // Busca un usuario por su id (devuelve null si no existe)
     @Override
-    public UserDtos searchUserId(Long id) {
-        UserEntity entity = userRepository.findById(id).orElse(null);
-
-        if (entity == null) {
-            return null;
-        }
-
-        return transformEntity(entity);
+    public UserDtos searchUserId(Long id){
+        return userRepository.findAll()
+                .stream()
+                .filter(userEntity -> userEntity.getId().equals(id))
+                .map(this::transformEntity)
+                .findFirst()
+                .orElse(null);
     }
 
+
+
+    // Devuelve la lista de todos los usuarios
     @Override
     public List<UserDtos> searchUsers() {
-        List<UserEntity> entities = userRepository.findAll();
-
-        List<UserDtos> usersDtos = new ArrayList<>();
-
-        for (UserEntity user : entities) {
-            usersDtos.add(transformEntity(user));
-        }
-
-        return usersDtos;
+        return userRepository.findAll()
+                .stream()
+                .map(this::transformEntity)
+                .toList();
     }
 
+    // Edita el nombre y el username de un usuario existente
     @Override
     public UserDtos editUser(Long id, UserDtos userDtos) {
-        UserEntity entity = userRepository.findById(id).orElse(null);
+        UserEntity entity = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Usuario no encontrado id:" + id)
+                );
 
-        if (entity == null) {
-            throw new RuntimeException("Usuario no encontrado con id: " + id);
-        }
+        Optional.ofNullable(userDtos.getName())
+                .filter(name -> !name.isBlank())
+                .ifPresent(entity::setName);
 
-        if (userDtos.getName() != null && !userDtos.getName().isBlank()) {
-            entity.setName(userDtos.getName());
-        }
+        Optional.ofNullable(userDtos.getName())
+                .filter(username -> !username.isBlank())
+                .ifPresent(entity::setUsername);
 
-        if (userDtos.getUsername() != null && !userDtos.getUsername().isBlank()) {
-            entity.setUsername(userDtos.getUsername());
-        }
-
-        UserEntity savedEntity = userRepository.save(entity);
-
-        return transformEntity(savedEntity);
+        return transformEntity(userRepository.save(entity));
     }
 
+
+    // Devuelve usuarios sugeridos para el usuario indicado
     @Override
-    public List<UserDtos> getSuggestions(Long userId) {
-        List<UserEntity> entities = userRepository.findSuggestions(userId);
-
-        List<UserDtos> usersDtos = new ArrayList<>();
-
-        for (UserEntity user : entities) {
-            usersDtos.add(transformEntity(user));
-        }
-
-        return usersDtos;
+    public List<UserDtos> getSuggestions(Long userId){
+        return userRepository.findSuggestions(userId)
+                .stream()
+                .map(this::transformEntity)
+                .toList();
     }
 
+    // Sube una nueva foto de perfil y guarda su URL en el usuario
     @Override
     public UserDtos updateProfilePhoto(Long id, MultipartFile file) {
         UserEntity entity = userRepository.findById(id).orElse(null);

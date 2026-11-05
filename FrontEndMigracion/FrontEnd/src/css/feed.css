@@ -1,106 +1,17 @@
-@import "./global.css";
-
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  src: url("../assets/fuentes/PlusJakartaSans-Variable.woff2") format("woff2");
-  font-weight: 200 800;
-  font-display: swap;
-}
-
-body{
-    margin: 0;
-    padding: 0;
-    background-color: var(--color-primario);
-    color: var(--color-texto-principal);
-    font-family: var(--fuente-principal);
-}
-
-.menu-hamburguesa {
+.feed{
     display: flex;
-    gap: 12px;
-    flex-direction: column;
-    width: 230px;
-    background-color: var(--color-secundario);
-    height: 100vh;
+    flex-direction: row;
+    gap: 1rem;
 }
 
-.foto-perfil {
-    border-radius: 50%;
-    width: 80px;
-    height: 80px;
-    margin: 0 auto;
-    margin-top: 40px;
-}
-
-.nombre-usuario {
-    display: flex;
+.titulo-texto-feed{
     color: var(--color-texto-principal);
-    font-size: 18px;
-    font-weight: bold;
-    background: none; 
-    margin: 0 auto;
+    font-family: var(--fuente-principal); 
+    position: relative;
+    top: 0;  
 }
 
-.texto-boton {
-    text-align: left;
-    font-size: 14px;
-    padding-top: 4px;
+.titulo-feed{
+   color: var(--color-texto-principal); 
 }
-
-.boton-navegacion-inicio svg{
-    width: 24px;
-    height: 24px;
-    padding-left: 10px;
-}
-
-.boton-navegacion-publicaciones svg{
-    width: 24px;
-    height: 24px;
-    padding-left: 8px;
-}
-
-.boton-navegacion-perfil svg{
-    width: 24px;
-    height: 24px;
-    padding-left: 10px;
-}
-
-.boton-navegacion-mensajes svg{
-    width: 24px;
-    height: 24px;
-    padding-left: 10px;
-}
-
-.boton-navegacion-inicio-div{
-    margin-top: 30px;
-}
-
-.boton-navegacion-inicio{
-    background: var(--color-terciario) !important;
-}
-
-.boton-navegacion-inicio, .boton-navegacion-publicaciones, 
-.boton-navegacion-perfil, .boton-navegacion-mensajes{
-  background: transparent;
-  justify-content: flex-start;
-  border: none;
-  border-radius: 10px;
-  width: 80%;
-  box-shadow: none;
-  outline: none;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 18px auto;
-  padding: 10px 0px;
-  cursor: pointer;
-}
-
-.boton-navegacion-inicio:hover, .boton-navegacion-publicaciones:hover, 
-.boton-navegacion-perfil:hover, .boton-navegacion-mensajes:hover {
-  background: var(--color-terciario-hover);
-}
-
-
 

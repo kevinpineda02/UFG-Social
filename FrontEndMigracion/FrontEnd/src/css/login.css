@@ -238,7 +238,7 @@ input, button, textarea, select {
 
 .tengo-cuenta{
   position: relative;
-  top: 55px;
+  top: 38px;
   color: var(--color-datos);
   font-size: 0.86rem;
 }
@@ -247,7 +247,6 @@ input, button, textarea, select {
   color: var(--color-terciario);
   text-decoration: none;
   font-weight: 600;
-  padding-bottom: 30px;
 }
 
 @media (max-width: 768px) {

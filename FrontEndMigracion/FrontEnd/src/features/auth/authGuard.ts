@@ -1,4 +1,4 @@
-import { RUTA_FEED, RUTA_LOGIN, TOKEN_KEY } from '../../core/constantes';
+import { RUTA_FEED, RUTA_LOGIN, TOKEN_KEY, USER_ID_KEY } from '../../core/constantes';
 
 // ---------- Manejo del token ----------
 export function guardarToken(token: string): void {
@@ -9,8 +9,30 @@ export function obtenerToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-export function cerrarSesion(): void {
+// ---------- Manejo del userId ----------
+export function guardarUserId(id: number): void {
+  localStorage.setItem(USER_ID_KEY, String(id));
+}
+
+export function limpiarUserId(): void {
+  localStorage.removeItem(USER_ID_KEY);
+}
+
+export function obtenerUserId(): number | null {
+  const id = localStorage.getItem(USER_ID_KEY);
+  if (!id) return null;
+
+  const numero = Number(id);
+  return Number.isNaN(numero) ? null : numero;
+}
+
+export function limpiarSesion(): void {
   localStorage.removeItem(TOKEN_KEY);
+  limpiarUserId();
+}
+
+export function cerrarSesion(): void {
+  limpiarSesion();
   window.location.replace(RUTA_LOGIN);
 }
 
@@ -36,12 +58,12 @@ function esPayloadJwt(payload: unknown): payload is { exp?: number } {
   return typeof payload === 'object' && payload !== null;
 }
 
-function haySesionValida(): boolean {
+export function haySesionValida(): boolean {
   const token = obtenerToken();
   if (!token) return false;
 
   if (tokenExpirado(token)) {
-    localStorage.removeItem(TOKEN_KEY);
+    limpiarSesion();
     return false;
   }
   return true;
@@ -51,14 +73,15 @@ function haySesionValida(): boolean {
 
 // Para páginas protegidas (feed, perfil, etc.)
 export function verificarSesion(): void {
-  if (!haySesionValida()) {
+  if (!haySesionValida() || obtenerUserId() === null) {
+    limpiarSesion();
     window.location.replace(RUTA_LOGIN);
   }
 }
 
 // Para login y registro: si ya hay sesión, redirige al feed
 export function redirigirSiAutenticado(): void {
-  if (haySesionValida()) {
+  if (haySesionValida() && obtenerUserId() !== null) {
     window.location.replace(RUTA_FEED);
   }
 }

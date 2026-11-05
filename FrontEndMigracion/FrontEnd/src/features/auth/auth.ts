@@ -108,4 +108,3 @@ export async function registrarse(datos: RegistroCompleto): Promise<ResultadoReg
     return { auth, usuario: null };
   }
 }
-

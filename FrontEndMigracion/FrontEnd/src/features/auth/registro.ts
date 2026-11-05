@@ -1,5 +1,5 @@
 import { registrarse } from './auth';
-import { guardarToken } from './authGuard';
+import { guardarToken, guardarUserId } from './authGuard';
 import { PATRON_CONTRASENA, RUTA_FEED } from '../../core/constantes';
 
 export function initRegistro(): void {
@@ -43,8 +43,19 @@ export function initRegistro(): void {
 
     boton.disabled = true;
     try {
-      const { auth } = await registrarse({ nombre, nombreUsuario, correo, contrasena });
+      const { auth, usuario } = await registrarse({ nombre, nombreUsuario, correo, contrasena });
       guardarToken(auth.token);
+
+      // El userId puede venir en la credencial o, si no, en el perfil recién creado
+      const userId = usuario?.id ?? auth.userId;
+      if (userId !== null && userId !== undefined) {
+        guardarUserId(userId);
+      }
+
+      if (!usuario) {
+        alert('Tu cuenta se creó, pero no se pudo crear tu perfil. Intenta iniciar sesión de nuevo.');
+      }
+
       window.location.replace(RUTA_FEED);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al registrarse');

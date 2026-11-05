@@ -1,15 +1,14 @@
 import { iniciarSesion } from './auth';
-import { guardarToken, redirigirSiAutenticado } from './authGuard';
+import { guardarToken, guardarUserId, limpiarSesion, redirigirSiAutenticado } from './authGuard';
 import { RUTA_FEED } from '../../core/constantes';
 
 export function initLogin(): void {
-  redirigirSiAutenticado();
-
   const form = document.querySelector<HTMLFormElement>('.form-login');
   if (!form) {
-    console.warn('No se encontró el formulario de inicio de sesión.');
     return;
   }
+
+  redirigirSiAutenticado();
 
   // Se busca dentro del formulario de login, no en todo el documento
   const inputCorreo = form.querySelector<HTMLInputElement>('#nombreUsuario');
@@ -30,7 +29,14 @@ export function initLogin(): void {
     boton.disabled = true;
     try {
       const auth = await iniciarSesion({ correo, contrasena });
+      if (auth.userId === null) {
+        limpiarSesion();
+        throw new Error('La respuesta de inicio de sesión no contiene el ID del usuario');
+      }
+
       guardarToken(auth.token);
+      guardarUserId(auth.userId);
+
       window.location.replace(RUTA_FEED);
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al iniciar sesión');

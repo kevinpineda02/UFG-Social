@@ -38,3 +38,18 @@ export function obtenerPublicaciones(): Promise<Publicacion[]> {
   return peticion<Publicacion[]>('/publication');
 }
 
+export function obtenerCantidadLikes(publicationId: number): Promise<number> {
+  return peticion<number>(`/publication/${publicationId}/likes/count`);
+}
+
+export function obtenerImagenesPorPublicacion(
+  publicationId: number
+): Promise<ImagenPublicacion[]> {
+  return peticion<ImagenPublicacion[]>(`/publication/${publicationId}/images`);
+}
+
+export function obtenerComentariosPorPublicacion(
+  publicationId: number
+): Promise<Comentario[]> {
+  return peticion<Comentario[]>(`/publication/${publicationId}/comments`);
+}

@@ -45,6 +45,8 @@ body{
     text-align: left;
     font-size: 14px;
     padding-top: 4px;
+    text-decoration: none;
+    color: var(--color-texto-principal);
 }
 
 .boton-navegacion-inicio svg{
@@ -75,10 +77,6 @@ body{
     margin-top: 30px;
 }
 
-.boton-navegacion-inicio{
-    background: var(--color-terciario) !important;
-}
-
 .boton-navegacion-inicio, .boton-navegacion-publicaciones, 
 .boton-navegacion-perfil, .boton-navegacion-mensajes{
   background: transparent;
@@ -97,10 +95,13 @@ body{
   cursor: pointer;
 }
 
+.boton-navegacion-activo {
+  background: var(--color-terciario);
+}
+
 .boton-navegacion-inicio:hover, .boton-navegacion-publicaciones:hover, 
 .boton-navegacion-perfil:hover, .boton-navegacion-mensajes:hover {
   background: var(--color-terciario-hover);
 }
-
 
 

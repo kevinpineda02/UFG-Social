@@ -32,6 +32,21 @@ function resolverUrlFoto(url: string): string {
     : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
+function normalizarRuta(ruta: string): string {
+  const rutaSinExtension = ruta.replace(/\.html$/, '');
+  return rutaSinExtension === '/' ? '/feed' : rutaSinExtension.replace(/\/$/, '');
+}
+
+function marcarBotonActivo(boton: HTMLButtonElement, href: string): void {
+  const rutaActual = normalizarRuta(window.location.pathname);
+  const rutaBoton = normalizarRuta(new URL(href, window.location.href).pathname);
+
+  if (rutaActual === rutaBoton) {
+    boton.classList.add('boton-navegacion-activo');
+    boton.setAttribute('aria-current', 'page');
+  }
+}
+
 //Obtener la informacion del usuario para mostrarla en el menu hamburguesa
 async function cargarPerfil(): Promise<void> {
   const userId = obtenerUserId();
@@ -57,7 +72,7 @@ async function cargarPerfil(): Promise<void> {
   }
 }
 
-const contenedor = document.querySelector<HTMLElement>('.feed');
+const contenedor = document.querySelector<HTMLElement>('.feed, .perfil, .mensajes, .publicacion');
 if (contenedor) {
   contenedor.append(menuHamburguesa);
   void cargarPerfil();
@@ -85,9 +100,14 @@ botonInicio.classList.add('boton-navegacion-inicio');
 botonInicio.innerHTML = iconoInicio;
 
 //Texto del boton de inicio
-const textoBotonInicio = document.createElement('span');
+const textoBotonInicio = document.createElement('a');
 textoBotonInicio.classList.add('texto-boton');
 textoBotonInicio.textContent = 'Inicio';
+textoBotonInicio.href = '/feed';
+marcarBotonActivo(botonInicio, textoBotonInicio.href);
+botonInicio.addEventListener('click', () => {
+  window.location.href = textoBotonInicio.href;
+});
 
 //Renderizacion del boton de inicio
 menuHamburguesa.append(botonesNavegacion);
@@ -116,9 +136,14 @@ botonMensajes.classList.add('boton-navegacion-mensajes');
 botonMensajes.innerHTML = iconoMensajes;
 
 //Texto del boton de mensajes
-const textoBotonMensajes = document.createElement('span');
+const textoBotonMensajes = document.createElement('a');
 textoBotonMensajes.classList.add('texto-boton');
 textoBotonMensajes.textContent = 'Mensajes';
+textoBotonMensajes.href = './mensajes.html';
+marcarBotonActivo(botonMensajes, textoBotonMensajes.href);
+botonMensajes.addEventListener('click', () => {
+  window.location.href = textoBotonMensajes.href;
+});
 
 //Renderizacion del boton de mensajes
 botonesNavegacion.append(botonMensajesDiv);
@@ -145,10 +170,15 @@ botonPublicaciones.classList.add('boton-navegacion-publicaciones');
 botonPublicaciones.innerHTML = iconoPublicaciones;
 
 //Texto del boton de publicaciones
-const textoBotonPublicaciones = document.createElement('span');
+const textoBotonPublicaciones = document.createElement('a');
 textoBotonPublicaciones.classList.add('texto-boton');
 textoBotonPublicaciones.textContent = 'Publicar';
-  
+textoBotonPublicaciones.href = './publicacion.html';
+marcarBotonActivo(botonPublicaciones, textoBotonPublicaciones.href);
+botonPublicaciones.addEventListener('click', () => {
+  window.location.href = textoBotonPublicaciones.href;
+});
+
 //Renderizacion del boton de publicaciones
 menuHamburguesa.append(botonesNavegacion);
 botonesNavegacion.append(botonPublicacionesDiv);
@@ -174,9 +204,15 @@ botonPerfil.classList.add('boton-navegacion-perfil');
 botonPerfil.innerHTML = iconoPerfil;
 
 //Texto del boton de perfil
-const textoBotonPerfil = document.createElement('span');
+const textoBotonPerfil = document.createElement('a');
 textoBotonPerfil.classList.add('texto-boton');
 textoBotonPerfil.textContent = 'Perfil';
+textoBotonPerfil.href = './perfil.html';
+marcarBotonActivo(botonPerfil, textoBotonPerfil.href);
+botonPerfil.addEventListener('click', () => {
+  window.location.href = textoBotonPerfil.href;
+});
+
 
 //Renderizacion del boton de perfil
 menuHamburguesa.append(botonesNavegacion);
@@ -191,5 +227,3 @@ botonPerfil.append(textoBotonPerfil);
 
 //LLamar Funciones para renderizar los botones del menu hamburguesa
 botonesMenuHamburguesa();
-
-

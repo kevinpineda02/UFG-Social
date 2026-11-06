@@ -1,6 +1,6 @@
 import fotoPorDefecto from '../assets/perfil/perfil.png';
 import { API_BASE_URL } from '../core/api/api';
-import { obtenerUserId } from '../features/auth/authGuard';
+import { cerrarSesion, obtenerUserId } from '../features/auth/authGuard';
 import { obtenerUsuarioPorId } from '../features/usuario/usuario.api';
 
 
@@ -220,6 +220,44 @@ botonesNavegacion.append(botonPerfilDiv);
 botonPerfilDiv.append(botonPerfil);
 botonPerfil.append(textoBotonPerfil);
 
+// Boton para alternar el tema de color
+const botonTemaDiv = document.createElement('div');
+botonTemaDiv.classList.add('boton-navegacion-tema-div');
+
+const botonTema = document.createElement('button');
+botonTema.type = 'button';
+botonTema.id = 'tema';
+botonTema.classList.add('boton-navegacion-tema');
+botonTema.dataset.label = 'Tema';
+botonTema.ariaLabel = 'Cambiar tema de color';
+botonTema.innerHTML = `
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+  <circle cx="12" cy="12" r="4"></circle>
+  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+</svg>
+<span class="texto-boton">Cambio de tema</span>`;
+
+botonesNavegacion.append(botonTemaDiv);
+botonTemaDiv.append(botonTema);
+
+
+//Boton para cerrar sesion
+const botonCerrarSesionDiv = document.createElement('div');
+botonCerrarSesionDiv.classList.add('boton-navegacion-cerrar-sesion-div');
+const botonCerrarSesion = document.createElement('button');
+botonCerrarSesion.type = 'button';
+botonCerrarSesion.classList.add('boton-navegacion-cerrar-sesion');
+botonCerrarSesion.dataset.label = 'Cerrar sesión';
+botonCerrarSesion.ariaLabel = 'Cerrar sesión';
+botonCerrarSesion.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 1.84615C3.46957 1.84615 2.96086 2.04066 2.58579 2.38688C2.21071 2.7331 2 3.20268 2 3.69231V20.3077C2 20.7973 2.21071 21.2669 2.58579 21.6131C2.96086 21.9593 3.46957 22.1538 4 22.1538H12C12.5304 22.1538 13.0391 21.9593 13.4142 21.6131C13.7893 21.2669 14 20.7973 14 20.3077V15.6923C14 15.4475 14.1054 15.2127 14.2929 15.0396C14.4804 14.8665 14.7348 14.7692 15 14.7692C15.2652 14.7692 15.5196 14.8665 15.7071 15.0396C15.8946 15.2127 16 15.4475 16 15.6923V20.3077C16 21.287 15.5786 22.2261 14.8284 22.9185C14.0783 23.611 13.0609 24 12 24H4C2.93913 24 1.92172 23.611 1.17157 22.9185C0.421427 22.2261 0 21.287 0 20.3077V3.69231C0 2.71305 0.421427 1.77389 1.17157 1.08145C1.92172 0.38901 2.93913 0 4 0H12C13.0609 0 14.0783 0.38901 14.8284 1.08145C15.5786 1.77389 16 2.71305 16 3.69231V8.30769C16 8.55251 15.8946 8.7873 15.7071 8.96041C15.5196 9.13352 15.2652 9.23077 15 9.23077C14.7348 9.23077 14.4804 9.13352 14.2929 8.96041C14.1054 8.7873 14 8.55251 14 8.30769V3.69231C14 3.20268 13.7893 2.7331 13.4142 2.38688C13.0391 2.04066 12.5304 1.84615 12 1.84615H4ZM10.7067 7.65539C10.8939 7.82846 10.9991 8.06308 10.9991 8.30769C10.9991 8.55231 10.8939 8.78692 10.7067 8.96L8.41333 11.0769H23C23.2652 11.0769 23.5196 11.1742 23.7071 11.3473C23.8946 11.5204 24 11.7552 24 12C24 12.2448 23.8946 12.4796 23.7071 12.6527C23.5196 12.8258 23.2652 12.9231 23 12.9231H8.41333L10.7067 15.04C10.8049 15.1245 10.8837 15.2264 10.9384 15.3396C10.993 15.4529 11.0224 15.5751 11.0248 15.699C11.0272 15.823 11.0025 15.9461 10.9522 16.061C10.9019 16.176 10.827 16.2804 10.7321 16.368C10.6371 16.4557 10.524 16.5248 10.3995 16.5712C10.2749 16.6177 10.1416 16.6405 10.0073 16.6383C9.87303 16.6361 9.74061 16.609 9.61795 16.5585C9.49528 16.508 9.38488 16.4353 9.29333 16.3446L5.29333 12.6523C5.10607 12.4792 5.00088 12.2446 5.00088 12C5.00088 11.7554 5.10607 11.5208 5.29333 11.3477L9.29333 7.65539C9.48083 7.48252 9.735 7.38543 10 7.38543C10.265 7.38543 10.5192 7.48252 10.7067 7.65539Z" fill-rule="evenodd" clip-rule="evenodd" fill="#FF0000"/>
+</svg><span class="texto-boton">Cerrar sesión</span>`;
+
+botonesNavegacion.append(botonCerrarSesionDiv);
+botonCerrarSesionDiv.append(botonCerrarSesion);
+botonCerrarSesion.addEventListener('click', () => {
+  cerrarSesion();
+});
 
   return menuHamburguesa;
 }

@@ -17,7 +17,10 @@ export function aplicarTema(tema: Tema): void {
   // Inyectamos el SVG correspondiente dentro del botón
   const boton = document.getElementById(idBotonActivo);
   if (boton) {
-    boton.innerHTML = tema === 'claro' ? iconoSol : iconoLuna;
+    const icono = tema === 'claro' ? iconoSol : iconoLuna;
+    boton.innerHTML = boton.dataset.label
+      ? `${icono}<span class="texto-boton">${boton.dataset.label}</span>`
+      : icono;
   }
 
   try {

@@ -2,18 +2,27 @@ import { iniciarTema } from './core/tema';
 import { cambiarFormulario } from './core/cambioForm';
 import { initLogin } from './features/auth/login';
 import { initRegistro } from './features/auth/registro';
-import { verificarSesion } from './features/auth/authGuard';
-import './components/menuHamburgesa';
-import { feedGeneral } from './components/feedGeneral';
-import './components/publicar';
+import { verificarAccesoDeRuta } from './features/auth/authGuard';
 
+(async (): Promise<void> => {
+  if (!verificarAccesoDeRuta()) {
+    return;
+  }
 
-if (document.querySelector('.feed')) {
-  verificarSesion();
-  feedGeneral();
-}
+  const [{ feedGeneral }, { verificarSesion }] = await Promise.all([
+    import('./components/feedGeneral'),
+    import('./features/auth/authGuard'),
+    import('./components/menuHamburgesa'),
+    import('./components/publicar'),
+  ]).then(([feedModule, authModule]) => [feedModule, authModule] as const);
 
-iniciarTema('tema');
-cambiarFormulario();
-initLogin();
-initRegistro();
+  if (document.querySelector('.feed')) {
+    verificarSesion();
+    void feedGeneral();
+  }
+
+  iniciarTema('tema');
+  cambiarFormulario();
+  initLogin();
+  initRegistro();
+})();

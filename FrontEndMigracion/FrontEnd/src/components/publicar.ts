@@ -3,7 +3,9 @@ import fotoPorDefecto from '../assets/perfil/perfil.png';
 import { API_BASE_URL } from '../core/api/api';
 import { obtenerUserId } from '../features/auth/authGuard';
 import { crearPublicacion } from '../features/publicaciones/publicar.api';
+import { obtenerPublicacionesPorUsuario } from '../features/publicaciones/publicaciones.api';
 import { obtenerUsuarioPorId } from '../features/usuario/usuario.api';
+import { crearTarjetaPublicacion } from './feedGeneral';
 
 const publicarDiv = document.querySelector('.publicacion');
 
@@ -37,6 +39,47 @@ publicarPanelDiv.append(perfilPublicar);
 //Renderizar el titulo y el panel de publicacion en el contenedor
 contenidoPublicar.append(tituloPublicar, publicarPanelDiv);
 publicarDiv?.appendChild(contenidoPublicar);
+
+const misPublicaciones = document.createElement('section');
+misPublicaciones.className = 'mis-publicaciones';
+const tituloMisPublicaciones = document.createElement('h2');
+tituloMisPublicaciones.className = 'titulo-mis-publicaciones';
+tituloMisPublicaciones.textContent = 'Mis publicaciones';
+const listaMisPublicaciones = document.createElement('div');
+listaMisPublicaciones.className = 'lista-mis-publicaciones';
+misPublicaciones.append(tituloMisPublicaciones, listaMisPublicaciones);
+contenidoPublicar.appendChild(misPublicaciones);
+
+async function cargarMisPublicaciones(userId: number): Promise<void> {
+  listaMisPublicaciones.replaceChildren();
+  const estado = document.createElement('p');
+  estado.className = 'estado-publicaciones';
+  estado.textContent = 'Cargando tus publicaciones...';
+  listaMisPublicaciones.append(estado);
+
+  try {
+    const publicaciones = await obtenerPublicacionesPorUsuario(userId);
+    publicaciones.sort(
+      (primera, segunda) =>
+        new Date(segunda.creationDate).getTime() - new Date(primera.creationDate).getTime()
+    );
+    listaMisPublicaciones.replaceChildren();
+
+    if (publicaciones.length === 0) {
+      estado.textContent = 'Todavía no tienes publicaciones.';
+      listaMisPublicaciones.append(estado);
+      return;
+    }
+
+    publicaciones.forEach((publicacion) => {
+      listaMisPublicaciones.append(crearTarjetaPublicacion(publicacion));
+    });
+  } catch (error) {
+    console.error('No se pudieron cargar tus publicaciones:', error);
+    estado.textContent = 'No se pudieron cargar tus publicaciones. Intenta nuevamente.';
+    listaMisPublicaciones.replaceChildren(estado);
+  }
+}
 
 async function cargarPerfil(): Promise<void> {
   const userId = obtenerUserId();
@@ -91,12 +134,21 @@ selectorVideo.hidden = true;
 
 let imagenesSeleccionadas: File[] = [];
 let videoSeleccionado: File | null = null;
+let estaPublicando = false;
 
 function actualizarVistaPrevia(): void {
   vistaPreviaDiv.querySelectorAll<HTMLImageElement | HTMLVideoElement>('img, video').forEach((elemento) => {
     URL.revokeObjectURL(elemento.src);
   });
   vistaPreviaDiv.replaceChildren();
+
+  const tieneArchivos = imagenesSeleccionadas.length > 0 || videoSeleccionado !== null;
+  if (tieneArchivos) {
+    const limiteVistaPrevia = document.createElement('small');
+    limiteVistaPrevia.classList.add('limite-vista-previa');
+    limiteVistaPrevia.textContent = 'Máximo de 5 imágenes';
+    vistaPreviaDiv.appendChild(limiteVistaPrevia);
+  }
 
   imagenesSeleccionadas.forEach((imagen, indice) => {
     const elementoPrevia = document.createElement('div');
@@ -190,15 +242,45 @@ botonesPublicacionDiv.appendChild(botonPublicar);
 publicarPanelDiv.appendChild(botonesPublicacionDiv);
 publicarPanelDiv.append(selectorImagenes, selectorVideo);
 
+const estadoPublicacion = document.createElement('div');
+estadoPublicacion.className = 'estado-publicacion';
+estadoPublicacion.hidden = true;
+estadoPublicacion.setAttribute('role', 'status');
+estadoPublicacion.setAttribute('aria-live', 'polite');
+estadoPublicacion.innerHTML = '<span class="cargador-publicacion" aria-hidden="true"></span><span>Publicando...</span>';
+publicarPanelDiv.appendChild(estadoPublicacion);
+
+function cambiarEstadoPublicacion(publicando: boolean): void {
+  estaPublicando = publicando;
+  publicarPanelDiv.classList.toggle('publicar-enviando', publicando);
+  estadoPublicacion.hidden = !publicando;
+  inputPublicacion.disabled = publicando;
+  selectorImagenes.disabled = publicando;
+  selectorVideo.disabled = publicando;
+
+  [iconoVideo, iconoEncuesta, iconoImagen, botonPublicar].forEach((boton) => {
+    boton.setAttribute('aria-disabled', String(publicando));
+  });
+}
+
 iconoVideo.addEventListener('click', () => {
+  if (estaPublicando) {
+    return;
+  }
   selectorVideo.click();
 });
 
 iconoEncuesta.addEventListener('click', () => {
+  if (estaPublicando) {
+    return;
+  }
   window.alert('Las encuestas estarán disponibles próximamente.');
 });
 
 iconoImagen.addEventListener('click', () => {
+  if (estaPublicando) {
+    return;
+  }
   selectorImagenes.click();
 });
 
@@ -222,6 +304,10 @@ selectorVideo.addEventListener('change', () => {
 });
 
 botonPublicar.addEventListener('click', async () => {
+  if (estaPublicando) {
+    return;
+  }
+
   const userId = obtenerUserId();
   const descripcion = inputPublicacion.value.trim();
 
@@ -234,7 +320,7 @@ botonPublicar.addEventListener('click', async () => {
     return;
   }
 
-  botonPublicar.classList.add('publicando');
+  cambiarEstadoPublicacion(true);
   try {
     await crearPublicacion(userId, descripcion, imagenesSeleccionadas, videoSeleccionado);
     inputPublicacion.value = '';
@@ -243,14 +329,18 @@ botonPublicar.addEventListener('click', async () => {
     selectorImagenes.value = '';
     selectorVideo.value = '';
     actualizarVistaPrevia();
+    await cargarMisPublicaciones(userId);
     window.alert('Publicación creada correctamente.');
   } catch (error) {
     console.error('No se pudo crear la publicación:', error);
     window.alert('No se pudo crear la publicación. Intenta nuevamente.');
   } finally {
-    botonPublicar.classList.remove('publicando');
+    cambiarEstadoPublicacion(false);
   }
 });
 
-
 void cargarPerfil();
+const userIdInicial = obtenerUserId();
+if (userIdInicial !== null) {
+  void cargarMisPublicaciones(userIdInicial);
+}

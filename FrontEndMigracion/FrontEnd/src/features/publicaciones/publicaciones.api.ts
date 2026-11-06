@@ -38,8 +38,28 @@ export function obtenerPublicaciones(): Promise<Publicacion[]> {
   return peticion<Publicacion[]>('/publication');
 }
 
+export function obtenerPublicacionesPorUsuario(userId: number): Promise<Publicacion[]> {
+  return peticion<Publicacion[]>(`/publication/user/${userId}`);
+}
+
 export function obtenerCantidadLikes(publicationId: number): Promise<number> {
   return peticion<number>(`/publication/${publicationId}/likes/count`);
+}
+
+export function obtenerEstadoMeGusta(publicationId: number, userId: number): Promise<boolean> {
+  return peticion<boolean>(`/publication/${publicationId}/like/${userId}`);
+}
+
+export function darMeGusta(publicationId: number, userId: number): Promise<Publicacion> {
+  return peticion<Publicacion>(`/publication/${publicationId}/like/${userId}`, {
+    method: 'POST',
+  });
+}
+
+export function quitarMeGusta(publicationId: number, userId: number): Promise<Publicacion> {
+  return peticion<Publicacion>(`/publication/${publicationId}/like/${userId}`, {
+    method: 'DELETE',
+  });
 }
 
 export function obtenerImagenesPorPublicacion(
@@ -52,4 +72,21 @@ export function obtenerComentariosPorPublicacion(
   publicationId: number
 ): Promise<Comentario[]> {
   return peticion<Comentario[]>(`/publication/${publicationId}/comments`);
+}
+
+export function crearComentario(
+  publicationId: number,
+  userId: number,
+  comment: string
+): Promise<Comentario> {
+  return peticion<Comentario>(`/publication/${publicationId}/comments/${userId}`, {
+    method: 'POST',
+    body: JSON.stringify({ comment }),
+  });
+}
+
+export function eliminarComentario(commentId: number, userId: number): Promise<Comentario> {
+  return peticion<Comentario>(`/publication/comments/${commentId}/user/${userId}`, {
+    method: 'DELETE',
+  });
 }

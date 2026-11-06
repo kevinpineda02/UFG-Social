@@ -1,5 +1,5 @@
 import { iniciarSesion } from './auth';
-import { guardarToken, guardarUserId, limpiarSesion, redirigirSiAutenticado } from './authGuard';
+import { guardarRol, guardarToken, guardarUserId, limpiarSesion, redirigirSiAutenticado } from './authGuard';
 import { RUTA_FEED } from '../../core/constantes';
 
 export function initLogin(): void {
@@ -36,6 +36,7 @@ export function initLogin(): void {
 
       guardarToken(auth.token);
       guardarUserId(auth.userId);
+      guardarRol(auth.rol);
 
       window.location.replace(RUTA_FEED);
     } catch (error) {

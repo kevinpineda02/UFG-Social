@@ -1,4 +1,4 @@
-import { RUTA_FEED, RUTA_LOGIN, TOKEN_KEY, USER_ID_KEY } from '../../core/constantes';
+import { RUTA_FEED, RUTA_LOGIN, TOKEN_KEY, USER_ID_KEY, USER_ROLE_KEY } from '../../core/constantes';
 
 // ---------- Manejo del token ----------
 export function guardarToken(token: string): void {
@@ -26,9 +26,22 @@ export function obtenerUserId(): number | null {
   return Number.isNaN(numero) ? null : numero;
 }
 
+export function guardarRol(rol: string | null): void {
+  if (rol) {
+    localStorage.setItem(USER_ROLE_KEY, rol);
+  } else {
+    localStorage.removeItem(USER_ROLE_KEY);
+  }
+}
+
+export function obtenerRol(): string | null {
+  return localStorage.getItem(USER_ROLE_KEY);
+}
+
 export function limpiarSesion(): void {
   localStorage.removeItem(TOKEN_KEY);
   limpiarUserId();
+  guardarRol(null);
 }
 
 export function cerrarSesion(): void {
@@ -77,6 +90,22 @@ export function verificarSesion(): void {
     limpiarSesion();
     window.location.replace(RUTA_LOGIN);
   }
+}
+
+export function verificarAccesoDeRuta(): boolean {
+  const archivoActual = window.location.pathname.split('/').pop() || 'index.html';
+
+  if (archivoActual === 'index.html') {
+    return true;
+  }
+
+  if (!haySesionValida() || obtenerUserId() === null) {
+    limpiarSesion();
+    window.location.replace(RUTA_LOGIN);
+    return false;
+  }
+
+  return true;
 }
 
 // Para login y registro: si ya hay sesión, redirige al feed

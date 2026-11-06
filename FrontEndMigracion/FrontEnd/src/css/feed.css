@@ -5,6 +5,14 @@
     background: var(--color-primario);
 }
 
+.logo-ufg{
+    display: block;
+    width: 140px;
+    height: 60px;
+    margin: 0 auto 18px;
+    object-fit: contain;
+}
+
 .contenido-feed {
     width: min(100% - 32px, 680px);
     margin: 0 auto;
@@ -14,7 +22,7 @@
 }
 
 .titulo-feed {
-    margin: 0px 0 18px;
+    margin: 0 0 18px;
     color: var(--color-texto-principal);
     font-family: var(--fuente-principal);
     font-size: 24px;

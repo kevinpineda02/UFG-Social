@@ -1,0 +1,159 @@
+.publicacion{
+    display: flex;
+    gap: 28px;
+    background: var(--color-primario);
+}
+
+.contenido-publicar{
+    width: 600px;
+    margin: 35px auto 0;
+    position: relative;
+    right: 120px;
+}
+
+.publicar-panel{
+    width: 600px;
+    min-height: 230px;
+    padding-bottom: 16px;
+    position: relative;
+    background: var(--color-secundario);
+    border-radius: 12px;
+}
+
+.perfil-publicar{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 16px;
+}
+
+.foto-publicar{
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.nombre-publicar{
+    color: var(--color-texto-principal);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.titulo-publicar{
+    margin: 0 0 12px;
+    padding: 0;
+    color: var(--color-texto-principal);
+    font-family: var(--fuente-principal);
+    font-size: 20px;
+}
+
+.input-publicar-div{
+    padding: 0 16px;
+    margin-bottom: 12px;
+}
+
+textarea.input-publicar {
+    width: 95%;
+    padding: 8px 12px;
+    border: var(--color-bordes) 0.5px solid;
+    border-radius: 15px;
+    background: var(--color-fondo-campo);
+    color: var(--color-texto-principal);
+    font-family: var(--fuente-principal);
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    margin-bottom: 12px;
+}
+
+.vista-previa-publicar{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 0 16px 24px;
+    padding: 8px;
+    border: 1px dashed var(--color-bordes);
+    border-radius: 10px;
+}
+
+.vista-previa-publicar:empty{
+    display: none;
+}
+
+.elemento-previa-publicar{
+    position: relative;
+    min-width: 0;
+}
+
+.imagen-previa-publicar,
+.video-previo-publicar{
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--color-fondo-campo);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.video-previo-publicar{
+    grid-column: span 2;
+}
+
+.elemento-video-previa-publicar{
+    grid-column: span 2;
+}
+
+.eliminar-previa-publicar{
+    position: absolute;
+    top: 1px;
+    right: 4px;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center; 
+    border: 1px solid var(--color-bordes);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--color-texto-principal);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.eliminar-previa-publicar:hover{
+    background: var(--color-terciario);
+}
+
+.botones-publicar{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 24px;
+    margin: 0 28px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--color-texto-principal);
+}
+
+.icono-video,
+.icono-encuesta,
+.icono-imagen,
+.boton-publicar{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    cursor: pointer;
+    height: 20px;
+}
+
+.icono-video svg,
+.icono-encuesta svg,
+.icono-imagen svg,
+.boton-publicar svg{
+    display: block;
+    max-width: 24px;
+    max-height: 24px;
+}

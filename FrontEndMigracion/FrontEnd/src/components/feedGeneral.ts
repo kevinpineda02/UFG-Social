@@ -225,6 +225,11 @@ export async function feedGeneral(): Promise<void> {
   titulo.className = 'titulo-feed';
   titulo.textContent = 'Feed';
 
+  const logoUFG = document.createElement('img');
+  logoUFG.src = './src/assets/fondos/logo.png';
+  logoUFG.alt = 'Logo de la Universidad Francisco Gavidia';
+  logoUFG.className = 'logo-ufg';
+
   const contenedorPublicaciones = document.createElement('div');
   contenedorPublicaciones.className = 'contenedor-publicaciones';
   const estado = document.createElement('p');
@@ -232,7 +237,7 @@ export async function feedGeneral(): Promise<void> {
   estado.textContent = 'Cargando publicaciones...';
   contenedorPublicaciones.append(estado);
 
-  contenidoFeed.append(titulo, contenedorPublicaciones);
+  contenidoFeed.append(logoUFG, titulo, contenedorPublicaciones);
   contenedorFeed.append(contenidoFeed);
 
   try {
@@ -258,10 +263,3 @@ export async function feedGeneral(): Promise<void> {
     contenedorPublicaciones.replaceChildren(estado);
   }
 }
-
-//Logo UFG
-const logoUFG = document.createElement('img');
-logoUFG.src = './src/assets/fondos/logo.png';
-logoUFG.alt = 'Logo de la Universidad Francisco Gavidia';
-logoUFG.className = 'logo-ufg';
-document.body.append(logoUFG);

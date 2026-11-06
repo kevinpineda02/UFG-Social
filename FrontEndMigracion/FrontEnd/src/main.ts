@@ -5,6 +5,7 @@ import { initRegistro } from './features/auth/registro';
 import { verificarSesion } from './features/auth/authGuard';
 import './components/menuHamburgesa';
 import { feedGeneral } from './components/feedGeneral';
+import './components/publicar';
 
 
 if (document.querySelector('.feed')) {

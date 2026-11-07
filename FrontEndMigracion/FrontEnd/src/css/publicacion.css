@@ -7,6 +7,7 @@
 }
 
 .encabezado-publicacion {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -41,14 +42,60 @@
     font-size: 13px;
 }
 
+.titulo-mis-publicaciones{
+    font-size: 20px;
+    margin-left: 4px;
+    padding-top: 8px;
+}
+
 .menu-publicacion {
+    width: 32px;
+    height: 32px;
     margin-left: auto;
     border: 0;
     background: transparent;
-    color: var(--color-texto-principal);
+    color: var(--color-texto-secundario);
     font-size: 24px;
     line-height: 1;
     cursor: pointer;
+}
+
+.menu-publicacion-contenedor {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+}
+
+.menu-publicacion-contenedor .menu-publicacion {
+    margin-left: 0;
+}
+
+.eliminar-publicacion {
+    position: absolute;
+    top: auto;
+    bottom: calc(100% + 6px);
+    left: 0;
+    z-index: 2;
+    padding: 8px 10px;
+    border: 1px solid var(--color-bordes);
+    border-radius: 7px;
+    white-space: nowrap;
+    background: var(--color-secundario);
+    color: var(--color-error);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+}
+
+.eliminar-publicacion:hover {
+    background: var(--color-error);
+    color: var(--color-objetos);
+}
+
+.menu-publicacion:hover {
+    color: var(--color-texto-principal);
+    background: var(--color-hoover);
+    border-radius: 50%;
 }
 
 .contenido-publicacion {
@@ -57,7 +104,7 @@
 }
 
 .descripcion-publicacion {
-    margin: 4px 0 14px;
+    margin: 4px 8px 14px;
     font-size: 15px;
     line-height: 1.45;
     white-space: pre-line;
@@ -217,13 +264,14 @@
     gap: 7px;
     margin-left: 44px;
     position: relative; 
-    bottom: 15px;
+    bottom: 12px;
+    width: 80%; 
 }
 
 .entrada-comentario {
     min-width: 0;
     flex: 1;
-    height: 25px;
+    height: 20px;
     padding: 6px 10px;
     padding-top: 8px;
     border: 1px solid var(--color-bordes);
@@ -325,6 +373,24 @@
     color: var(--color-texto-principal);
     position: relative;
     padding-left: 40px;
+    font-size: 14px;
+    
+}
+
+.responder-comentario {
+    align-self: flex-start;
+    margin-left: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-terciario);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+}
+
+.responder-comentario:hover {
+    text-decoration: underline;
 }
 
 .eliminar-comentario {

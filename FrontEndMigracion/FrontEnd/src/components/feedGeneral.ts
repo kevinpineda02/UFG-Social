@@ -6,6 +6,7 @@ import {
   crearComentario,
   darMeGusta,
   eliminarComentario,
+  eliminarPublicacion,
   quitarMeGusta,
   obtenerCantidadLikes,
   obtenerEstadoMeGusta,
@@ -92,7 +93,8 @@ async function cargarDetallesPublicacion(publicacion: Publicacion): Promise<Publ
 function crearListaComentarios(
   comentarios: Comentario[],
   userId: number | null,
-  onEliminar: (comentario: Comentario) => void
+  onEliminar: (comentario: Comentario) => void,
+  onResponder: (comentario: Comentario) => void
 ): HTMLElement {
   const lista = document.createElement('div');
   lista.className = 'lista-comentarios';
@@ -135,7 +137,13 @@ function crearListaComentarios(
     const texto = document.createElement('span');
     texto.textContent = comentario.comment;
 
-    elemento.append(autorComentario, texto);
+    const responder = document.createElement('button');
+    responder.type = 'button';
+    responder.className = 'responder-comentario';
+    responder.textContent = 'Responder';
+    responder.addEventListener('click', () => onResponder(comentario));
+
+    elemento.append(autorComentario, texto, responder);
     if (userId !== null && (comentario.userId === userId || rolActual === 'ADMIN')) {
       const menuContenedor = document.createElement('div');
       menuContenedor.className = 'menu-comentario';
@@ -185,6 +193,15 @@ function crearPanelComentarios(
     lista.replaceChildren(
       crearListaComentarios(comentarios, userId, (comentario) => {
         void eliminarComentarioPublicacion(comentario);
+      }, (comentario) => {
+        const nombre = (comentario.username || comentario.user || 'usuario').replace(/^@/, '').trim();
+        const mencion = `@${nombre}`;
+        const textoActual = entrada.value.trimEnd();
+        entrada.value = textoActual.endsWith(mencion)
+          ? `${textoActual} `
+          : `${textoActual ? `${textoActual} ` : ''}${mencion} `;
+        entrada.focus();
+        entrada.setSelectionRange(entrada.value.length, entrada.value.length);
       })
     );
   };
@@ -412,7 +429,35 @@ export function crearTarjetaPublicacion(publicacion: Publicacion): HTMLElement {
   menuPublicacion.type = 'button';
   menuPublicacion.ariaLabel = 'Opciones de publicación';
   menuPublicacion.textContent = '⋮';
-  encabezado.append(menuPublicacion);
+  const userId = obtenerUserId();
+  const rolActual = obtenerRol()?.toUpperCase();
+  if (userId !== null && (publicacion.idUser === userId || rolActual === 'ADMIN')) {
+    const menuContenedor = document.createElement('div');
+    menuContenedor.className = 'menu-publicacion-contenedor';
+
+    const eliminar = document.createElement('button');
+    eliminar.type = 'button';
+    eliminar.className = 'eliminar-publicacion';
+    eliminar.textContent = 'Eliminar publicación';
+    eliminar.hidden = true;
+    eliminar.addEventListener('click', () => {
+      eliminar.disabled = true;
+      void eliminarPublicacion(publicacion.id, userId)
+        .then(() => {
+          tarjeta.remove();
+        })
+        .catch((error) => {
+          console.error(`No se pudo eliminar la publicación ${publicacion.id}:`, error);
+          eliminar.disabled = false;
+        });
+    });
+
+    menuContenedor.append(menuPublicacion, eliminar);
+    menuPublicacion.addEventListener('click', () => {
+      eliminar.hidden = !eliminar.hidden;
+    });
+    encabezado.append(menuContenedor);
+  }
 
   const contenido = document.createElement('div');
   contenido.className = 'contenido-publicacion';
@@ -486,7 +531,6 @@ export function crearTarjetaPublicacion(publicacion: Publicacion): HTMLElement {
     }
   });
 
-  const userId = obtenerUserId();
   if (userId !== null) {
     actualizandoMeGusta = true;
     botonMeGusta.disabled = true;

@@ -90,3 +90,9 @@ export function eliminarComentario(commentId: number, userId: number): Promise<C
     method: 'DELETE',
   });
 }
+
+export function eliminarPublicacion(publicationId: number, userId: number): Promise<Publicacion> {
+  return peticion<Publicacion>(`/publication/${publicationId}/user/${userId}`, {
+    method: 'DELETE',
+  });
+}

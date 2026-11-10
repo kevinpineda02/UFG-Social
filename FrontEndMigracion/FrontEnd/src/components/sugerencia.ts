@@ -211,9 +211,7 @@ export async function menuSolicitudes(): Promise<void> {
       if (resultado?.status === 'rejected') {
         console.error(`No se pudo consultar el estado de seguimiento del usuario ${usuario.id}:`, resultado.reason);
       }
-      if (estado !== 'PENDING_RECEIVED') {
-        listaSugerencias.appendChild(crearTarjetaSugerencia(usuario, usuarioActualId, estado));
-      }
+      listaSugerencias.appendChild(crearTarjetaSugerencia(usuario, usuarioActualId, estado));
     });
   } catch (error) {
     console.error('No se pudieron cargar las sugerencias:', error);

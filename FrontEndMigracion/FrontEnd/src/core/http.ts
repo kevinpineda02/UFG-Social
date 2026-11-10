@@ -25,5 +25,10 @@ export async function peticion<T>(
     throw new Error(`Error ${res.status}`);
   }
 
-  return res.json() as Promise<T>;
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const cuerpo = await res.text();
+  return cuerpo ? (JSON.parse(cuerpo) as T) : (undefined as T);
 }

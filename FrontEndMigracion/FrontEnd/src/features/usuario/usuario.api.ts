@@ -9,3 +9,9 @@ export function obtenerUsuarioPorId(id: number): Promise<UserResponse> {
     method: 'GET',
   });
 }
+
+export function obtenerUsuarios(): Promise<UserResponse[]> {
+  return peticion<UserResponse[]>('/user/users', {
+    method: 'GET',
+  });
+}

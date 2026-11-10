@@ -1,12 +1,5 @@
 @import "./global.css";
 
-@font-face {
-  font-family: "Plus Jakarta Sans";
-  src: url("../assets/fuentes/PlusJakartaSans-Variable.woff2") format("woff2");
-  font-weight: 200 800;
-  font-display: swap;
-}
-
 body{
     margin: 0;
     padding: 0;
@@ -27,6 +20,7 @@ body{
     background-color: var(--color-secundario);
     height: 100vh;
     overflow-y: auto;
+    box-shadow : 5px 0px 10px var(--color-sombra);
 }
 
 .foto-perfil {
@@ -83,6 +77,13 @@ body{
     color: currentColor;
 }
 
+.boton-navegacion-solicitudes svg{
+    width: 24px;
+    height: 24px;
+    padding-left: 10px;
+    color: currentColor;
+}
+
 .boton-navegacion-tema svg{
     width: 24px;
     height: 24px;
@@ -96,6 +97,7 @@ body{
 
 .boton-navegacion-inicio, .boton-navegacion-publicaciones, 
 .boton-navegacion-perfil, .boton-navegacion-mensajes,
+.boton-navegacion-solicitudes,
 .boton-navegacion-tema{
   background: transparent;
   justify-content: flex-start;
@@ -153,11 +155,13 @@ body{
 
 .boton-navegacion-inicio:hover, .boton-navegacion-publicaciones:hover, 
 .boton-navegacion-perfil:hover, .boton-navegacion-mensajes:hover,
+.boton-navegacion-solicitudes:hover,
 .boton-navegacion-tema:hover,
 .boton-navegacion-inicio.boton-navegacion-activo,
 .boton-navegacion-publicaciones.boton-navegacion-activo,
 .boton-navegacion-perfil.boton-navegacion-activo,
 .boton-navegacion-mensajes.boton-navegacion-activo,
+.boton-navegacion-solicitudes.boton-navegacion-activo,
 .boton-navegacion-tema.boton-navegacion-activo {
   background: var(--color-terciario);
   color: var(--color-secundario);
@@ -167,11 +171,65 @@ body{
 .boton-navegacion-publicaciones:hover .texto-boton,
 .boton-navegacion-perfil:hover .texto-boton,
 .boton-navegacion-mensajes:hover .texto-boton,
+.boton-navegacion-solicitudes:hover .texto-boton,
 .boton-navegacion-tema:hover .texto-boton,
 .boton-navegacion-inicio.boton-navegacion-activo .texto-boton,
 .boton-navegacion-publicaciones.boton-navegacion-activo .texto-boton,
 .boton-navegacion-perfil.boton-navegacion-activo .texto-boton,
 .boton-navegacion-mensajes.boton-navegacion-activo .texto-boton,
+.boton-navegacion-solicitudes.boton-navegacion-activo .texto-boton,
 .boton-navegacion-tema.boton-navegacion-activo .texto-boton {
   color: inherit;
+}
+
+@media (min-width: 761px) and (max-width: 1440px) {
+  .menu-hamburguesa {
+    width: 215px;
+    gap: 10px;
+  }
+
+  .foto-perfil {
+    width: 74px;
+    height: 74px;
+    margin-top: 30px;
+  }
+
+  .nombre-usuario {
+    font-size: 17px;
+  }
+
+  .texto-boton {
+    font-size: 14px;
+  }
+
+  .boton-navegacion-inicio-div {
+    margin-top: 24px;
+  }
+
+  .boton-navegacion-inicio, .boton-navegacion-publicaciones,
+  .boton-navegacion-perfil, .boton-navegacion-mensajes,
+  .boton-navegacion-solicitudes, .boton-navegacion-tema {
+    margin: 14px auto;
+    padding: 9px 0;
+  }
+
+  .boton-navegacion-inicio svg, .boton-navegacion-publicaciones svg,
+  .boton-navegacion-perfil svg, .boton-navegacion-mensajes svg,
+  .boton-navegacion-solicitudes svg, .boton-navegacion-tema svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  .boton-navegacion-cerrar-sesion {
+    left: 24px;
+    bottom: 16px;
+    width: 78%;
+    padding: 9px 11px;
+  }
+
+  .boton-navegacion-cerrar-sesion svg {
+    width: 23px;
+    height: 23px;
+    flex-basis: 23px;
+  }
 }

@@ -61,7 +61,7 @@ function crearIconoMeGusta(): string {
     </svg>`;
 }
 
-async function cargarDetallesPublicacion(publicacion: Publicacion): Promise<Publicacion> {
+export async function cargarDetallesPublicacion(publicacion: Publicacion): Promise<Publicacion> {
   const [resultadoLikes, resultadoImagenes, resultadoComentarios] = await Promise.allSettled([
     obtenerCantidadLikes(publicacion.id),
     obtenerImagenesPorPublicacion(publicacion.id),

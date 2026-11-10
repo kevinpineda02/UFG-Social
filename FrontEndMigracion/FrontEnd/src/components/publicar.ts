@@ -5,7 +5,7 @@ import { obtenerUserId } from '../features/auth/authGuard';
 import { crearPublicacion } from '../features/publicaciones/publicar.api';
 import { obtenerPublicacionesPorUsuario } from '../features/publicaciones/publicaciones.api';
 import { obtenerUsuarioPorId } from '../features/usuario/usuario.api';
-import { crearTarjetaPublicacion } from './feedGeneral';
+import { cargarDetallesPublicacion, crearTarjetaPublicacion } from './feedGeneral';
 
 const publicarDiv = document.querySelector('.publicacion');
 
@@ -71,7 +71,11 @@ async function cargarMisPublicaciones(userId: number): Promise<void> {
       return;
     }
 
-    publicaciones.forEach((publicacion) => {
+    const publicacionesConDetalles = await Promise.all(
+      publicaciones.map((publicacion) => cargarDetallesPublicacion(publicacion))
+    );
+
+    publicacionesConDetalles.forEach((publicacion) => {
       listaMisPublicaciones.append(crearTarjetaPublicacion(publicacion));
     });
   } catch (error) {

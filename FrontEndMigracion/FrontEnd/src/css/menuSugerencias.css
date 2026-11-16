@@ -24,6 +24,7 @@
 .titulo-solicitudes{
     text-align: center;
     font-size: 20px;
+    margin-top: 50px;
 }
 
 .contenedor-sugerencias {
@@ -38,7 +39,7 @@
     height: 120px;
     object-fit: cover;
     border: 2px solid var(--color-bordes);
-    border-radius: 12px;
+    border-radius: 50%;
 }
 
 .contenedor-sugerencia {

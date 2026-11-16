@@ -211,6 +211,11 @@ export async function menuSolicitudes(): Promise<void> {
       if (resultado?.status === 'rejected') {
         console.error(`No se pudo consultar el estado de seguimiento del usuario ${usuario.id}:`, resultado.reason);
       }
+
+      if (estado === 'FOLLOWING') {
+        return;
+      }
+
       listaSugerencias.appendChild(crearTarjetaSugerencia(usuario, usuarioActualId, estado));
     });
   } catch (error) {

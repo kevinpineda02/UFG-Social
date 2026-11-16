@@ -1,0 +1,166 @@
+@import "./global.css";
+
+.seguidores {
+    display: flex;
+    min-height: 100vh;
+    background: var(--color-primario);
+}
+
+.contenido-seguidores {
+    box-sizing: border-box;
+    flex: 1;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px clamp(24px, 5vw, 80px);
+}
+
+.encabezado-seguidores {
+    margin-bottom: 24px;
+}
+
+.encabezado-seguidores h1 {
+    margin: 0;
+    color: var(--color-texto-principal);
+    font-size: 19px;
+    position: relative;
+    right: 50px; 
+}
+
+.panel-seguimiento {
+    min-height: calc(100vh - 150px);
+    overflow: hidden;
+    border: 1px solid var(--color-bordes);
+    border-radius: 6px;
+    background: var(--color-secundario);
+    box-shadow: 0 3px 10px var(--color-sombra);
+    position: relative;
+    right: 50px;
+}
+
+.pestanas-seguimiento {
+    display: flex;
+    border-bottom: 1px solid var(--color-bordes);
+}
+
+.pestana-seguimiento {
+    flex: 1;
+    padding: 16px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--color-texto-secundario);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pestana-seguimiento:hover,
+.pestana-seguimiento.pestana-activa {
+    border-bottom-color: var(--color-terciario);
+    color: var(--color-terciario);
+}
+
+.contenido-lista-seguimiento {
+    padding: 16px clamp(24px, 4vw, 56px);
+}
+
+.lista-seguimiento {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.persona-seguimiento {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-bordes);
+}
+
+.persona-seguimiento:last-child {
+    border-bottom: 0;
+}
+
+.foto-persona-seguimiento {
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--color-bordes);
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.datos-persona-seguimiento {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+    color: var(--color-texto-principal);
+}
+
+.datos-persona-seguimiento strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.datos-persona-seguimiento span {
+    color: var(--color-texto-secundario);
+    font-size: 13px;
+}
+
+.boton-eliminar-seguimiento {
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: var(--color-error);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.boton-eliminar-seguimiento:hover {
+    filter: brightness(0.9);
+}
+
+.boton-eliminar-seguimiento:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.estado-lista-seguimiento,
+.estado-carga-seguimiento {
+    padding: 32px;
+    color: var(--color-texto-secundario);
+    text-align: center;
+}
+
+.estado-error {
+    color: var(--color-error);
+}
+
+@media (max-width: 760px) {
+    .contenido-seguidores {
+        padding: 24px 16px;
+    }
+
+    .panel-seguimiento {
+        min-height: calc(100vh - 120px);
+    }
+
+    .contenido-lista-seguimiento {
+        padding: 8px 16px;
+    }
+
+    .boton-eliminar-seguimiento {
+        padding: 7px 9px;
+    }
+}

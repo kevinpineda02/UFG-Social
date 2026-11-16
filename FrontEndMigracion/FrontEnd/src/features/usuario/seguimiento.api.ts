@@ -20,6 +20,19 @@ export interface EstadoSeguimiento {
   status: string;
 }
 
+export interface RelacionSeguimiento {
+  id: number;
+  followerId: number;
+  followerName: string;
+  followerUsername: string;
+  followerProfilePhoto: string;
+  followedId: number;
+  followedName: string;
+  followedUsername: string;
+  followedProfilePhoto: string;
+  creationDate: string;
+}
+
 export function enviarSolicitud(requesterId: number, receiverId: number): Promise<SolicitudSeguimiento> {
   return peticion<SolicitudSeguimiento>(`/follow/request/${requesterId}/${receiverId}`, { method: 'POST' });
 }
@@ -42,4 +55,24 @@ export function aceptarSolicitud(requestId: number): Promise<SolicitudSeguimient
 
 export function rechazarSolicitud(requestId: number): Promise<SolicitudSeguimiento> {
   return peticion<SolicitudSeguimiento>(`/follow/request/${requestId}/reject`, { method: 'POST' });
+}
+
+export function obtenerCantidadSeguidores(userId: number): Promise<number> {
+  return peticion<number>(`/follow/followers/${userId}/count`);
+}
+
+export function obtenerCantidadSeguidos(userId: number): Promise<number> {
+  return peticion<number>(`/follow/following/${userId}/count`);
+}
+
+export function obtenerSeguidores(userId: number): Promise<RelacionSeguimiento[]> {
+  return peticion<RelacionSeguimiento[]>(`/follow/followers/${userId}`);
+}
+
+export function obtenerSeguidos(userId: number): Promise<RelacionSeguimiento[]> {
+  return peticion<RelacionSeguimiento[]>(`/follow/following/${userId}`);
+}
+
+export function eliminarSeguimiento(followerId: number, followedId: number): Promise<void> {
+  return peticion<void>(`/follow/${followerId}/${followedId}`, { method: 'DELETE' });
 }

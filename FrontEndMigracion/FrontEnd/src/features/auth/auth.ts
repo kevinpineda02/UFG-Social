@@ -32,10 +32,15 @@ export interface UserRequest {
   followers?: number;
   followed?: number;
   profilePhoto: string;
+  description?: string;
+  carrera?: string;
   creationDate?: string;
 }
 
-export type UserResponse = Required<UserRequest>;
+export type UserResponse = Required<UserRequest> & {
+  description: string;
+  carrera: string;
+};
 
 export interface RegistroCompleto {
   nombre: string;

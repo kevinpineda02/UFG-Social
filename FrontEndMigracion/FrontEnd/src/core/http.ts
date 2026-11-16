@@ -6,14 +6,18 @@ export async function peticion<T>(
   opciones: RequestInit = {}
 ): Promise<T> {
   const token = obtenerToken();
+  const headers = new Headers(opciones.headers);
+
+  if (!(opciones.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
 
   const res = await fetch(`${API_BASE_URL}${ruta}`, {
     ...opciones,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...opciones.headers,
-    },
+    headers,
   });
 
   if (res.status === 401) {

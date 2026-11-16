@@ -11,11 +11,11 @@ import { verificarAccesoDeRuta } from './features/auth/authGuard';
   }
 
   const [{ feedGeneral }, { verificarSesion }, { menuSolicitudes }] = await Promise.all([
-    import('./components/feedGeneral'),
+    import('./views/feedGeneral'),
     import('./features/auth/authGuard'),
-    import('./components/menuHamburgesa'),
-    import('./components/publicar'),
-    import('./components/sugerencia'),
+    import('./views/menuHamburgesa'),
+    import('./views/publicar'),
+    import('./views/sugerencia'),
   ]).then(([feedModule, authModule, , , sugerenciaModule]) =>
     [feedModule, authModule, sugerenciaModule] as const);
 
@@ -26,6 +26,14 @@ import { verificarAccesoDeRuta } from './features/auth/authGuard';
 
   if (document.querySelector('.solicitudes')) {
     void menuSolicitudes();
+  }
+
+  if (document.querySelector('.perfil')) {
+    await import('./views/perfil');
+  }
+
+  if (document.querySelector('.seguidores')) {
+    await import('./views/seguidores');
   }
 
   iniciarTema('tema');

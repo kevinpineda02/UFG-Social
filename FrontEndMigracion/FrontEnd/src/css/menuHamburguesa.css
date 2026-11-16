@@ -43,16 +43,16 @@ body{
 
 .texto-boton {
     text-align: left;
-    font-size: 14px;
-    padding-top: 4px;
+    font-size: 13px;
+    padding-top: 3px;
     text-decoration: none;
     color: var(--color-texto-principal);
 }
 
 .boton-navegacion-inicio svg{
-    width: 24px;
-    height: 24px;
-    padding-left: 10px;
+    width: 23px;
+    height: 23px;
+    padding-left: 9px;
     color: currentColor;
 }
 
@@ -91,6 +91,13 @@ body{
     color: currentColor;
 }
 
+.boton-navegacion-seguidores svg{
+    width: 24px;
+    height: 24px;
+    padding-left: 10px;
+    color: currentColor;
+}
+
 .boton-navegacion-inicio-div{
     margin-top: 30px;
 }
@@ -98,6 +105,7 @@ body{
 .boton-navegacion-inicio, .boton-navegacion-publicaciones, 
 .boton-navegacion-perfil, .boton-navegacion-mensajes,
 .boton-navegacion-solicitudes,
+.boton-navegacion-seguidores,
 .boton-navegacion-tema{
   background: transparent;
   justify-content: flex-start;
@@ -113,6 +121,23 @@ body{
   margin: 18px auto;
   padding: 10px 0px;
   cursor: pointer;
+}
+
+.boton-navegacion-inicio, .boton-navegacion-publicaciones,
+.boton-navegacion-perfil, .boton-navegacion-mensajes,
+.boton-navegacion-solicitudes, .boton-navegacion-seguidores,
+.boton-navegacion-tema {
+  gap: 7px;
+  margin: 16px auto;
+  padding: 9px 0;
+}
+
+.boton-navegacion-inicio svg, .boton-navegacion-publicaciones svg,
+.boton-navegacion-perfil svg, .boton-navegacion-mensajes svg,
+.boton-navegacion-solicitudes svg, .boton-navegacion-seguidores svg,
+.boton-navegacion-tema svg {
+  width: 23px;
+  height: 23px;
 }
 
 .boton-navegacion-cerrar-sesion {
@@ -156,12 +181,14 @@ body{
 .boton-navegacion-inicio:hover, .boton-navegacion-publicaciones:hover, 
 .boton-navegacion-perfil:hover, .boton-navegacion-mensajes:hover,
 .boton-navegacion-solicitudes:hover,
+.boton-navegacion-seguidores:hover,
 .boton-navegacion-tema:hover,
 .boton-navegacion-inicio.boton-navegacion-activo,
 .boton-navegacion-publicaciones.boton-navegacion-activo,
 .boton-navegacion-perfil.boton-navegacion-activo,
 .boton-navegacion-mensajes.boton-navegacion-activo,
 .boton-navegacion-solicitudes.boton-navegacion-activo,
+.boton-navegacion-seguidores.boton-navegacion-activo,
 .boton-navegacion-tema.boton-navegacion-activo {
   background: var(--color-terciario);
   color: var(--color-secundario);
@@ -172,12 +199,14 @@ body{
 .boton-navegacion-perfil:hover .texto-boton,
 .boton-navegacion-mensajes:hover .texto-boton,
 .boton-navegacion-solicitudes:hover .texto-boton,
+.boton-navegacion-seguidores:hover .texto-boton,
 .boton-navegacion-tema:hover .texto-boton,
 .boton-navegacion-inicio.boton-navegacion-activo .texto-boton,
 .boton-navegacion-publicaciones.boton-navegacion-activo .texto-boton,
 .boton-navegacion-perfil.boton-navegacion-activo .texto-boton,
 .boton-navegacion-mensajes.boton-navegacion-activo .texto-boton,
 .boton-navegacion-solicitudes.boton-navegacion-activo .texto-boton,
+.boton-navegacion-seguidores.boton-navegacion-activo .texto-boton,
 .boton-navegacion-tema.boton-navegacion-activo .texto-boton {
   color: inherit;
 }
@@ -208,14 +237,16 @@ body{
 
   .boton-navegacion-inicio, .boton-navegacion-publicaciones,
   .boton-navegacion-perfil, .boton-navegacion-mensajes,
-  .boton-navegacion-solicitudes, .boton-navegacion-tema {
+  .boton-navegacion-solicitudes, .boton-navegacion-seguidores,
+  .boton-navegacion-tema {
     margin: 14px auto;
     padding: 9px 0;
   }
 
   .boton-navegacion-inicio svg, .boton-navegacion-publicaciones svg,
   .boton-navegacion-perfil svg, .boton-navegacion-mensajes svg,
-  .boton-navegacion-solicitudes svg, .boton-navegacion-tema svg {
+  .boton-navegacion-solicitudes svg, .boton-navegacion-seguidores svg,
+  .boton-navegacion-tema svg {
     width: 23px;
     height: 23px;
   }

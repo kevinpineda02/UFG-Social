@@ -180,7 +180,43 @@ export async function menuSolicitudes(): Promise<void> {
   const listaSolicitudes = document.createElement('div');
   listaSolicitudes.className = 'lista-solicitudes';
   menuSolicitudes.append(tituloSolicitudes, listaSolicitudes);
-  solicitudesDiv.append(menuSugerencias, menuSolicitudes);
+
+  const selectorMovil = document.createElement('div');
+  selectorMovil.className = 'selector-vistas-movil';
+  selectorMovil.setAttribute('role', 'tablist');
+  selectorMovil.setAttribute('aria-label', 'Cambiar entre sugerencias y solicitudes');
+
+  const botonSugerencias = document.createElement('button');
+  botonSugerencias.type = 'button';
+  botonSugerencias.className = 'boton-vista-movil boton-vista-movil-activo';
+  botonSugerencias.dataset.vista = 'sugerencias';
+  botonSugerencias.setAttribute('role', 'tab');
+  botonSugerencias.setAttribute('aria-selected', 'true');
+  botonSugerencias.textContent = 'Sugerencias';
+
+  const botonSolicitudes = document.createElement('button');
+  botonSolicitudes.type = 'button';
+  botonSolicitudes.className = 'boton-vista-movil';
+  botonSolicitudes.dataset.vista = 'solicitudes';
+  botonSolicitudes.setAttribute('role', 'tab');
+  botonSolicitudes.setAttribute('aria-selected', 'false');
+  botonSolicitudes.textContent = 'Solicitudes';
+
+  const cambiarVistaMovil = (vista: 'sugerencias' | 'solicitudes'): void => {
+    menuSugerencias.classList.toggle('vista-movil-activa', vista === 'sugerencias');
+    menuSolicitudes.classList.toggle('vista-movil-activa', vista === 'solicitudes');
+    botonSugerencias.classList.toggle('boton-vista-movil-activo', vista === 'sugerencias');
+    botonSolicitudes.classList.toggle('boton-vista-movil-activo', vista === 'solicitudes');
+    botonSugerencias.setAttribute('aria-selected', String(vista === 'sugerencias'));
+    botonSolicitudes.setAttribute('aria-selected', String(vista === 'solicitudes'));
+  };
+
+  botonSugerencias.addEventListener('click', () => cambiarVistaMovil('sugerencias'));
+  botonSolicitudes.addEventListener('click', () => cambiarVistaMovil('solicitudes'));
+  selectorMovil.append(botonSugerencias, botonSolicitudes);
+
+  solicitudesDiv.append(selectorMovil, menuSugerencias, menuSolicitudes);
+  cambiarVistaMovil('sugerencias');
 
   const cargarSolicitudes = async (): Promise<void> => {
     listaSolicitudes.replaceChildren();

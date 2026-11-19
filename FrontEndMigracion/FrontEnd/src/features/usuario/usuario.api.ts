@@ -1,5 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8081';
-
+export { API_BASE_URL } from '../../core/api/api';
 import { peticion } from '../../core/http';
 import type { UserResponse } from '../auth/auth';
 

@@ -117,6 +117,10 @@
     margin-bottom: 0;
 }
 
+.selector-vistas-movil {
+    display: none;
+}
+
 .username-sugerencias,
 .informacion-solicitud span {
     color: var(--color-texto-secundario);
@@ -190,12 +194,109 @@
 }
 
 @media (max-width: 760px) {
+    .solicitudes {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .selector-vistas-movil {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 12px 0;
+        padding: 5px;
+        border: 1px solid var(--color-bordes);
+        border-radius: 12px;
+        background: var(--color-secundario);
+        box-sizing: border-box;
+    }
+
+    .boton-vista-movil {
+        min-height: 44px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--color-texto-secundario);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .boton-vista-movil-activo {
+        background: var(--color-terciario);
+        color: #ffffff;
+        box-shadow: 0 3px 8px var(--color-sombra);
+    }
+
+    .menuDeSolicitudes {
+        position: relative;
+        order: 2;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        padding: 20px 12px calc(84px + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--color-bordes);
+        box-shadow: none;
+        box-sizing: border-box;
+    }
+
     .menuDeSugerencias {
+        order: 1;
         margin: 0;
-        padding: 20px 14px 36px;
+        min-height: 0;
+        padding: 20px 12px 24px;
+    }
+
+    .menuDeSugerencias,
+    .menuDeSolicitudes {
+        display: none;
+    }
+
+    .menuDeSugerencias.vista-movil-activa,
+    .menuDeSolicitudes.vista-movil-activa {
+        display: block;
+    }
+
+    .menuDeSugerencias .titulo-sugerencias,
+    .menuDeSolicitudes .titulo-solicitudes {
+        display: none;
     }
 
     .lista-sugerencias {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .contenedor-sugerencia {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+    }
+
+    .foto-perfil-sugerencias {
+        width: 72px;
+        height: 72px;
+        flex: 0 0 72px;
+    }
+
+    .informacion-usuario-sugerencias {
+        min-height: 72px;
+        margin-left: 10px;
+    }
+
+    .nombre-usuario-sugerencias {
+        margin-top: 4px;
+        font-size: 15px;
+    }
+
+    .boton-seguir-sugerencias {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .titulo-solicitudes {
+        margin-top: 8px;
     }
 }

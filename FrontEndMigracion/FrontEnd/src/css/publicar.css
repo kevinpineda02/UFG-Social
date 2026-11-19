@@ -226,3 +226,46 @@ textarea.input-publicar {
         transform: rotate(360deg);
     }
 }
+
+@media (max-width: 760px) {
+    .publicacion {
+        display: block;
+        min-height: 100vh;
+    }
+
+    .contenido-publicar {
+        width: 100%;
+        right: 0;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 16px 10px calc(84px + env(safe-area-inset-bottom));
+    }
+
+    .publicar-panel {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    textarea.input-publicar {
+        width: 100%;
+        height: 48px;
+        margin-left: 0;
+        box-sizing: border-box;
+    }
+
+    .perfil-publicar {
+        padding-left: 12px;
+    }
+
+    .botones-publicar {
+        margin-inline: 12px;
+    }
+
+    .vista-previa-publicar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .lista-mis-publicaciones {
+        gap: 28px;
+    }
+}

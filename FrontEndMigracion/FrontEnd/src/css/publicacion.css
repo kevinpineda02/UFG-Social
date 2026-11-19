@@ -501,10 +501,45 @@
     .diapositiva-publicacion img,
     .diapositiva-publicacion .video-publicacion {
         height: min(430px, 90vw);
+        min-height: 220px;
     }
 
     .acciones-publicacion {
         gap: 18px;
         padding-inline: 10px;
+        width: 100%;
+    }
+
+    .encabezado-publicacion {
+        padding-inline: 12px;
+    }
+
+    .descripcion-publicacion {
+        margin-inline: 4px;
+    }
+
+    .contenedor-comentarios {
+        margin-inline: 10px;
+        padding: 12px 8px;
+    }
+
+    .cuerpo-formulario-comentario {
+        width: auto;
+        margin-left: 0;
+    }
+
+    .entrada-comentario {
+        height: 34px;
+        box-sizing: border-box;
+    }
+
+    .comentario-publicacion span {
+        padding-left: 36px;
+    }
+
+    .control-carrusel {
+        width: 30px;
+        height: 30px;
+        font-size: 24px;
     }
 }

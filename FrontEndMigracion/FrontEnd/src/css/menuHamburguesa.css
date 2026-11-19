@@ -295,7 +295,7 @@ body{
 
   .botones-navegacion {
     display: grid;
-    grid-template-columns: repeat(7, minmax(42px, 1fr));
+    grid-template-columns: repeat(8, minmax(42px, 1fr));
     align-items: center;
     width: 100%;
   }

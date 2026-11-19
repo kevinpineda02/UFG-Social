@@ -1,7 +1,4 @@
-import fotoPorDefecto from '../../assets/perfil/perfil.png';
 import { API_BASE_URL } from '../../core/api/api';
-
-const FOTO_PERFIL_POR_DEFECTO = new URL(fotoPorDefecto, window.location.origin).href;
 
 export interface LoginRequest {
   correo: string;
@@ -103,7 +100,7 @@ export async function registrarse(datos: RegistroCompleto): Promise<ResultadoReg
         credentialId: auth.credentialId,
         name: datos.nombre,
         username: datos.nombreUsuario,
-        profilePhoto: FOTO_PERFIL_POR_DEFECTO,
+        profilePhoto: '',
       },
       auth.token,
     );

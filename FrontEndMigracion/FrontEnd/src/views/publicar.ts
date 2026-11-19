@@ -1,6 +1,6 @@
 //Contenedor de la publicacion
 import fotoPorDefecto from '../assets/perfil/perfil.png';
-import { API_BASE_URL } from '../core/api/api';
+import { resolverUrlMedia } from '../core/api/api';
 import { obtenerUserId } from '../features/auth/authGuard';
 import { crearPublicacion } from '../features/publicaciones/publicar.api';
 import { obtenerPublicacionesPorUsuario } from '../features/publicaciones/publicaciones.api';
@@ -98,9 +98,7 @@ async function cargarPerfil(): Promise<void> {
     nombreUsuario.textContent = nombre || 'Usuario sin nombre';
 
     if (usuario.profilePhoto) {
-      fotoPerfil.src = usuario.profilePhoto.startsWith('http') || usuario.profilePhoto.startsWith('data:')
-        ? usuario.profilePhoto
-        : `${API_BASE_URL}${usuario.profilePhoto.startsWith('/') ? usuario.profilePhoto : `/${usuario.profilePhoto}`}`;
+      fotoPerfil.src = resolverUrlMedia(usuario.profilePhoto, fotoPorDefecto);
     }
   } catch (error) {
     console.error('No se pudo cargar el perfil para publicar:', error);

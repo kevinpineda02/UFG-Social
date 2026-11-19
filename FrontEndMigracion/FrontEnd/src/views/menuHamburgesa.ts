@@ -1,5 +1,5 @@
 import fotoPorDefecto from '../assets/perfil/perfil.png';
-import { API_BASE_URL } from '../core/api/api';
+import { resolverUrlMedia } from '../core/api/api';
 import { cerrarSesion, obtenerUserId } from '../features/auth/authGuard';
 import { obtenerUsuarioPorId } from '../features/usuario/usuario.api';
 
@@ -27,9 +27,7 @@ nombreUsuario.textContent = 'Cargando usuario...';
 menuHamburguesa.append(fotoPerfil, nombreUsuario);
 
 function resolverUrlFoto(url: string): string {
-  return url.startsWith('http') || url.startsWith('data:')
-    ? url
-    : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+  return resolverUrlMedia(url, fotoPorDefecto);
 }
 
 function normalizarRuta(ruta: string): string {

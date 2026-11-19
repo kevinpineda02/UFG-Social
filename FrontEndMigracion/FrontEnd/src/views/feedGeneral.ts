@@ -1,5 +1,6 @@
 import fotoPorDefecto from '../assets/perfil/perfil.png';
-import { API_BASE_URL } from '../core/api/api';
+import logoUfgAsset from '../assets/fondos/logo.png';
+import { resolverUrlMedia } from '../core/api/api';
 import { obtenerRol, obtenerUserId } from '../features/auth/authGuard';
 import { obtenerUsuarioPorId } from '../features/usuario/usuario.api';
 import {
@@ -17,15 +18,7 @@ import {
   type Publicacion,
 } from '../features/publicaciones/publicaciones.api';
 
-function resolverUrl(url: string | null | undefined, valorPorDefecto: string): string {
-  if (!url) {
-    return valorPorDefecto;
-  }
-
-  return url.startsWith('http') || url.startsWith('data:')
-    ? url
-    : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
-}
+const resolverUrl = resolverUrlMedia;
 
 function tiempoTranscurrido(fecha: string): string {
   const diferencia = Date.now() - new Date(fecha).getTime();
@@ -584,7 +577,7 @@ export async function feedGeneral(): Promise<void> {
   titulo.textContent = 'Feed';
 
   const logoUFG = document.createElement('img');
-  logoUFG.src = './src/assets/fondos/logo.png';
+  logoUFG.src = logoUfgAsset;
   logoUFG.alt = 'Logo de la Universidad Francisco Gavidia';
   logoUFG.className = 'logo-ufg';
 

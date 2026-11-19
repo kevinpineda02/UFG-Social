@@ -1,5 +1,5 @@
 import fotoPorDefecto from '../assets/perfil/perfil.png';
-import { API_BASE_URL } from '../core/api/api';
+import { resolverUrlMedia } from '../core/api/api';
 import { obtenerUserId } from '../features/auth/authGuard';
 import type { UserResponse } from '../features/auth/auth';
 import {
@@ -16,10 +16,7 @@ import { obtenerUsuarios } from '../features/usuario/usuario.api';
 const solicitudesDiv = document.querySelector<HTMLDivElement>('.solicitudes');
 
 function resolverFoto(url: string | null | undefined): string {
-  if (!url) return fotoPorDefecto;
-  return url.startsWith('http') || url.startsWith('data:')
-    ? url
-    : `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+  return resolverUrlMedia(url, fotoPorDefecto);
 }
 
 function crearFoto(url: string | null | undefined, nombre: string): HTMLImageElement {
